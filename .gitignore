@@ -1,0 +1,5 @@
+.env
+.agents/
+.claude/
+node_modules/
+scripts/
