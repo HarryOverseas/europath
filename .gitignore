@@ -1,5 +1,10 @@
 .env
-/.agents/*
-/.claude/*
-/node_modules/*
-scripts/
+.env.local
+.agents/
+.claude/
+node_modules/
+dist/
+*.sqlite
+*.sqlite-journal
+*.log
+dist/
