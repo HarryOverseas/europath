@@ -1,13 +1,13 @@
 ---
 name: harry-global-immigration-website
-description: Project context for Harry Global Immigration website combining visa services, German language training, and Germany arrival assistance
+description: Project context for Harry Overseas Immigration website combining visa services, German language training, and Germany arrival assistance
 metadata:
   type: project
   phase: requirements-gathering
 ---
 
 Project name and purpose:
-Harry Global Immigration website - combines immigration consultancy services (student, spouse/family reunion, Chancenkarte, work, tourist visas), German language training (A1-A2-B1-B2), and Germany arrival assistance services.
+Harry Overseas Immigration website - combines immigration consultancy services (student, spouse/family reunion, Chancenkarte, work, tourist visas), German language training (A1-A2-B1-B2), and Germany arrival assistance services.
 
 Tech stack:
 Modern web stack with mobile-first design, international accessibility, and cross-border management capabilities between Germany and India.

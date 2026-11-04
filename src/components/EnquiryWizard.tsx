@@ -538,7 +538,7 @@ export default function EnquiryWizard() {
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start space-x-3 text-xs text-amber-800">
                     <ShieldAlert className="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" />
                     <p>
-                      <strong>Important Notice:</strong> Submitting this enquiry does not automatically charge fees or guarantee visa approval. Staff at Harry Global Immigration will review your requirements and contact you with a formal quotation.
+                      <strong>Important Notice:</strong> Submitting this enquiry does not automatically charge fees or guarantee visa approval. Staff at Harry Overseas Immigration will review your requirements and contact you with a formal quotation.
                     </p>
                   </div>
                 </div>

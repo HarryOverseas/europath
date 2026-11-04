@@ -22,7 +22,7 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                 <Globe className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-lg font-bold tracking-tight text-white block">Harry Global</span>
+                <span className="text-lg font-bold tracking-tight text-white block">Harry Overseas</span>
                 <span className="text-[10px] text-brand-gold tracking-widest uppercase font-semibold">Immigration & Language</span>
               </div>
             </div>
@@ -111,20 +111,14 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                 </button>
               </li>
               <li>
-                <button
-                  onClick={() => {
-                    if (onNavigate) {
-                      onNavigate('careers');
-                    } else {
-                      window.location.hash = 'careers';
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  }}
-                  className="hover:text-brand-gold transition text-left text-brand-gold font-semibold flex items-center space-x-1.5"
+                <a
+                  href="/feed.xml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-brand-gold transition text-left flex items-center space-x-1"
                 >
-                  <span>Careers & Vacancies</span>
-                  <span className="text-[10px] bg-brand-gold/20 px-1.5 py-0.5 rounded text-brand-gold font-bold">Hiring</span>
-                </button>
+                  <span>RSS Feed (XML)</span>
+                </a>
               </li>
             </ul>
           </div>
@@ -145,9 +139,9 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
         {/* Disclaimer Bar */}
         <div className="mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-400 space-y-2">
           <p>
-            <strong>Disclaimer:</strong> Harry Global Immigration is an independent consultancy and language training provider. Visa decisions are solely at the discretion of the respective embassies and government authorities. We do not guarantee visa approvals.
+            <strong>Disclaimer:</strong> Harry Overseas Immigration is an independent consultancy and language training provider. Visa decisions are solely at the discretion of the respective embassies and government authorities. We do not guarantee visa approvals.
           </p>
-          <p>© {new Date().getFullYear()} Harry Global Immigration. All rights reserved. • Tagline: Your Global Journey Starts Here.</p>
+          <p>© {new Date().getFullYear()} Harry Overseas Immigration. All rights reserved. • Tagline: Your Global Journey Starts Here.</p>
         </div>
       </div>
 
@@ -173,7 +167,7 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
             <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
               {activeModal === 'privacy' && (
                 <>
-                  <p>At Harry Global Immigration, we respect your privacy and protect your personal information with strict confidentiality.</p>
+                  <p>At Harry Overseas Immigration, we respect your privacy and protect your personal information with strict confidentiality.</p>
                   <p><strong>Information Collection:</strong> We collect contact details, academic background, and visa preferences solely for the purpose of immigration assessment and language training enrolment.</p>
                   <p><strong>Data Security:</strong> Your data is stored securely and never sold or shared with unauthorized third parties.</p>
                 </>
@@ -181,7 +175,7 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
 
               {activeModal === 'terms' && (
                 <>
-                  <p>By engaging Harry Global Immigration for consultancy or German language courses, you agree to provide accurate and authentic documents.</p>
+                  <p>By engaging Harry Overseas Immigration for consultancy or German language courses, you agree to provide accurate and authentic documents.</p>
                   <p><strong>Service Scope:</strong> We provide expert guidance, document checklists, application preparation, and language instruction. Final visa outcomes rest entirely with government immigration authorities.</p>
                 </>
               )}
@@ -195,7 +189,7 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
 
               {activeModal === 'disclaimer' && (
                 <>
-                  <p>Harry Global Immigration operates independently and is not an official branch of any German or European government embassy.</p>
+                  <p>Harry Overseas Immigration operates independently and is not an official branch of any German or European government embassy.</p>
                   <p>We provide professional guidance, application preparation, and language training. No consultancy can guarantee visa issuance, as approvals are decided solely by visa officers based on individual applicant credentials.</p>
                 </>
               )}

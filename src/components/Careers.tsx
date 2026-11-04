@@ -442,7 +442,7 @@ export default function Careers() {
             </h1>
 
             <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8">
-              Harry Global Immigration and German Academy connects talent, students, and skilled professionals with life-changing European opportunities. We are seeking passionate trainers, legal advisors, counselors, and relocation specialists to join our offices in Berlin, Frankfurt, and India.
+              Harry Overseas Immigration and German Academy connects talent, students, and skilled professionals with life-changing European opportunities. We are seeking passionate trainers, legal advisors, counselors, and relocation specialists to join our offices in Berlin, Frankfurt, and India.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-300">

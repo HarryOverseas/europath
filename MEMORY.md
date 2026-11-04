@@ -1,1 +1,1 @@
-- [Harry Global Immigration Website Project Context](PROJECT-CONTEXT.md) — dev-team project setup
+- [Harry Overseas Immigration Website Project Context](PROJECT-CONTEXT.md) — dev-team project setup

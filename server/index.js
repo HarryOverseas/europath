@@ -5,7 +5,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pg from 'pg';
-import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
 
@@ -19,116 +18,58 @@ app.use(express.json({ limit: '10mb' }));
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const JWT_SECRET = process.env.JWT_SECRET || 'harry_global_secret_key_2026_secure';
 
-// Dual-persistence state
-let dbEngine = 'sqlite';
 let pgPool = null;
-let sqliteDb = null;
-
 const databaseUrl = process.env.DATABASE_URL;
-const dbPath = process.env.DB_PATH || (process.env.VERCEL ? '/tmp/database.sqlite' : './database.sqlite');
 
 /**
- * Connect to database engine (PostgreSQL if available, otherwise SQLite)
+ * Connect to PostgreSQL database
  */
 async function connectDb() {
-  if (pgPool || sqliteDb) {
+  if (pgPool) {
     return;
   }
 
-  if (databaseUrl) {
-    try {
-      const useSsl = databaseUrl.includes('sslmode=require') || 
-                     databaseUrl.includes('ssl=true') || 
-                     databaseUrl.includes('neon.tech') || 
-                     databaseUrl.includes('supabase') || 
-                     process.env.NODE_ENV === 'production';
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 5000,
-        ssl: useSsl ? { rejectUnauthorized: false } : false
-      });
-      const client = await pool.connect();
-      client.release();
-      pgPool = pool;
-      dbEngine = 'postgres';
-      console.log('[DB] Connected to PostgreSQL database successfully.');
-      return;
-    } catch (err) {
-      console.warn('[DB] PostgreSQL connection failed. Falling back to SQLite adapter:', err.message);
-    }
+  if (!databaseUrl) {
+    throw new Error('[DB] DATABASE_URL environment variable is required for PostgreSQL connection.');
   }
 
-  // SQLite fallback
-  dbEngine = 'sqlite';
-  const dir = path.dirname(path.resolve(dbPath));
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+  const useSsl = databaseUrl.includes('sslmode=require') ||
+                 databaseUrl.includes('ssl=true') ||
+                 databaseUrl.includes('neon.tech') ||
+                 databaseUrl.includes('supabase') ||
+                 process.env.NODE_ENV === 'production';
 
-  return new Promise((resolve, reject) => {
-    sqliteDb = new sqlite3.Database(dbPath, (err) => {
-      if (err) {
-        console.error('[DB] SQLite connection error:', err);
-        return reject(err);
-      }
-      console.log(`[DB] Connected to SQLite database at ${dbPath}`);
-      sqliteDb.run('PRAGMA foreign_keys = ON;', (pragmaErr) => {
-        if (pragmaErr) console.warn('[DB] PRAGMA error:', pragmaErr.message);
-        resolve();
-      });
-    });
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    connectionTimeoutMillis: 5000,
+    ssl: useSsl ? { rejectUnauthorized: false } : false
   });
+
+  const client = await pool.connect();
+  client.release();
+  pgPool = pool;
+  console.log('[DB] Connected to PostgreSQL database successfully.');
 }
 
 /**
  * Universal query abstraction supporting parameterized queries ($1, $2)
- * across both PostgreSQL and SQLite.
  */
 async function query(sql, params = []) {
-  if (dbEngine === 'postgres' && pgPool) {
-    const res = await pgPool.query(sql, params);
-    return {
-      rows: res.rows || [],
-      rowCount: res.rowCount ?? (res.rows?.length || 0)
-    };
+  if (!pgPool) {
+    await connectDb();
   }
-
-  return new Promise((resolve, reject) => {
-    // Convert PostgreSQL $1, $2, ... to SQLite ?1, ?2, ...
-    const sqliteSql = sql.replace(/\$(\d+)/g, '?$1');
-    const upper = sqliteSql.trim().toUpperCase();
-    const isSelect = upper.startsWith('SELECT') || upper.startsWith('PRAGMA');
-    const hasReturning = upper.includes('RETURNING');
-
-    if (isSelect || hasReturning) {
-      sqliteDb.all(sqliteSql, params, (err, rows) => {
-        if (err) return reject(err);
-        const resultRows = rows || [];
-        resolve({
-          rows: resultRows,
-          rowCount: resultRows.length
-        });
-      });
-    } else {
-      sqliteDb.run(sqliteSql, params, function (err) {
-        if (err) return reject(err);
-        resolve({
-          rows: [],
-          rowCount: this.changes,
-          insertId: this.lastID
-        });
-      });
-    }
-  });
+  const res = await pgPool.query(sql, params);
+  return {
+    rows: res.rows || [],
+    rowCount: res.rowCount ?? (res.rows?.length || 0)
+  };
 }
 
 /**
  * Database schema initialization and admin synchronization
  */
 async function initDb() {
-  const isPostgres = dbEngine === 'postgres';
-  const idCol = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  const idCol = 'SERIAL PRIMARY KEY';
 
   // 1. Users table
   await query(`CREATE TABLE IF NOT EXISTS users (
@@ -220,7 +161,7 @@ async function sendNotificationEmail(lead) {
         return;
       }
       const mailOptions = {
-        from: '"Harry Global Immigration" <noreply@harryglobal.com>',
+        from: '"Harry Overseas Immigration" <noreply@harryoverseas.com>',
         to: (process.env.ADMIN_EMAIL || 'admin@harryglobal.com') + (lead.email ? ', ' + lead.email : ''),
         subject: `New Enquiry Received: ${lead.id} - ${lead.full_name}`,
         text: `Hello,\n\nA new enquiry has been submitted by ${lead.full_name}.\nContact: ${lead.mobile || lead.phone}\nEmail: ${lead.email}\n\nPlease check the admin dashboard to review.`
@@ -705,6 +646,52 @@ app.post('/api/whatsapp/send', authenticateToken, async (req, res) => {
   });
 });
 
+// 13. DW RSS / RDF Feed Proxy & Reader Endpoint (XML)
+app.get('/feed.xml', async (req, res) => {
+  try {
+    const dwFeedUrl = 'https://rss.dw.com/rdf/rss-en-all';
+
+    // Fetch external DW RSS / RDF feed
+    const response = await fetch(dwFeedUrl, {
+      headers: {
+        'User-Agent': 'HarryOverseasImmigration-RSSReader/1.0'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch DW feed: ${response.status} ${response.statusText}`);
+    }
+
+    const xmlText = await response.text();
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    return res.status(200).send(xmlText);
+  } catch (err) {
+    console.error('Error fetching DW RSS feed:', err);
+    // Fallback XML if DW feed is temporarily unreachable
+    const siteUrl = req.protocol + '://' + req.get('host');
+    const pubDate = new Date().toUTCString();
+    const fallbackXml = `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Harry Overseas Immigration &amp; German Academy (Fallback Feed)</title>
+    <link>${siteUrl}</link>
+    <description>Official RSS feed for Harry Overseas Immigration. DW feed temporarily unavailable.</description>
+    <language>en-us</language>
+    <lastBuildDate>${pubDate}</lastBuildDate>
+    <item>
+      <title><![CDATA[Germany Visa Consultancy & Opportunity Card]]></title>
+      <link>${siteUrl}/#services</link>
+      <description><![CDATA[Expert guidance for Germany Opportunity Card and skilled worker immigration pathways.]]></description>
+      <pubDate>${pubDate}</pubDate>
+    </item>
+  </channel>
+</rss>`;
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    return res.status(200).send(fallbackXml);
+  }
+});
+
 // Initialize database and start listening
 await connectDb();
 await initDb();
@@ -712,7 +699,7 @@ await initDb();
 let server = null;
 if (process.env.NODE_ENV !== 'test_no_listen' && !process.env.VERCEL) {
   server = app.listen(PORT, () => {
-    console.log(`Harry Global Immigration backend server running on port ${PORT} [engine: ${dbEngine}]`);
+    console.log(`Harry Overseas Immigration backend server running on port ${PORT} [engine: ${dbEngine}]`);
   });
 }
 

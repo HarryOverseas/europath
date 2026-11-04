@@ -1,6 +1,6 @@
 # Deploying EuroPath to Vercel
 
-EuroPath (Harry Global Immigration) is configured for seamless deployment on **Vercel** as a full-stack application:
+EuroPath (Harry Overseas Immigration) is configured for seamless deployment on **Vercel** as a full-stack application:
 - **Frontend**: Vite + React SPA served from `dist` with client-side routing.
 - **Backend**: Express REST API running as a Vercel Serverless Function via [`api/index.js`](file:///e:/Projects/VS_Projects/EuroPath/api/index.js).
 

@@ -57,7 +57,7 @@ export default function Navbar({
               <Globe className="w-7 h-7" />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-white block">Harry Global</span>
+              <span className="text-xl font-bold tracking-tight text-white block">Harry Overseas</span>
               <span className="text-xs text-brand-gold tracking-widest uppercase font-semibold">Immigration & Language</span>
             </div>
           </div>
