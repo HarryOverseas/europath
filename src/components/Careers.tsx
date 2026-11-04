@@ -50,7 +50,7 @@ export const VACANCIES: JobVacancy[] = [
     location: 'Anantapur Office',
     type: 'Full-time',
     experience: '1+ Years Experience',
-    salaryRange: '₹15,000 - ₹25,000 / month',
+    salaryRange: '₹12,000 - ₹15,000 / month + Incentives',
     featured: true,
     summary:
       'Manage front office operations, greet clients, handle telephone & WhatsApp enquiries, and coordinate appointments for students and visa applicants visiting our Anantapur office.',
@@ -79,7 +79,7 @@ export const VACANCIES: JobVacancy[] = [
     location: 'Anantapur Office / Hybrid',
     type: 'Full-time',
     experience: '1-3 Years Experience',
-    salaryRange: '₹20,000 - ₹40,000 / month + Incentives',
+    salaryRange: '₹18,000 - ₹25,000 / month + Incentives',
     featured: true,
     summary:
       'Counsel aspiring students and professionals on Germany study visas, tourist visas, and settlement pathways, guiding them through documentation and application processes.',
