@@ -1,5 +1,5 @@
 /**
- * Independent Challenger Verification Harness for EuroPath Recruitment Lifecycle.
+ * Independent Challenger Verification Harness for Harry Overseas Recruitment Lifecycle.
  * 
  * Verifies:
  * 1. Public application submissions across all 4 advertised roles

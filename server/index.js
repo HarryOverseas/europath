@@ -759,6 +759,90 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
+// ─── Chatbot API ──────────────────────────────────────────────────────────────
+// POST /api/chat  { message: string, history: { role, content }[] }
+// Uses Claude API when ANTHROPIC_API_KEY is set; falls back to rule-based replies.
+app.post('/api/chat', async (req, res) => {
+  const { message, history = [] } = req.body || {};
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ success: false, error: 'message is required' });
+  }
+
+  // ---- Try Claude API (claude-haiku-5-5 for speed + cost) ----
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (apiKey) {
+    try {
+      const systemPrompt = `You are Harry, a friendly and knowledgeable immigration assistant for Harry Overseas Immigration, based in Anantapur, Andhra Pradesh, India. You help prospective students and workers navigate visa applications, language courses, and relocation to Germany and Europe.
+
+Key details about Harry Overseas:
+- Services: Student/Work/Business Visa consulting, Language (German A1-B2), Arrival Assistance in Germany
+- Office: Near JNTU University, Anantapur, AP, India
+- Phone (India): +91 6302951891
+- Phone (Germany): +49 17670256852
+- WhatsApp: +91 6302951891
+- Google Maps: https://maps.app.goo.gl/fYazXdmvJG33oDN28
+
+Your tone is warm, professional, and concise. Answer immigration-related questions thoroughly. For sensitive or legal queries, recommend the user book a consultation. If you do not know something specific, say so honestly and direct them to call or WhatsApp.`;
+
+      const claudeMessages = [
+        ...history.map(h => ({ role: h.role, content: h.content })),
+        { role: 'user', content: message },
+      ];
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-5-5',
+          max_tokens: 512,
+          system: systemPrompt,
+          messages: claudeMessages,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const reply = data?.content?.[0]?.text || '';
+        if (reply) return res.json({ success: true, reply });
+      } else {
+        console.warn('[Chat] Claude API error:', response.status);
+      }
+    } catch (err) {
+      console.warn('[Chat] Claude API fetch failed:', err.message);
+    }
+  }
+
+  // ---- Rule-based fallback ----
+  const q = message.toLowerCase();
+  let reply = '';
+
+  if (/service|offer|help|do you|what can/.test(q)) {
+    reply = 'We offer:\n• 🎓 Student Visa consulting for Germany & Europe\n• 💼 Work & Business Visa assistance\n• 🗣️ German Language courses (A1-B2)\n• 🏠 Arrival Assistance in Germany\n\nWould you like details on any of these?';
+  } else if (/german.*visa|visa.*german|student.*visa|work.*visa/.test(q)) {
+    reply = 'For a German student or work visa, you typically need:\n• Valid passport\n• University admission / job offer letter\n• Financial proof\n• Health insurance\n• Language certificate (A1-B2)\n\nWe guide you through every step. Book a free consultation at +91 6302951891 or WhatsApp us!';
+  } else if (/language|german.*course|a1|a2|b1|b2/.test(q)) {
+    reply = 'Our Language Academy offers German courses from A1 to B2 levels, both online and in-person at our Anantapur office.\n\nCourses prepare you for the Goethe-Institut exams required for visa applications. Call us at +91 6302951891 for the next batch schedule.';
+  } else if (/arrival|germany|settle|accommodation|housing/.test(q)) {
+    reply = 'Our Arrival Assistance service helps you:\n• Airport pickup in Germany\n• Accommodation search\n• Bank account opening\n• City registration (Anmeldung)\n• Local SIM & transport setup\n\nContact us to add this to your package.';
+  } else if (/contact|phone|call|whatsapp|email|address|location|office/.test(q)) {
+    reply = '📍 Near JNTU University, Anantapur, AP, India\n📞 India: +91 6302951891\n📞 Germany: +49 17670256852\n💬 WhatsApp: +91 6302951891\n\nOr visit us on Google Maps:\nhttps://maps.app.goo.gl/fYazXdmvJG33oDN28';
+  } else if (/cost|fee|price|charge|how much/.test(q)) {
+    reply = 'Our fees vary depending on the visa type and services required. We offer transparent, competitive pricing with no hidden charges.\n\nPlease contact us at +91 6302951891 or WhatsApp for a personalised quote.';
+  } else if (/time|how long|duration|process|days|weeks|months/.test(q)) {
+    reply = 'German visa processing typically takes 4-8 weeks after document submission. We help you prepare everything correctly the first time to avoid delays.\n\nStart early - call us at +91 6302951891 to plan your timeline!';
+  } else if (/hello|hi|hey|good morning|good afternoon|good evening/.test(q)) {
+    reply = 'Hello! 👋 I\'m Harry, your immigration guide.\n\nHow can I help you today? You can ask me about visas, language courses, or our arrival support services.';
+  } else {
+    reply = 'That\'s a great question! For personalised guidance, our experts are available at:\n📞 +91 6302951891 (India)\n📞 +49 17670256852 (Germany)\n💬 WhatsApp: +91 6302951891\n\nOr fill out our enquiry form on the website and we\'ll get back to you within 24 hours.';
+  }
+
+  return res.json({ success: true, reply });
+});
+
 // Initialize database and start listening
 await connectDb();
 await initDb();

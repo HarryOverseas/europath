@@ -12,7 +12,7 @@ const dbPath = process.env.DB_PATH || './database.sqlite';
 const databaseUrl = process.env.DATABASE_URL;
 
 console.log('====================================================');
-console.log('   EuroPath: SQLite to PostgreSQL Migration Tool');
+console.log('   Harry Overseas: SQLite to PostgreSQL Migration Tool');
 console.log('====================================================\n');
 
 if (!databaseUrl) {

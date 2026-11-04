@@ -1,5 +1,5 @@
 /**
- * HTTP test client for opaque-box E2E testing against the EuroPath REST API.
+ * HTTP test client for opaque-box E2E testing against the Harry Overseas REST API.
  */
 
 import { CONFIG } from './config.mjs';

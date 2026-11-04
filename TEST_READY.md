@@ -8,14 +8,17 @@
 ---
 
 ## 1. Executive Summary
-The comprehensive End-to-End test suite for the EuroPath project is designed, implemented, and fully verified. It covers all functional features, boundary/adversarial cases, pairwise feature interactions, and real-world multi-candidate application scenarios across Tiers 1 through 4.
+
+The comprehensive End-to-End test suite for the Harry Overseas project is designed, implemented, and fully verified. It covers all functional features, boundary/adversarial cases, pairwise feature interactions, and real-world multi-candidate application scenarios across Tiers 1 through 4.
 
 All test files are written using standard Node.js native testing libraries (`node:test`, `node:assert/strict`), require zero third-party testing dependencies, and execute deterministically with sub-second per-suite latency.
 
 ---
 
 ## 2. Test Verification Summary
+
 Execution of `npm test` (`node tests/run_tests.mjs`):
+
 - **Total Test Suites**: 14
 - **Total Automated Tests**: 54
 - **Passed**: 54 (100%)
@@ -27,6 +30,7 @@ Execution of `npm test` (`node tests/run_tests.mjs`):
 ## 3. Test Suites Inventory
 
 ### Tier 1: Functional Feature Coverage (26 tests)
+
 - `tests/tier1_features/auth.test.mjs` (6 tests)
   - `F3-T1`: Valid credentials issue JWT token and user profile
   - `F3-T2`: Invalid password rejected with 401 Unauthorized
@@ -59,6 +63,7 @@ Execution of `npm test` (`node tests/run_tests.mjs`):
   - `ENQ-T6`: `GET /api/enquiries` rejected unauthenticated with 401
 
 ### Tier 2: Boundary & Corner Cases (20 tests)
+
 - `tests/tier2_boundaries/auth_boundary.test.mjs` (6 tests)
   - `AUTH-BND-1`: Empty string credentials return 400 Bad Request
   - `AUTH-BND-2`: Whitespace-only credentials return 400 Bad Request
@@ -84,6 +89,7 @@ Execution of `npm test` (`node tests/run_tests.mjs`):
   - `ENQ-BND-6`: Empty arrays and nulls in optional fields handled safely
 
 ### Tier 3: Pairwise Cross-Feature Workflows (3 tests)
+
 - `tests/tier3_cross_feature/hiring_lifecycle.test.mjs` (2 tests)
   - `CROSS-HIRING-1`: Candidate applies -> Admin logs in -> inspects -> filters -> updates status through full lifecycle (New -> Reviewing -> Shortlisted -> Interviewed -> Hired) -> deletes candidate -> confirms deletion
   - `CROSS-HIRING-2`: Rejection lifecycle: candidate transitioned to Rejected
@@ -91,6 +97,7 @@ Execution of `npm test` (`node tests/run_tests.mjs`):
   - `CROSS-ENQ-1`: Public enquiry submit -> Admin auth -> inspect -> update status -> delete
 
 ### Tier 4: Real-World Application Scenarios (5 tests)
+
 - `tests/tier4_real_world/recruitment_campaign.test.mjs` (1 test)
   - `SCENARIO-1`: Multi-candidate recruitment campaign across all 4 advertised roles (German Trainer, Visa Consultant, Student Counselor, Relocation Coordinator) with department filtering & triage
 - `tests/tier4_real_world/concurrency_stress.test.mjs` (1 test)
@@ -105,7 +112,9 @@ Execution of `npm test` (`node tests/run_tests.mjs`):
 ---
 
 ## 4. How Implementing Agents Should Use This Suite
+
 During Milestone M1 (Backend API & Dual Persistence Engine):
+
 1. Start the backend server (`npm run dev` or `node server/index.js`).
 2. Run `npm test` (or `node tests/run_tests.mjs --live`).
 3. The test suite will execute all 54 tests against the live server.

@@ -1,5 +1,5 @@
 /**
- * Master Test Runner for EuroPath E2E Test Suite (Tiers 1-4).
+ * Master Test Runner for Harry Overseas E2E Test Suite (Tiers 1-4).
  * 
  * Supports:
  * - Running all tiers or specific tier (--tier=1,2,3,4)
@@ -65,7 +65,7 @@ async function getTestFiles() {
 
 async function main() {
   console.log('='.repeat(65));
-  console.log(' EuroPath Automated E2E Test Suite (Tiers 1 - 4)');
+  console.log(' Harry Overseas Automated E2E Test Suite (Tiers 1 - 4)');
   console.log('='.repeat(65));
 
   let mockServerInstance = null;

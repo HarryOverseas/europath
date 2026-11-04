@@ -1,5 +1,5 @@
 /**
- * Test configuration for EuroPath automated test suite.
+ * Test configuration for Harry Overseas automated test suite.
  * Supports configurable API base URL and admin credentials.
  */
 

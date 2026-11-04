@@ -10,6 +10,7 @@ import NewsFeed from './components/NewsFeed';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import LegalFooter from './components/LegalFooter';
+import Chatbot from './components/Chatbot';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'public' | 'careers' | 'news' | 'admin'>('public');
@@ -142,6 +143,7 @@ export default function App() {
       )}
 
       <LegalFooter onNavigate={handleNavigate} />
+      <Chatbot />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /**
  * Tier 4 - Real-World Application Scenario: Multi-Role Recruitment Campaign
- * Models the end-to-end recruitment drive across EuroPath's 4 core advertised roles:
+ * Models the end-to-end recruitment drive across Harry Overseas's 4 core advertised roles:
  * - German Language Trainer
  * - Visa Consultant
  * - Student Counselor
