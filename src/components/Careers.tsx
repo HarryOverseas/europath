@@ -43,145 +43,69 @@ export interface JobVacancy {
 
 export const VACANCIES: JobVacancy[] = [
   {
-    id: 'daf-trainer',
-    title: 'German Language Trainer (DaF B1-C1)',
-    roleValue: 'German Language Trainer',
-    department: 'Language Training',
-    location: 'Berlin / Remote / Regional Offices',
-    type: 'Full-time / Hybrid',
-    experience: '2+ Years Teaching Experience',
-    salaryRange: '€42,000 - €55,000 / year (or local competitive tier)',
-    featured: true,
-    summary:
-      'Lead intensive and comprehensive German language instruction (A1 to C1) for healthcare professionals, engineers, and students preparing for Goethe-Zertifikat, TestDaF, and telc examinations.',
-    responsibilities: [
-      'Design and deliver structured curriculum for levels A1 through C1 following CEFR standards.',
-      'Conduct interactive online and in-person sessions emphasizing conversational fluency, grammar precision, and exam mastery.',
-      'Evaluate student progress, provide detailed constructive feedback, and administer practice examinations.',
-      'Deliver specialized technical and medical German modules (Fachsprachenprüfung prep) for nurses and doctors.',
-      'Collaborate with immigration counselors to align student language progression with embassy visa appointment deadlines.'
-    ],
-    requirements: [
-      'Goethe-Zertifikat C2, DaF / DaZ degree, or native/bilingual proficiency in German.',
-      'Minimum 2+ years of professional teaching experience in Goethe, TestDaF, or telc examination preparation.',
-      'Proficiency with digital classroom tools, interactive multimedia learning, and LMS platforms.',
-      'Strong intercultural communication skills with fluency in both German and English.',
-      'Passionate about student outcomes and European integration.'
-    ],
-    benefits: [
-      'Flexible hybrid and remote working arrangements',
-      'Sponsored Goethe-Institut examiner accreditation and continuous pedagogy training',
-      'Relocation assistance if transitioning to German branch offices',
-      'Performance-based student exam completion bonuses'
-    ]
-  },
-  {
-    id: 'visa-consultant',
-    title: 'Senior Visa & Immigration Consultant (Opportunity Card, EU Blue Card)',
-    roleValue: 'Senior Visa & Immigration Consultant',
-    department: 'Visa & Immigration',
-    location: 'Frankfurt / Berlin / Regional Offices',
-    type: 'Full-time / Hybrid',
-    experience: '3+ Years Immigration Advisory',
-    salaryRange: '€48,000 - €65,000 / year',
-    featured: true,
-    summary:
-      'Guide skilled professionals, engineers, and healthcare specialists through German residency pathways including the Chancenkarte (Opportunity Card), EU Blue Card, and skilled worker recognition.',
-    responsibilities: [
-      'Perform detailed eligibility evaluations based on the Chancenkarte points matrix and EU Blue Card salary thresholds.',
-      'Audit and assemble visa application dossiers, ZAB / Anabin degree equivalency recognitions, and professional license filings.',
-      'Act as liaison with German embassies, consulates, and local Foreigners Authorities (Ausländerbehörde).',
-      'Advise corporate clients and individual applicants on fast-track skilled worker procedures (Beschleunigtes Fachkräfteverfahren).',
-      'Monitor updates to the German Skilled Immigration Act (Fachkräfteeinwanderungsgesetz) and ensure compliance.'
-    ],
-    requirements: [
-      'Bachelor’s or Master’s degree in Law, International Relations, HR, or related professional field.',
-      '3+ years of verifiable experience in German skilled immigration and visa case management.',
-      'Deep functional understanding of Aufenthaltsgesetz, Anabin database, and German consulate requirements.',
-      'Fluency in English; working knowledge of German (B1+) is a significant asset.',
-      'Flawless legal document drafting and rigorous attention to detail.'
-    ],
-    benefits: [
-      'Direct exposure to European legal immigration frameworks and corporate mobility',
-      'Generous paid annual leave (30 days EU standard) and health benefits',
-      'Modern tech stack with automated dossier tracking software',
-      'Career advancement path toward Head of Immigration Practice'
-    ]
-  },
-  {
-    id: 'student-counselor',
-    title: 'Overseas Student Counselor (German Higher Education)',
-    roleValue: 'Overseas Student Counselor',
+    id: 'receptionist',
+    title: 'Receptionist / Front Office Executive',
+    roleValue: 'Receptionist',
     department: 'Student Counseling',
-    location: 'Anantapur / Regional Offices / Hybrid',
-    type: 'Full-time / Hybrid',
-    experience: '2+ Years Educational Counseling',
-    salaryRange: 'Competitive Base + Performance Incentives',
-    featured: false,
+    location: 'Anantapur Office',
+    type: 'Full-time',
+    experience: '1+ Years Experience',
+    salaryRange: '₹15,000 - ₹25,000 / month',
+    featured: true,
     summary:
-      'Empower ambitious students aspiring to study at German public and private universities through personalized university selection, Uni-Assist processing, and APS certification guidance.',
+      'Manage front office operations, greet clients, handle telephone & WhatsApp enquiries, and coordinate appointments for students and visa applicants visiting our Anantapur office.',
     responsibilities: [
-      'Provide personalized counseling on German universities (TU9, Universities of Applied Sciences), bachelor’s, and master’s programs.',
-      'Guide students through APS India certification, Uni-Assist portal submissions, and direct university applications.',
-      'Review and polish Statements of Purpose (SOP), Letters of Recommendation (LOR), and academic CVs.',
-      'Assist with blocked account (Sperrkonto) setup, statutory student health insurance, and student visa interview readiness.',
-      'Conduct educational webinars, parent briefings, and pre-departure orientations.'
+      'Greet visitors, students, and clients with professionalism and warmth.',
+      'Answer incoming phone calls, WhatsApp messages, and direct walk-in enquiries.',
+      'Maintain visitor logs, schedule counseling appointments, and manage office correspondence.',
+      'Assist administrative staff with documentation and client intake filing.'
     ],
     requirements: [
-      'Bachelor’s degree with 2+ years of experience counseling students for European destinations (especially Germany).',
-      'Comprehensive understanding of German university admissions, ECTS credit evaluation, and public vs. private tiers.',
-      'High empathy, proactive listening skills, and ability to guide families through career choices.',
-      'Hands-on experience with APS India certification procedures and Uni-Assist guidelines.',
-      'Strong organizational skills and fluent verbal/written English.'
+      'Graduate or diploma with excellent communication skills in English, Telugu, and Hindi.',
+      'Proficiency in computer operations, MS Office, email management, and WhatsApp Business.',
+      'Pleasing personality, polite demeanor, and strong organizational skills.'
     ],
     benefits: [
-      'Quarterly performance bonuses based on student admission achievements',
-      'Comprehensive training on German university catalogs and emerging tech curricula',
-      'Collaborative, high-energy counseling team environment',
-      'Opportunities for European familiarization campus tours'
+      'Competitive monthly salary with performance bonuses',
+      'Friendly professional office environment near JNTU Anantapur',
+      'Direct training in client relations and immigration communication'
     ]
   },
   {
-    id: 'relocation-coordinator',
-    title: 'European Relocation & Settlement Coordinator',
-    roleValue: 'European Relocation & Settlement Coordinator',
-    department: 'Relocation & Settlement',
-    location: 'Berlin / Frankfurt / Remote',
-    type: 'Full-time / Hybrid',
-    experience: '2+ Years European Relocation Support',
-    salaryRange: '€40,000 - €52,000 / year',
-    featured: false,
+    id: 'visa-counsellor',
+    title: 'Visa Counsellor / Immigration Advisor',
+    roleValue: 'Visa Counsellor',
+    department: 'Visa & Immigration',
+    location: 'Anantapur Office / Hybrid',
+    type: 'Full-time',
+    experience: '1-3 Years Experience',
+    salaryRange: '₹20,000 - ₹40,000 / month + Incentives',
+    featured: true,
     summary:
-      'Orchestrate post-landing arrival support and integration for expatriates, including city registration (Anmeldung), tax ID issuance, banking, and housing navigation in Germany.',
+      'Counsel aspiring students and professionals on Germany study visas, tourist visas, and settlement pathways, guiding them through documentation and application processes.',
     responsibilities: [
-      'Coordinate airport arrivals, temporary accommodation logistics, and local public transit onboarding.',
-      'Guide clients through municipal citizen office registration (Bürgeramt Anmeldung) and tax ID (Steueridentifikationsnummer) retrieval.',
-      'Support bank account openings (Girokonto) and public/private health insurance (Krankenkasse) activation.',
-      'Provide neighborhood orientations, emergency contacts, local school enrollments, and German bureaucracy navigation tips.',
-      'Conduct regular check-ins during the candidate’s first 90 days to ensure smooth cultural adaptation.'
+      'Provide expert counseling to walk-in and online leads regarding German and European visa opportunities.',
+      'Explain visa requirements, documentation checklists, financial proof guidelines, and timelines.',
+      'Coordinate with applicants to gather academic certificates, language certificates, and passport documents.',
+      'Follow up actively on pending enquiries and convert prospective leads into registered clients.'
     ],
     requirements: [
-      'German language proficiency (minimum B2/C1) and fluent English.',
-      '2+ years of on-the-ground experience living, studying, or working in Germany with intimate knowledge of civic processes.',
-      'High emotional intelligence, cultural adaptability, and patience when helping newcomers.',
-      'Strong multitasking abilities and proactive coordination across European and international time zones.',
-      'Clean driver’s license and familiarity with German metropolitan areas.'
+      '1+ years of experience in study abroad, immigration consulting, or customer advisory roles.',
+      'Exceptional interpersonal, negotiation, and verbal communication skills.',
+      'Goal-oriented mindset with a passion for helping students achieve international careers.'
     ],
     benefits: [
-      'Public transport ticket subscription (Deutschlandticket) covered',
-      'Flexible remote schedule with client appointment stipends',
-      'Rewarding impact directly welcoming international talent into German society',
-      'Direct networking with German employers and expatriate networks'
+      'Attractive performance incentives on top of base salary',
+      'Comprehensive training on German immigration laws and university pathways',
+      'Clear career growth path to Senior Immigration Manager'
     ]
   }
 ];
 
 export const DEPARTMENTS = [
   'All Departments',
-  'Language Training',
   'Visa & Immigration',
-  'Student Counseling',
-  'Relocation & Settlement'
+  'Student Counseling'
 ] as const;
 
 export type DepartmentType = (typeof DEPARTMENTS)[number];
@@ -731,7 +655,7 @@ export default function Careers() {
             <div className="bg-brand-dark text-white px-6 sm:px-8 py-6 flex items-center justify-between border-b border-slate-800">
               <div>
                 <span className="text-xs font-semibold text-brand-gold uppercase tracking-wider block mb-1">
-                  EuroPath Careers
+                  Harry Overseas Careers
                 </span>
                 <h3 className="text-xl sm:text-2xl font-bold leading-tight">
                   {selectedVacancyForModal ? selectedVacancyForModal.title : 'Job Application'}
@@ -860,13 +784,8 @@ export default function Careers() {
                           formErrors.role ? 'border-rose-400 bg-rose-50/50' : 'border-slate-300'
                         }`}
                       >
-                        <option value="German Language Trainer">German Language Trainer (DaF B1-C1)</option>
-                        <option value="Senior Visa & Immigration Consultant">Senior Visa & Immigration Consultant (Opportunity Card, EU Blue Card)</option>
-                        <option value="Overseas Student Counselor">Overseas Student Counselor (German Higher Education)</option>
-                        <option value="European Relocation & Settlement Coordinator">European Relocation & Settlement Coordinator</option>
-                        <option value="Visa Consultant">Visa Consultant (General Advisory)</option>
-                        <option value="Student Counselor">Student Counselor (Study Abroad)</option>
-                        <option value="European Relocation Coordinator">European Relocation Coordinator (Landing Support)</option>
+                        <option value="Receptionist">Receptionist / Front Office Executive</option>
+                        <option value="Visa Counsellor">Visa Counsellor / Immigration Advisor</option>
                         <option value="General Application">General / Speculative Talent Application</option>
                       </select>
                     </div>
@@ -991,7 +910,7 @@ export default function Careers() {
                     <div className="relative">
                       <textarea
                         rows={3}
-                        placeholder="Briefly highlight your teaching experience, CEFR levels taught, visa case experience, or why you want to join EuroPath..."
+                        placeholder="Briefly highlight your experience, qualifications, or why you want to join Harry Overseas..."
                         value={formData.notes}
                         onChange={e => handleInputChange('notes', e.target.value)}
                         className="w-full p-3.5 text-xs sm:text-sm border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-navy"

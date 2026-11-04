@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Globe, Phone, Mail, Menu, X, ShieldCheck, Lock, Unlock, LogOut } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'public' | 'careers' | 'admin';
-  setCurrentView: (view: 'public' | 'careers' | 'admin') => void;
+  currentView: 'public' | 'careers' | 'news' | 'admin';
+  setCurrentView: (view: 'public' | 'careers' | 'news' | 'admin') => void;
   isAdminAuthenticated?: boolean;
   onLogout?: () => void;
 }
@@ -36,6 +36,13 @@ export default function Navbar({
     setMobileMenuOpen(false);
     setCurrentView('careers');
     window.location.hash = 'careers';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToNews = () => {
+    setMobileMenuOpen(false);
+    setCurrentView('news');
+    window.location.hash = 'news';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -86,6 +93,14 @@ export default function Navbar({
               <span className="bg-brand-gold/20 text-brand-gold text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                 Hiring
               </span>
+            </button>
+            <button
+              onClick={navigateToNews}
+              className={`hover:text-brand-gold transition font-medium ${
+                currentView === 'news' ? 'text-brand-gold font-bold' : 'text-slate-200'
+              }`}
+            >
+              News & Updates
             </button>
           </nav>
 
@@ -208,6 +223,14 @@ export default function Navbar({
             <span className="bg-brand-gold/20 text-brand-gold text-[10px] px-2 py-0.5 rounded-full font-bold">
               We're Hiring
             </span>
+          </button>
+          <button
+            onClick={navigateToNews}
+            className={`block w-full text-left py-2 font-medium ${
+              currentView === 'news' ? 'text-brand-gold font-bold' : 'text-slate-300 hover:text-brand-gold'
+            }`}
+          >
+            News & Updates
           </button>
           <div className="pt-2 space-y-2">
             <a

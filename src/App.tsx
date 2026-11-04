@@ -6,12 +6,13 @@ import LanguageAcademy from './components/LanguageAcademy';
 import ArrivalAssistance from './components/ArrivalAssistance';
 import EnquiryWizard from './components/EnquiryWizard';
 import Careers from './components/Careers';
+import NewsFeed from './components/NewsFeed';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import LegalFooter from './components/LegalFooter';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'public' | 'careers' | 'admin'>('public');
+  const [currentView, setCurrentView] = useState<'public' | 'careers' | 'news' | 'admin'>('public');
   const [adminUser, setAdminUser] = useState<{ username: string; role: string } | null>(null);
 
   // Sync view state with URL hash on mount & hash changes
@@ -20,6 +21,8 @@ export default function App() {
       const hash = (window.location.hash || '').toLowerCase();
       if (hash === '#careers') {
         setCurrentView('careers');
+      } else if (hash === '#news') {
+        setCurrentView('news');
       } else if (hash === '#admin') {
         setCurrentView('admin');
       } else if (hash === '#services' || hash === '#academy' || hash === '#arrival' || hash === '#enquiry') {
@@ -66,10 +69,13 @@ export default function App() {
     window.location.hash = '';
   };
 
-  const handleNavigate = (view: 'public' | 'careers' | 'admin', sectionId?: string) => {
+  const handleNavigate = (view: 'public' | 'careers' | 'news' | 'admin', sectionId?: string) => {
     setCurrentView(view);
     if (view === 'careers') {
       window.location.hash = 'careers';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'news') {
+      window.location.hash = 'news';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'admin') {
       window.location.hash = 'admin';
@@ -110,6 +116,12 @@ export default function App() {
       {currentView === 'careers' && (
         <main className="flex-grow">
           <Careers />
+        </main>
+      )}
+
+      {currentView === 'news' && (
+        <main className="flex-grow">
+          <NewsFeed onNavigateHome={() => handleNavigate('public')} />
         </main>
       )}
 

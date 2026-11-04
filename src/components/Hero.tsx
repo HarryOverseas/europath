@@ -19,7 +19,14 @@ export default function Hero() {
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center space-x-2 bg-slate-800/80 border border-brand-gold/30 px-3.5 py-1.5 rounded-full text-brand-gold text-xs sm:text-sm font-medium">
               <MapPin className="w-4 h-4 text-brand-gold" />
-              <span>Anantapur, AP, India & Germany Operations</span>
+              <a
+                href="https://maps.app.goo.gl/fYazXdmvJG33oDN28?g_st=ac"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline text-brand-gold"
+              >
+                Anantapur, AP, India & Germany Operations
+              </a>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
@@ -109,8 +116,18 @@ export default function Hero() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-                <span className="text-xs text-slate-400">
-                  📍 Office: Near JNTU University, Anantapur, AP • 📞 +91 6302951891
+                <span className="text-xs text-slate-400 block">
+                  📍 <a
+                    href="https://maps.app.goo.gl/fYazXdmvJG33oDN28?g_st=ac"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-brand-gold underline"
+                  >
+                    Office: Near JNTU University, Anantapur, AP
+                  </a>
+                </span>
+                <span className="text-xs text-slate-300 mt-1 block font-medium">
+                  📞 <a href="tel:+916302951891" className="hover:text-brand-gold">+91 6302951891</a> / <a href="tel:+4917670256852" className="hover:text-brand-gold">+49 17670256852</a>
                 </span>
               </div>
             </div>

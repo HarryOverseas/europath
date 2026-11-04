@@ -501,7 +501,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
               )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              EuroPath Operations Dashboard
+              Harry Overseas Operations Dashboard
             </h1>
             <p className="text-slate-600 text-sm mt-1">
               Cross-Border Immigration Services & European Recruitment Management (Anantapur & Germany)

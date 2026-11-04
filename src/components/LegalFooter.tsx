@@ -37,15 +37,30 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
             <div className="space-y-2 text-xs text-slate-300">
               <div className="flex items-start space-x-2">
                 <MapPin className="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5" />
-                <span>Near JNTU University, Anantapur, Andhra Pradesh, India</span>
+                <div>
+                  <a
+                    href="https://maps.app.goo.gl/fYazXdmvJG33oDN28?g_st=ac"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-brand-gold transition text-left inline-block"
+                  >
+                    <span>Near JNTU University, Anantapur, Andhra Pradesh, India</span>
+                    <span className="block text-[11px] text-brand-gold font-semibold mt-0.5">📍 View on Google Maps</span>
+                  </a>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="tel:+916302951891" className="hover:text-white">+91 6302951891</a>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
+                  <a href="tel:+916302951891" className="hover:text-white">+91 6302951891</a>
+                </div>
+                <div className="flex items-center space-x-2 pl-6">
+                  <a href="tel:+4917670256852" className="hover:text-white">+49 17670256852</a>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="mailto:hkrishna014@gmail.com" className="hover:text-white">hkrishna014@gmail.com</a>
+                <a href="mailto:info.harryoverseas@gmail.com" className="hover:text-white">info.harryoverseas@gmail.com</a>
               </div>
             </div>
           </div>
