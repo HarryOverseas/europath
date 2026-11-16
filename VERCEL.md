@@ -31,12 +31,18 @@ In your Vercel Dashboard under **Project Settings → Environment Variables**, c
 | `JWT_SECRET`               | Secret key for signing and verifying admin JWTs | `harry_global_secret_key_2026_production`                                       |
 | `ADMIN_USERNAME`           | Admin portal username                           | `admin`                                                                         |
 | `ADMIN_PASSWORD`           | Strong password for admin login                 | _(your strong password)_                                                        |
-| `ADMIN_EMAIL`              | Admin contact & notification email              | `admin@harryglobal.com`                                                         |
+| `ADMIN_EMAIL`              | Admin contact & notification email              | `admin.harryoverseas@gmail.com`                                                 |
+| `EMAIL_ADMIN`              | Administrative & security alert recipient       | `admin.harryoverseas@gmail.com`                                                 |
+| `EMAIL_INFO`               | Leads & course admissions recipient             | `info.harryoverseas@gmail.com`                                                  |
+| `EMAIL_SUPPORT`            | Careers & candidate support recipient           | `support.harryoverseas@gmail.com`                                               |
 | `DATABASE_URL`             | **(Recommended)** PostgreSQL connection URL     | `postgresql://user:pass@ep-cool.us-east-2.aws.neon.tech/neondb?sslmode=require` |
 | `EMAIL_HOST`               | SMTP server host _(optional)_                   | `smtp.gmail.com`                                                                |
 | `EMAIL_PORT`               | SMTP port _(optional)_                          | `587`                                                                           |
-| `EMAIL_USER`               | SMTP username _(optional)_                      | `notifications@harryglobal.com`                                                 |
-| `EMAIL_PASS`               | SMTP application password _(optional)_          | _(app password)_                                                                |
+| `EMAIL_USER`               | SMTP username / sender _(optional)_             | `info.harryoverseas@gmail.com`                                                  |
+| `EMAIL_PASS`               | Google 16-character App Password _(optional)_   | _(16-char app password)_                                                        |
+| `SLACK_WEBHOOK_URL`        | Slack Incoming Webhook for instant alerts       | `https://hooks.slack.com/services/...`                                          |
+| `PAYLOAD_SECRET`           | Secret for AES-256 payload decryption           | _(256-bit hex string)_                                                          |
+| `VITE_PAYLOAD_SECRET`      | Client-side secret for payload encryption       | _(matches PAYLOAD_SECRET)_                                                       |
 | `WHATSAPP_API_TOKEN`       | Meta WhatsApp Cloud API token _(optional)_      | _(token)_                                                                       |
 | `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Phone Number ID _(optional)_           | _(id)_                                                                          |
 

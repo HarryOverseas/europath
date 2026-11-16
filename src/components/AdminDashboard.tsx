@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { secureFetch } from '../utils/secureApi';
 import {
   Search,
   Filter,
@@ -200,7 +201,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
     try {
       const token = getAuthToken();
-      const res = await fetch(`/api/enquiries/${id}/status`, {
+      const res = await secureFetch(`/api/enquiries/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +216,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
       }
 
       if (res.ok) {
-        showNotice(`Enquiry ${id} updated to "${newStatus}"`);
+        showNotice(`Enquiry #${id} updated to "${newStatus}" (Client & Slack notified)`);
       }
     } catch (e) {
       console.warn('Network error updating enquiry status on server, kept in local state:', e);
@@ -319,7 +320,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
     try {
       const token = getAuthToken();
-      const res = await fetch(`/api/applications/${id}/status`, {
+      const res = await secureFetch(`/api/applications/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -338,7 +339,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         if (data.application) {
           setApplications(prev => prev.map(a => String(a.id) === String(id) ? { ...a, ...data.application } : a));
         }
-        showNotice(`Candidate status updated to "${newStatus}"`);
+        showNotice(`Candidate #${id} updated to "${newStatus}" (Candidate & HR notified)`);
       }
     } catch (e) {
       console.warn('Network error updating application status on server, kept in local state:', e);

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { secureFetch } from '../utils/secureApi';
 import { 
   ShieldCheck, 
   Lock, 
@@ -39,7 +40,7 @@ export default function AdminLogin({ onLoginSuccess, onCancel }: AdminLoginProps
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await secureFetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

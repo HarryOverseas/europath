@@ -1,4 +1,5 @@
 import React, { useState, useId } from 'react';
+import { secureFetch } from '../utils/secureApi';
 import {
   Briefcase,
   MapPin,
@@ -42,37 +43,7 @@ export interface JobVacancy {
 }
 
 export const VACANCIES: JobVacancy[] = [
-  {
-    id: 'nurse-germany',
-    title: 'Registered Nurse (Germany Placement Program)',
-    roleValue: 'Registered Nurse (Germany)',
-    department: 'Healthcare & Nursing',
-    location: 'Germany (Hospitals & Care Networks)',
-    type: 'Full-time / Permanent Contract',
-    experience: 'GNM or B.Sc Nursing (Freshers & Experienced)',
-    salaryRange: '€2,800 - €3,600 / month (approx. ₹2.5L - ₹3.2L)',
-    featured: true,
-    summary:
-      'Direct recruitment requirement for qualified nurses (GNM / B.Sc) in top German hospitals and elder care groups. Complete assistance with German language training (B1/B2), Defizitbescheid qualification recognition, visa processing, and relocation support.',
-    responsibilities: [
-      'Provide bedside patient care and clinical support in German hospitals or modern care facilities.',
-      'Undergo clinical adaptation training (Anpassungslehrgang) to achieve full German Registered Nurse recognition (Anerkennung).',
-      'Administer medications, coordinate with multidisciplinary German medical teams, and maintain patient records.',
-      'Communicate with patients and colleagues in German with confidence and cultural empathy.'
-    ],
-    requirements: [
-      'Diploma in General Nursing & Midwifery (GNM) or B.Sc / M.Sc Nursing from a recognized university/nursing council.',
-      'Active registration with State Nursing Council in India.',
-      'Willingness to learn German up to B1/B2 level (Harry Overseas provides dedicated training).',
-      'Commitment to professional excellence and clinical care in Germany.'
-    ],
-    benefits: [
-      'European standard monthly pay: €2,800 to €3,600 + overtime & weekend night allowances',
-      'Free job placement, direct employment contract, and visa sponsorship from German hospital partners',
-      'Subsidized language course and recognition filing assistance',
-      'Right to family reunion for spouse and children with immediate work permit rights'
-    ]
-  },
+  
   {
     id: 'receptionist',
     title: 'Receptionist / Front Office Executive',
@@ -282,7 +253,7 @@ export default function Careers() {
     };
 
     try {
-      const response = await fetch('/api/applications', {
+      const response = await secureFetch('/api/applications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

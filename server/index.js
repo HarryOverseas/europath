@@ -1,6 +1,21 @@
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
+import {
+  notifyNewEnquiry,
+  notifyNewJobApplication,
+  notifyAdminAlert,
+  notifyApplicationStageChange,
+  notifyEnquiryStageChange
+} from './services/notifier.js';
+import { listTemplates, renderTemplate } from './services/templateEngine.js';
+import {
+  notifySlackNewLead,
+  notifySlackJobApplication,
+  notifySlackAdminAlert,
+  notifySlackStageChange
+} from './services/slackNotifier.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -14,6 +29,53 @@ const { Pool } = pg;
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Payload Decryption Configuration (AES-256-GCM)
+// Must match frontend VITE_PAYLOAD_SECRET. Independent of JWT_SECRET.
+const PAYLOAD_SECRET = process.env.PAYLOAD_SECRET || process.env.VITE_PAYLOAD_SECRET || 'harry_global_payload_secure_2026';
+const PAYLOAD_KEY = crypto.createHash('sha256').update(PAYLOAD_SECRET).digest();
+
+/**
+ * Decrypts frontend payloads encrypted via Web Crypto AES-256-GCM.
+ * Input format: Base64 string of [IV (12 bytes)][AuthTag (16 bytes)][Ciphertext]
+ */
+function decryptPayloadData(cipherBase64) {
+  try {
+    const buffer = Buffer.from(cipherBase64, 'base64');
+    if (buffer.length < 28) return null;
+    const iv = buffer.subarray(0, 12);
+    const tag = buffer.subarray(12, 28);
+    const ciphertext = buffer.subarray(28);
+
+    const decipher = crypto.createDecipheriv('aes-256-gcm', PAYLOAD_KEY, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+    return JSON.parse(decrypted);
+  } catch (err) {
+    console.warn('[SECURITY] Failed to decrypt encrypted payload:', err.message);
+    return null;
+  }
+}
+
+// Transparent Payload Decryption Middleware:
+// If request body contains an encrypted payload (`__enc` or `payload`), decrypts it before endpoint handlers.
+app.use((req, res, next) => {
+  if (req.body && (req.body.__enc || req.body.payload)) {
+    const encryptedToken = req.body.__enc || req.body.payload;
+    if (typeof encryptedToken === 'string') {
+      const decrypted = decryptPayloadData(encryptedToken);
+      if (decrypted && typeof decrypted === 'object') {
+        req.body = decrypted;
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'Failed to decrypt encrypted payload. Check encryption secret configuration.'
+        });
+      }
+    }
+  }
+  next();
+});
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const JWT_SECRET = process.env.JWT_SECRET || 'harry_global_secret_key_2026_secure';
@@ -121,7 +183,7 @@ async function initDb() {
   // Admin seeding / credentials synchronization from .env
   const adminUsername = (process.env.ADMIN_USERNAME || 'admin').trim();
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin_harry_2026_secure';
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@harryglobal.com').trim();
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin.harryoverseas@gmail.com').trim();
 
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(adminPassword, salt);
@@ -143,41 +205,9 @@ async function initDb() {
   }
 }
 
-// Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || '587', 10),
-  auth: {
-    user: process.env.EMAIL_USER || '',
-    pass: process.env.EMAIL_PASS || ''
-  }
-});
-
-// Non-blocking notification dispatcher
-async function sendNotificationEmail(lead) {
-  setTimeout(async () => {
-    try {
-      if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'sample_app_password') {
-        return;
-      }
-      const mailOptions = {
-        from: '"Harry Overseas Immigration" <noreply@harryoverseas.com>',
-        to: (process.env.ADMIN_EMAIL || 'admin@harryglobal.com') + (lead.email ? ', ' + lead.email : ''),
-        subject: `New Enquiry Received: ${lead.id} - ${lead.full_name}`,
-        text: `Hello,\n\nA new enquiry has been submitted by ${lead.full_name}.\nContact: ${lead.mobile || lead.phone}\nEmail: ${lead.email}\n\nPlease check the admin dashboard to review.`
-      };
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-          console.log('[Email note]:', err.message);
-        } else {
-          console.log('[Email sent]:', info.response);
-        }
-      });
-    } catch (e) {
-      console.error('[Email notification error]:', e);
-    }
-  }, 100);
-}
+// Multi-Inbox Notification Service handles email routing across
+// admin.harryoverseas@gmail.com, info.harryoverseas@gmail.com, and support.harryoverseas@gmail.com
+// via server/services/notifier.js
 
 // Authentication Middleware
 function authenticateToken(req, res, next) {
@@ -307,6 +337,8 @@ app.post('/api/applications', async (req, res) => {
     ]);
 
     const createdApp = result.rows[0];
+    notifyNewJobApplication(createdApp);
+    notifySlackJobApplication(createdApp);
     return res.status(201).json({
       success: true,
       application_id: createdApp.id,
@@ -366,7 +398,7 @@ app.patch('/api/applications/:id/status', authenticateToken, async (req, res) =>
     return res.status(400).json({ success: false, error: 'Invalid application ID' });
   }
 
-  const { status } = req.body || {};
+  const { status, notes } = req.body || {};
   const validStatuses = ['New', 'Reviewing', 'Shortlisted', 'Interviewed', 'Hired', 'Rejected'];
 
   if (!status || typeof status !== 'string' || !validStatuses.includes(status)) {
@@ -377,13 +409,23 @@ app.patch('/api/applications/:id/status', authenticateToken, async (req, res) =>
   }
 
   try {
+    const existing = await query('SELECT * FROM applications WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Application not found' });
+    }
+    const prevStatus = existing.rows[0].status;
+
     const result = await query(
       'UPDATE applications SET status = $1 WHERE id = $2 RETURNING *',
       [status, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Application not found' });
+    const updatedApp = result.rows[0];
+
+    // Dispatch stage-transition notifications (Email + Slack)
+    if (prevStatus !== status) {
+      notifyApplicationStageChange(updatedApp, prevStatus, status, notes);
+      notifySlackStageChange('application', updatedApp, prevStatus, status, req.user?.username || 'Admin', notes);
     }
 
     return res.status(200).json({
@@ -391,7 +433,7 @@ app.patch('/api/applications/:id/status', authenticateToken, async (req, res) =>
       message: 'Status updated successfully',
       id,
       status,
-      application: result.rows[0]
+      application: updatedApp
     });
   } catch (err) {
     console.error('Error updating application status:', err);
@@ -501,7 +543,8 @@ app.post('/api/enquiries', async (req, res) => {
     const result = await query(insertSql, values);
     const createdLead = result.rows[0];
 
-    sendNotificationEmail(createdLead);
+    notifyNewEnquiry(createdLead);
+    notifySlackNewLead(createdLead);
 
     return res.status(201).json({
       success: true,
@@ -554,18 +597,35 @@ app.get('/api/enquiries', authenticateToken, async (req, res) => {
 // 9. Update Enquiry Status (Protected Endpoint)
 app.patch('/api/enquiries/:id/status', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body || {};
+  const { status, notes } = req.body || {};
 
   if (!status || typeof status !== 'string') {
     return res.status(400).json({ success: false, error: 'Status is required' });
   }
 
   try {
-    const result = await query('UPDATE enquiries SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
-    if (result.rows.length === 0) {
+    const existing = await query('SELECT * FROM enquiries WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Enquiry not found' });
     }
-    return res.status(200).json({ success: true, message: 'Status updated successfully', id, status });
+    const prevStatus = existing.rows[0].status;
+
+    const result = await query('UPDATE enquiries SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+    const updatedEnquiry = result.rows[0];
+
+    // Dispatch stage-transition notifications (Email + Slack)
+    if (prevStatus !== status) {
+      notifyEnquiryStageChange(updatedEnquiry, prevStatus, status, notes);
+      notifySlackStageChange('enquiry', updatedEnquiry, prevStatus, status, req.user?.username || 'Admin', notes);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Status updated successfully',
+      id,
+      status,
+      enquiry: updatedEnquiry
+    });
   } catch (err) {
     console.error('Error updating enquiry status:', err);
     return res.status(500).json({ success: false, error: 'Internal server error. Please try again later.' });
@@ -619,6 +679,18 @@ app.post('/api/users', authenticateToken, async (req, res) => {
       'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id',
       [username.trim(), email.trim(), hash, role.trim()]
     );
+    notifyAdminAlert('New User Account Created', `User account '${username.trim()}' with role '${role.trim()}' was created by ${req.user?.username || 'Super Admin'}.`, {
+      Username: username.trim(),
+      Email: email.trim(),
+      Role: role.trim(),
+      CreatedBy: req.user?.username || 'Super Admin'
+    });
+    notifySlackAdminAlert('New User Account Created', `User account '${username.trim()}' with role '${role.trim()}' was created by ${req.user?.username || 'Super Admin'}.`, {
+      Username: username.trim(),
+      Email: email.trim(),
+      Role: role.trim(),
+      CreatedBy: req.user?.username || 'Super Admin'
+    });
     return res.status(201).json({
       success: true,
       message: 'User created successfully',
@@ -644,6 +716,29 @@ app.post('/api/whatsapp/send', authenticateToken, async (req, res) => {
     recipient: phone,
     timestamp: new Date().toISOString()
   });
+});
+
+// 12b. Email Templates Catalog & Preview Endpoints
+app.get('/api/email/templates', (req, res) => {
+  try {
+    const list = listTemplates();
+    return res.status(200).json({ success: true, count: list.length, templates: list });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/email/preview', (req, res) => {
+  const { templateId, data } = req.body || {};
+  if (!templateId) {
+    return res.status(400).json({ success: false, error: 'templateId is required' });
+  }
+  try {
+    const rendered = renderTemplate(templateId, data || {});
+    return res.status(200).json({ success: true, ...rendered });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
 });
 
 // 13. DW RSS / RDF Feed Proxy & Reader Endpoint (XML)

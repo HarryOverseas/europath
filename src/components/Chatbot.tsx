@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { secureFetch } from '../utils/secureApi';
 import { MessageCircle, X, Send, User, Loader2, Sparkles } from 'lucide-react';
 
 interface Message {
@@ -102,7 +103,7 @@ export default function Chatbot() {
         .filter(m => m.id !== 'welcome')
         .map(m => ({ role: m.role, content: m.text }));
 
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await secureFetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed, history }),

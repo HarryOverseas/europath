@@ -1,0 +1,661 @@
+{
+  "welcome_lead": {
+    "id": "welcome_lead",
+    "name": "General Lead Welcome & Enquiry Confirmation",
+    "category": "lead",
+    "targetInbox": "info.harryoverseas@gmail.com",
+    "subject": "Willkommen, {{firstName}}! Your Journey to {{destinationCountry}} Begins with Harry Overseas",
+    "preheader": "Thank you for contacting Harry Overseas. We have received your inquiry #{{referenceId}}.",
+    "badge": "Consultation Enquiry Received",
+    "badgeType": "gold",
+    "title": "Welcome to Harry Overseas, {{firstName}}!",
+    "subtitle": "Your Trusted Gateway to German Language & European Migration",
+    "salutation": "Dear {{fullName}},",
+    "intro": "Thank you for reaching out to Harry Overseas! We are excited to assist you with your plans for <strong>{{destinationCountry}}</strong>. Our overseas education and immigration specialists have received your request and will review your profile to prepare a customized guidance plan.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Your Enquiry Summary",
+        "fields": [
+          { "label": "Reference ID", "value": "#{{referenceId}}" },
+          { "label": "Service of Interest", "value": "<strong>{{serviceInterest}}</strong>" },
+          { "label": "Target Destination", "value": "{{destinationCountry}}" },
+          { "label": "Preferred Timeline", "value": "{{travelPeriod}}" },
+          { "label": "Consultation Mode", "value": "{{consultationMethod}}" },
+          { "label": "Contact Number", "value": "{{phone}}" },
+          { "label": "WhatsApp Number", "value": "{{whatsapp}}" },
+          { "label": "Location", "value": "{{city}}, {{country}}" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "Next Steps for Your Consultation",
+        "items": [
+          "A dedicated counselor will contact you via <strong>{{consultationMethod}}</strong> within 24 hours.",
+          "We will review your qualification documents against German legal and visa requirements.",
+          "You will receive a step-by-step roadmap covering document attestation, language prep, and visa submission."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Message an Advisor on WhatsApp",
+      "url": "https://wa.me/916302951891?text=Hello%20Harry%20Overseas,%20my%20enquiry%20reference%20is%20{{referenceId}}"
+    },
+    "footerNote": "Have an urgent question? Reply directly to this email or call our direct helpline at +91 6302951891.",
+    "sampleData": {
+      "fullName": "Rahul Sharma",
+      "email": "rahul.sharma@example.com",
+      "phone": "+91 6302951891",
+      "whatsapp": "+91 6302951891",
+      "city": "Hyderabad",
+      "country": "India",
+      "referenceId": "HGI-7821",
+      "serviceInterest": "German Language Course & Study Visa",
+      "destinationCountry": "Germany",
+      "travelPeriod": "Immediate",
+      "consultationMethod": "WhatsApp"
+    }
+  },
+
+  "course_enrolment": {
+    "id": "course_enrolment",
+    "name": "German Language Academy Course Enrolment",
+    "category": "academic",
+    "targetInbox": "info.harryoverseas@gmail.com",
+    "subject": "Willkommen im Deutschkurs! {{courseName}} Enrolment Confirmation for {{firstName}}",
+    "preheader": "Congratulations {{firstName}}! Your seat for {{courseName}} at Harry Overseas German Language Academy is confirmed.",
+    "badge": "Language Course Enrolment",
+    "badgeType": "gold",
+    "title": "Herzlich Willkommen, {{firstName}}!",
+    "subtitle": "German Language Academy & Goethe / ÖSD Exam Preparation",
+    "salutation": "Dear {{fullName}},",
+    "intro": "Congratulations on taking the first major step toward fluency in German! We are delighted to confirm your enrolment in our <strong>{{courseName}}</strong> program.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Course & Batch Details",
+        "fields": [
+          { "label": "Course Level", "value": "<strong>{{courseName}}</strong>" },
+          { "label": "Enrolment ID", "value": "#{{referenceId}}" },
+          { "label": "Batch Start Date", "value": "{{batchStartDate}}" },
+          { "label": "Class Schedule", "value": "{{classSchedule}}" },
+          { "label": "Training Mode", "value": "{{trainingMode}}" },
+          { "label": "Tuition / Fee Status", "value": "<strong>{{feeStatus}}</strong> (Regular: <del>{{regularPrice}}</del> | Offer: <span style='color: #16a34a; font-weight: bold;'>{{offerPrice}}</span>)" },
+          { "label": "Lead Instructor", "value": "{{instructorName}}" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "What's Included in Your Course Package",
+        "items": [
+          "Interactive live sessions covering Speaking, Listening, Reading, and Writing (A1/A2/B1).",
+          "Comprehensive digital study materials, Netzwerkarbeitsbuch PDFs, and audio tracks.",
+          "Regular weekly vocabulary quizzes and Goethe / ÖSD exam pattern simulation tests.",
+          "Free guidance for visa interview preparation and blocked account setup."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Join Course WhatsApp Study Group",
+      "url": "https://chat.whatsapp.com/sample_group_link"
+    },
+    "footerNote": "Our academic coordinator will reach out to share your classroom link and schedule before the first session.",
+    "sampleData": {
+      "fullName": "Priya Patel",
+      "email": "priya.patel@example.com",
+      "phone": "+91 9845012345",
+      "referenceId": "HGI-ACAD-204",
+      "courseName": "Complete German Combo (A1 + A2 + B1)",
+      "regularPrice": "₹45,999",
+      "offerPrice": "₹43,999",
+      "batchStartDate": "Monday, 1st of Next Month",
+      "classSchedule": "Mon - Fri | 7:00 PM - 8:30 PM IST",
+      "trainingMode": "Live Interactive Online via Zoom / In-Person Anantapur",
+      "feeStatus": "Seat Reserved",
+      "instructorName": "Herr Harry & Certified German Faculty"
+    }
+  },
+
+  "nurse_pathway_welcome": {
+    "id": "nurse_pathway_welcome",
+    "name": "Germany Registered Nurse Pathway Welcome",
+    "category": "lead",
+    "targetInbox": "info.harryoverseas@gmail.com",
+    "subject": "Pflegefachkraft in Deutschland! Germany Nurse Pathway Details for {{firstName}}",
+    "preheader": "Step-by-step roadmap to working as a licensed registered nurse in German hospitals.",
+    "badge": "Healthcare Recruitment Germany",
+    "badgeType": "urgent",
+    "title": "Your Nursing Career in Germany, {{firstName}}!",
+    "subtitle": "Direct Hospital Placement & German Medical License Recognition",
+    "salutation": "Dear {{fullName}},",
+    "intro": "Thank you for inquiring about our <strong>Germany Nurse Recruitment Pathway</strong>. German hospitals and healthcare networks are actively welcoming qualified nurses from India with competitive salaries, permanent residency pathways, and family reunification benefits.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Program Highlights for Indian Nurses",
+        "fields": [
+          { "label": "Target Role", "value": "<strong>Pflegefachkraft (Registered Nurse)</strong>" },
+          { "label": "Expected Monthly Salary", "value": "<strong>€2,800 to €3,600 / month</strong> (approx. ₹2.5L to ₹3.2L)" },
+          { "label": "Language Prerequisite", "value": "B1/B2 German Certification (Provided at Harry Overseas)" },
+          { "label": "Hospital Placement", "value": "Free Direct Hospital Placement & Contract Support" },
+          { "label": "Accommodation", "value": "Hospital subsidized nurse housing arranged" },
+          { "label": "Licensing Process", "value": "Defizitbescheid (Equivalency Assessment) & Adaptation Course" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "Document Checklist to Keep Ready",
+        "items": [
+          "B.Sc Nursing Degree Certificate or GNM Diploma mark sheets (all semesters).",
+          "Valid State Nursing Council Registration Certificate.",
+          "Minimum 1-2 years clinical hospital experience certificates.",
+          "Valid Indian Passport with at least 2 years validity."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Schedule Free Nurse Document Verification",
+      "url": "https://wa.me/916302951891?text=Hello,%20I%20am%20a%20nurse%20interested%20in%20Germany%20placement.%20Ref:%20{{referenceId}}"
+    },
+    "footerNote": "Our dedicated healthcare desk handles document translation, Defizitbescheid application, and visa processing end-to-end.",
+    "sampleData": {
+      "fullName": "Anjali Thomas",
+      "email": "anjali.thomas@example.com",
+      "phone": "+91 9447123456",
+      "referenceId": "HGI-NURSE-512",
+      "destinationCountry": "Germany",
+      "travelPeriod": "Immediate / Next Batch",
+      "consultationMethod": "Phone Call & WhatsApp"
+    }
+  },
+
+  "job_applicant_receipt": {
+    "id": "job_applicant_receipt",
+    "name": "Careers Job Application Receipt",
+    "category": "candidate",
+    "targetInbox": "support.harryoverseas@gmail.com",
+    "subject": "Application Received: {{role}} at Harry Overseas (#{{applicationId}})",
+    "preheader": "Thank you for applying for the {{role}} opening at Harry Overseas. Here are your submission details.",
+    "badge": "Application Under Review",
+    "badgeType": "gold",
+    "title": "Application Received, {{firstName}}!",
+    "subtitle": "Harry Overseas Talent Acquisition Desk",
+    "salutation": "Dear {{fullName}},",
+    "intro": "Thank you for your interest in joining the Harry Overseas team! We have successfully received your application for the <strong>{{role}}</strong> opening.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Submission Details",
+        "fields": [
+          { "label": "Application ID", "value": "<strong>#{{applicationId}}</strong>" },
+          { "label": "Role Applied For", "value": "<strong>{{role}}</strong>" },
+          { "label": "Applicant Name", "value": "{{fullName}}" },
+          { "label": "Email Address", "value": "{{email}}" },
+          { "label": "Phone Number", "value": "{{phone}}" },
+          { "label": "Resume Link", "value": "{{resumeLink}}" },
+          { "label": "Application Status", "value": "<span style='color: #2563eb; font-weight: bold;'>Profile Received & Screening</span>" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "Recruitment Timeline",
+        "items": [
+          "<strong>1. Profile Review:</strong> Our hiring team evaluates your CV and qualifications within 3-5 business days.",
+          "<strong>2. Initial Screening:</strong> Shortlisted candidates receive an invitation for an initial video or phone discussion.",
+          "<strong>3. Final Interview & Offer:</strong> Comprehensive discussion regarding role requirements, compensations, and joining date."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Contact HR Recruitment Support",
+      "url": "mailto:support.harryoverseas@gmail.com?subject=Inquiry%20regarding%20Application%20%23{{applicationId}}"
+    },
+    "footerNote": "You can follow up directly by replying to this email or contacting our careers desk at support.harryoverseas@gmail.com.",
+    "sampleData": {
+      "fullName": "Suresh Kumar",
+      "email": "suresh.kumar@example.com",
+      "phone": "+91 9701234567",
+      "applicationId": 142,
+      "role": "German Language Instructor (B2/C1)",
+      "resumeLink": "https://example.com/suresh_cv.pdf"
+    }
+  },
+
+  "consultation_booking": {
+    "id": "consultation_booking",
+    "name": "One-on-One Consultation Appointment Confirmed",
+    "category": "lead",
+    "targetInbox": "info.harryoverseas@gmail.com",
+    "subject": "Confirmed: Your One-on-One Consultation on {{consultationDate}} with Harry Overseas",
+    "preheader": "Your appointment with a European immigration specialist is confirmed for {{consultationDate}} at {{consultationTime}}.",
+    "badge": "Consultation Confirmed",
+    "badgeType": "gold",
+    "title": "Appointment Confirmed, {{firstName}}!",
+    "subtitle": "Personalized European Visa & Education Counseling",
+    "salutation": "Dear {{fullName}},",
+    "intro": "Your personalized one-on-one consultation with Harry Overseas is confirmed. Below are your meeting details and counselor information.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Appointment Details",
+        "fields": [
+          { "label": "Booking Reference", "value": "#{{referenceId}}" },
+          { "label": "Scheduled Date", "value": "<strong>{{consultationDate}}</strong>" },
+          { "label": "Scheduled Time", "value": "<strong>{{consultationTime}}</strong>" },
+          { "label": "Meeting Mode", "value": "{{meetingMode}}" },
+          { "label": "Assigned Counselor", "value": "{{counselorName}}" },
+          { "label": "Discussion Topic", "value": "{{discussionTopic}}" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "How to Prepare for Your Session",
+        "items": [
+          "Keep digital copies of your academic mark sheets, degree, and CV accessible.",
+          "Note down any specific questions regarding university shortlisting, blocked account, or Opportunity Card points.",
+          "Ensure you are in a quiet environment with a stable internet connection if joining via video call."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Open Meeting Link",
+      "url": "{{meetingLink}}"
+    },
+    "footerNote": "Need to reschedule? Please reply at least 3 hours prior to your slot or message us on WhatsApp at +91 6302951891.",
+    "sampleData": {
+      "fullName": "Kavitha Reddy",
+      "email": "kavitha.reddy@example.com",
+      "phone": "+91 9885123456",
+      "referenceId": "HGI-BOOK-801",
+      "consultationDate": "Thursday, 20th November 2026",
+      "consultationTime": "4:00 PM IST (11:30 AM CET)",
+      "meetingMode": "Google Meet Video Call",
+      "counselorName": "Senior Immigration Consultant",
+      "discussionTopic": "Opportunity Card (Chancenkarte) & Work Visa Germany",
+      "meetingLink": "https://meet.google.com/abc-defg-hij"
+    }
+  },
+
+  "admin_lead_alert": {
+    "id": "admin_lead_alert",
+    "name": "Internal Team Lead Notification",
+    "category": "administrative",
+    "targetInbox": "info.harryoverseas@gmail.com",
+    "subject": "[New Lead Alert] #{{referenceId}} - {{fullName}} ({{serviceInterest}}){{urgencyFlag}}",
+    "preheader": "New consultation enquiry submitted by {{fullName}} from {{city}}, {{country}}.",
+    "badge": "New Client Lead",
+    "badgeType": "gold",
+    "title": "New Lead: #{{referenceId}}",
+    "subtitle": "Website Enquiry Wizard Submission",
+    "salutation": "Hello Team,",
+    "intro": "A prospective client has submitted an enquiry through the Harry Overseas website. Details are recorded below for follow-up:",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Client Contact & Profile",
+        "fields": [
+          { "label": "Lead ID", "value": "<strong>#{{referenceId}}</strong>" },
+          { "label": "Client Full Name", "value": "{{fullName}}" },
+          { "label": "Email Address", "value": "<a href='mailto:{{email}}'>{{email}}</a>" },
+          { "label": "Phone / Mobile", "value": "<a href='tel:{{phone}}'>{{phone}}</a>" },
+          { "label": "WhatsApp", "value": "<a href='https://wa.me/{{whatsappClean}}'>{{whatsapp}}</a>" },
+          { "label": "Location", "value": "{{city}}, {{country}}" },
+          { "label": "Primary Service", "value": "<strong>{{serviceInterest}}</strong>" },
+          { "label": "Destination", "value": "{{destinationCountry}}" },
+          { "label": "Timeline / Urgency", "value": "<strong>{{travelPeriod}}</strong>" },
+          { "label": "Contact Preference", "value": "{{consultationMethod}}" },
+          { "label": "Client Message / Notes", "value": "{{notes}}" }
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Open Lead on WhatsApp",
+      "url": "https://wa.me/{{whatsappClean}}?text=Hello%20{{firstName}},%20this%20is%20Harry%20Overseas%20regarding%20your%20enquiry%20%23{{referenceId}}"
+    },
+    "footerNote": "This lead has been saved to the PostgreSQL database and is visible in the Admin Dashboard.",
+    "sampleData": {
+      "fullName": "Venkatesh Rao",
+      "email": "venkatesh.rao@example.com",
+      "phone": "+91 9848012345",
+      "whatsapp": "+91 9848012345",
+      "whatsappClean": "919848012345",
+      "city": "Anantapur",
+      "country": "India",
+      "referenceId": "HGI-9102",
+      "serviceInterest": "German Language Course A1-B1 Combo",
+      "destinationCountry": "Germany",
+      "travelPeriod": "Immediate",
+      "consultationMethod": "WhatsApp",
+      "notes": "Looking for immediate evening batch and study visa guidance.",
+      "urgencyFlag": " [URGENT]"
+    }
+  },
+
+  "support_career_alert": {
+    "id": "support_career_alert",
+    "name": "Internal Careers & Candidate Submission Alert",
+    "category": "administrative",
+    "targetInbox": "support.harryoverseas@gmail.com",
+    "subject": "[Career Application] #{{applicationId}} - {{fullName}} ({{role}})",
+    "preheader": "New candidate application received for {{role}} from {{fullName}}.",
+    "badge": "Talent Application",
+    "badgeType": "gold",
+    "title": "New Candidate Application: #{{applicationId}}",
+    "subtitle": "Harry Overseas Careers Portal",
+    "salutation": "Hello Recruitment Team,",
+    "intro": "A candidate has submitted their profile for an open position. Review the profile below:",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Applicant Profile",
+        "fields": [
+          { "label": "Application ID", "value": "<strong>#{{applicationId}}</strong>" },
+          { "label": "Candidate Name", "value": "<strong>{{fullName}}</strong>" },
+          { "label": "Role Applied For", "value": "<strong>{{role}}</strong>" },
+          { "label": "Email", "value": "<a href='mailto:{{email}}'>{{email}}</a>" },
+          { "label": "Phone", "value": "<a href='tel:{{phone}}'>{{phone}}</a>" },
+          { "label": "Resume Link", "value": "<a href='{{resumeLink}}' target='_blank' style='color: #2563eb; font-weight: bold;'>View Resume &rarr;</a>" },
+          { "label": "Candidate Statement", "value": "{{notes}}" }
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Review Candidate in Admin Portal",
+      "url": "mailto:{{email}}?subject=Interview%20Invitation%20-%20Harry%20Overseas%20({{role}})"
+    },
+    "footerNote": "This record has been logged to the applications database table.",
+    "sampleData": {
+      "fullName": "Meera Nair",
+      "email": "meera.nair@example.com",
+      "phone": "+91 9995123456",
+      "applicationId": 188,
+      "role": "Hospitality & Nursing Coordinator",
+      "resumeLink": "https://example.com/meera_resume.pdf",
+      "notes": "Over 4 years of experience coordinating German nurse placements and B1 documentation."
+    }
+  },
+
+  "admin_security_alert": {
+    "id": "admin_security_alert",
+    "name": "Administrative Security & System Notice",
+    "category": "administrative",
+    "targetInbox": "admin.harryoverseas@gmail.com",
+    "subject": "[Security Alert] {{eventTitle}}",
+    "preheader": "Security notice for Harry Overseas administrative console.",
+    "badge": "Security Alert",
+    "badgeType": "urgent",
+    "title": "Security & System Notice",
+    "subtitle": "Harry Overseas Admin Portal",
+    "salutation": "Attention Administrator,",
+    "intro": "The system recorded an administrative action or security event that requires your awareness:",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Event Details",
+        "fields": [
+          { "label": "Event Type", "value": "<strong>{{eventTitle}}</strong>" },
+          { "label": "Description", "value": "{{eventDescription}}" },
+          { "label": "Initiated By", "value": "<strong>{{actor}}</strong>" },
+          { "label": "IP Address / Source", "value": "{{ipAddress}}" },
+          { "label": "Timestamp", "value": "{{timestamp}}" }
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Open Admin Dashboard",
+      "url": "https://harryoverseas.com/#admin"
+    },
+    "footerNote": "If this action was unexpected, please review user permissions and rotate your admin secret immediately.",
+    "sampleData": {
+      "eventTitle": "New Admin User Account Provisioned",
+      "eventDescription": "User account 'branch_manager_hyd' was created with role 'Admin'.",
+      "actor": "admin (Super Admin)",
+      "ipAddress": "103.21.244.1",
+      "timestamp": "2026-11-16 16:30:00 UTC"
+    }
+  },
+
+  "candidate_shortlisted": {
+    "id": "candidate_shortlisted",
+    "name": "Candidate Shortlisted Notification",
+    "category": "candidate",
+    "targetInbox": "support.harryoverseas@gmail.com",
+    "subject": "Great News, {{firstName}}! You are Shortlisted for {{role}} at Harry Overseas",
+    "preheader": "Your profile has been shortlisted for the {{role}} opening at Harry Overseas.",
+    "badge": "Application Shortlisted",
+    "badgeType": "gold",
+    "title": "Congratulations, {{firstName}}!",
+    "subtitle": "You have been shortlisted for {{role}}",
+    "salutation": "Dear {{fullName}},",
+    "intro": "We are pleased to inform you that following an initial review of your qualifications and experience, your profile has been <strong>shortlisted</strong> for the <strong>{{role}}</strong> opening at Harry Overseas.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Application Milestone",
+        "fields": [
+          { "label": "Application ID", "value": "<strong>#{{applicationId}}</strong>" },
+          { "label": "Role", "value": "<strong>{{role}}</strong>" },
+          { "label": "Status", "value": "<span style='color: #16a34a; font-weight: bold;'>Shortlisted &amp; Interview Stage</span>" },
+          { "label": "Next Round", "value": "Technical / HR Interview Discussion" },
+          { "label": "Talent Coordinator", "value": "Harry Overseas HR Desk" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "Interview Preparation Guidance",
+        "items": [
+          "Our talent acquisition team will reach out within 24-48 hours to confirm your interview slot.",
+          "Please ensure your original degree certificates, experience letters, and German level certificates (if applicable) are ready.",
+          "Prepare to discuss your relevant background and motivations for European immigration &amp; language training."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Confirm Availability via Email",
+      "url": "mailto:support.harryoverseas@gmail.com?subject=Availability%20Confirmation%20-%20Application%20%23{{applicationId}}"
+    },
+    "footerNote": "For immediate coordination, you can also reach our recruitment team at support.harryoverseas@gmail.com.",
+    "sampleData": {
+      "fullName": "Suresh Kumar",
+      "email": "suresh.kumar@example.com",
+      "phone": "+91 9701234567",
+      "applicationId": 142,
+      "role": "German Language Instructor (B2/C1)"
+    }
+  },
+
+  "candidate_interviewed": {
+    "id": "candidate_interviewed",
+    "name": "Interview Completed & Review Stage",
+    "category": "candidate",
+    "targetInbox": "support.harryoverseas@gmail.com",
+    "subject": "Interview Completed: {{role}} - Next Steps with Harry Overseas",
+    "preheader": "Thank you for attending the interview discussion for {{role}}.",
+    "badge": "Interview Completed",
+    "badgeType": "gold",
+    "title": "Thank You for Your Time, {{firstName}}!",
+    "subtitle": "Next Steps for the {{role}} Position",
+    "salutation": "Dear {{fullName}},",
+    "intro": "Thank you for taking the time to speak with our evaluation panel today regarding the <strong>{{role}}</strong> position at Harry Overseas. We thoroughly enjoyed learning about your background and aspirations.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Interview Status",
+        "fields": [
+          { "label": "Application ID", "value": "<strong>#{{applicationId}}</strong>" },
+          { "label": "Role Evaluated", "value": "<strong>{{role}}</strong>" },
+          { "label": "Current Stage", "value": "<strong>Interview Completed &amp; Under Evaluation</strong>" },
+          { "label": "Decision Window", "value": "3 to 5 business days" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "What Follows Now?",
+        "items": [
+          "Our panel is compiling interview assessments across all candidates.",
+          "You will receive an official update regarding the final outcome and offer stage within 3 to 5 business days.",
+          "If additional verification documents are needed, our HR desk will contact you directly."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Careers Helpdesk",
+      "url": "mailto:support.harryoverseas@gmail.com?subject=Interview%20Query%20-%20Application%20%23{{applicationId}}"
+    },
+    "footerNote": "Have questions in the meantime? Reach out to support.harryoverseas@gmail.com.",
+    "sampleData": {
+      "fullName": "Meera Nair",
+      "email": "meera.nair@example.com",
+      "phone": "+91 9995123456",
+      "applicationId": 188,
+      "role": "Hospitality & Nursing Coordinator"
+    }
+  },
+
+  "candidate_hired": {
+    "id": "candidate_hired",
+    "name": "Offer of Employment & Welcome",
+    "category": "candidate",
+    "targetInbox": "support.harryoverseas@gmail.com",
+    "subject": "Herzlichen Glückwunsch, {{firstName}}! Offer of Employment at Harry Overseas 🎉",
+    "preheader": "We are thrilled to offer you the position of {{role}} at Harry Overseas.",
+    "badge": "Offer Extended",
+    "badgeType": "gold",
+    "title": "Welcome to the Team, {{firstName}}!",
+    "subtitle": "Official Offer of Employment & Next Steps",
+    "salutation": "Dear {{fullName}},",
+    "intro": "On behalf of the entire leadership team at Harry Overseas, we are delighted to offer you the position of <strong>{{role}}</strong>! Your experience and vision align directly with our mission to empower students and professionals in their European journeys.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Offer Overview",
+        "fields": [
+          { "label": "Application ID", "value": "<strong>#{{applicationId}}</strong>" },
+          { "label": "Offered Position", "value": "<strong>{{role}}</strong>" },
+          { "label": "Status", "value": "<span style='color: #16a34a; font-weight: bold;'>🎉 Selected &amp; Offer Extended</span>" },
+          { "label": "HR Coordinator", "value": "Talent &amp; Operations Desk" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "Onboarding Steps",
+        "items": [
+          "Your formal offer letter with compensation breakdown and joining dates is being prepared.",
+          "Our HR team will schedule an onboarding briefing to complete documentation and orientation.",
+          "Please confirm acceptance by replying to this email."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Confirm Offer Acceptance",
+      "url": "mailto:support.harryoverseas@gmail.com?subject=Offer%20Acceptance%20-%20{{fullName}}%20({{role}})"
+    },
+    "footerNote": "We are thrilled to welcome you aboard to build the future of European immigration and language education!",
+    "sampleData": {
+      "fullName": "Kavitha Reddy",
+      "email": "kavitha.reddy@example.com",
+      "phone": "+91 9885123456",
+      "applicationId": 204,
+      "role": "Student Counselor & APS Specialist"
+    }
+  },
+
+  "candidate_rejected": {
+    "id": "candidate_rejected",
+    "name": "Application Status Update (Not Selected)",
+    "category": "candidate",
+    "targetInbox": "support.harryoverseas@gmail.com",
+    "subject": "Application Update: {{role}} at Harry Overseas",
+    "preheader": "Thank you for your interest in Harry Overseas.",
+    "badge": "Application Concluded",
+    "badgeType": "gold",
+    "title": "Thank You for Applying, {{firstName}}",
+    "subtitle": "Update regarding the {{role}} opening",
+    "salutation": "Dear {{fullName}},",
+    "intro": "Thank you for your time and effort in applying for the <strong>{{role}}</strong> position at Harry Overseas. We received a significant volume of highly qualified candidates for this opening.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Application Record",
+        "fields": [
+          { "label": "Application ID", "value": "#{{applicationId}}" },
+          { "label": "Role", "value": "{{role}}" },
+          { "label": "Decision", "value": "Not Moving Forward at This Time" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "Active Talent Network",
+        "items": [
+          "While we have decided to move forward with other candidates whose experience more closely matched this specific role, we were genuinely impressed by your background.",
+          "With your permission, we will keep your profile in our active talent pool for future opportunities.",
+          "We sincerely wish you the best in your professional endeavors."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Stay Connected with Harry Overseas",
+      "url": "https://harryoverseas.com"
+    },
+    "footerNote": "Thank you once again for considering Harry Overseas as your potential employer.",
+    "sampleData": {
+      "fullName": "Arun Prasad",
+      "email": "arun.prasad@example.com",
+      "phone": "+91 9448123456",
+      "applicationId": 210,
+      "role": "Relocation Coordinator"
+    }
+  },
+
+  "enquiry_stage_update": {
+    "id": "enquiry_stage_update",
+    "name": "Client Consultation Stage Progress Update",
+    "category": "lead",
+    "targetInbox": "info.harryoverseas@gmail.com",
+    "subject": "Consultation Progress: Enquiry #{{referenceId}} is now {{status}} - Harry Overseas",
+    "preheader": "Your European immigration / language inquiry #{{referenceId}} status has been updated to {{status}}.",
+    "badge": "Stage: {{status}}",
+    "badgeType": "gold",
+    "title": "Progress Update on Your Enquiry, {{firstName}}!",
+    "subtitle": "Current Consultation Milestone: {{status}}",
+    "salutation": "Dear {{fullName}},",
+    "intro": "We are writing to share an update regarding your consultation request with Harry Overseas for <strong>{{destinationCountry}}</strong>.",
+    "sections": [
+      {
+        "type": "details_table",
+        "heading": "Case Overview",
+        "fields": [
+          { "label": "Enquiry Reference", "value": "<strong>#{{referenceId}}</strong>" },
+          { "label": "Current Status", "value": "<span style='color: #0a192f; font-weight: bold; background: #e0f2fe; padding: 2px 8px; border-radius: 4px;'>{{status}}</span>" },
+          { "label": "Selected Service", "value": "{{serviceInterest}}" },
+          { "label": "Destination", "value": "{{destinationCountry}}" },
+          { "label": "Counselor Notes", "value": "{{stageNotes || 'Your counselor is actively processing your case documentation.'}}" }
+        ]
+      },
+      {
+        "type": "highlight_box",
+        "title": "What this means for your case",
+        "items": [
+          "Our team is actively coordinating your file according to German statutory requirements.",
+          "If documents (APS, language certificates, or transcripts) are requested, please share them via WhatsApp or email.",
+          "You can reach out to your counselor at any time referencing your enquiry ID #{{referenceId}}."
+        ]
+      }
+    ],
+    "callToAction": {
+      "label": "Message Counselor on WhatsApp",
+      "url": "https://wa.me/916302951891?text=Hello%20Harry%20Overseas,%20regarding%20my%20enquiry%20%23{{referenceId}}%20(Status:%20{{status}})"
+    },
+    "footerNote": "Need immediate clarification? Reply to this email or call our desk at +91 6302951891.",
+    "sampleData": {
+      "fullName": "Venkatesh Rao",
+      "email": "venkatesh.rao@example.com",
+      "phone": "+91 9848012345",
+      "referenceId": "HGI-9102",
+      "status": "In Progress",
+      "serviceInterest": "German Language Course & Study Visa",
+      "destinationCountry": "Germany",
+      "stageNotes": "Document checklist verified. A1 batch allotted starting next Monday."
+    }
+  }
+}

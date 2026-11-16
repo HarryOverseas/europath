@@ -84,9 +84,14 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                   <a href="tel:+4917670256852" className="hover:text-white">+49 17670256852</a>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="mailto:info.harryoverseas@gmail.com" className="hover:text-white">info.harryoverseas@gmail.com</a>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" />
+                  <a href="mailto:info.harryoverseas@gmail.com" className="hover:text-white" title="General & Course Inquiries">info.harryoverseas@gmail.com</a>
+                </div>
+                <div className="flex items-center space-x-2 pl-6">
+                  <a href="mailto:support.harryoverseas@gmail.com" className="hover:text-white" title="Careers & Candidate Support">support.harryoverseas@gmail.com</a>
+                </div>
               </div>
             </div>
           </div>

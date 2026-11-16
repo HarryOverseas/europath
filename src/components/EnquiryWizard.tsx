@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { secureFetch } from '../utils/secureApi';
 import { CheckCircle2, ArrowRight, ArrowLeft, Send, ShieldAlert, Sparkles } from 'lucide-react';
 
 export default function EnquiryWizard() {
@@ -126,7 +127,7 @@ export default function EnquiryWizard() {
     let confirmedId = newId;
 
     try {
-      const response = await fetch('/api/enquiries', {
+      const response = await secureFetch('/api/enquiries', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
