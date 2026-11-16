@@ -1,0 +1,439 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+    <defs>
+        <!-- Gradients -->
+        <radialGradient id="cosmosBg" cx="50%" cy="45%" r="70%">
+            <stop offset="0%" stop-color="#0E1E3D"/>
+            <stop offset="40%" stop-color="#081328"/>
+            <stop offset="75%" stop-color="#030814"/>
+            <stop offset="100%" stop-color="#010307"/>
+        </radialGradient>
+
+        <radialGradient id="portalAura" cx="50%" cy="48%" r="48%">
+            <stop offset="0%" stop-color="#1E3A8A" stop-opacity="0.85"/>
+            <stop offset="40%" stop-color="#0F244C" stop-opacity="0.65"/>
+            <stop offset="75%" stop-color="#071328" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+        </radialGradient>
+
+        <linearGradient id="goldLux" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFFDF0"/>
+            <stop offset="20%" stop-color="#FDE68A"/>
+            <stop offset="50%" stop-color="#F59E0B"/>
+            <stop offset="80%" stop-color="#D97706"/>
+            <stop offset="100%" stop-color="#78350F"/>
+        </linearGradient>
+
+        <linearGradient id="goldGloss" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#92400E"/>
+            <stop offset="25%" stop-color="#D97706"/>
+            <stop offset="50%" stop-color="#FFFBEB"/>
+            <stop offset="75%" stop-color="#F59E0B"/>
+            <stop offset="100%" stop-color="#78350F"/>
+        </linearGradient>
+
+        <linearGradient id="goldStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFFBEB"/>
+            <stop offset="35%" stop-color="#FDE047"/>
+            <stop offset="75%" stop-color="#F59E0B"/>
+            <stop offset="100%" stop-color="#92400E"/>
+        </linearGradient>
+
+        <linearGradient id="highwayDeck" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#050F21"/>
+            <stop offset="35%" stop-color="#0E234D"/>
+            <stop offset="70%" stop-color="#1D4ED8"/>
+            <stop offset="100%" stop-color="#38BDF8"/>
+        </linearGradient>
+
+        <linearGradient id="neonCyan" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00F2FE"/>
+            <stop offset="60%" stop-color="#38BDF8"/>
+            <stop offset="100%" stop-color="#93C5FD"/>
+        </linearGradient>
+
+        <linearGradient id="roadDashGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#F59E0B"/>
+            <stop offset="50%" stop-color="#FDE047"/>
+            <stop offset="100%" stop-color="#FFFFFF"/>
+        </linearGradient>
+
+        <!-- Filters -->
+        <filter id="glowGold" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <filter id="glowCyan" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <filter id="shadow3D" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="-6" dy="18" stdDeviation="14" flood-color="#000000" flood-opacity="0.9"/>
+        </filter>
+
+        <filter id="shadowSubtle" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="2" dy="6" stdDeviation="4" flood-color="#000000" flood-opacity="0.6"/>
+        </filter>
+
+        <!-- Animations -->
+        <style>
+            @keyframes orbitSpin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            @keyframes beaconBloom {
+                0%, 100% { transform: scale(1); opacity: 0.92; }
+                50% { transform: scale(1.15) rotate(3deg); opacity: 1; filter: drop-shadow(0 0 35px #FDE047); }
+            }
+            @keyframes highwayDash {
+                to { stroke-dashoffset: -120; }
+            }
+            @keyframes starTwinkle {
+                0%, 100% { transform: scale(0.92); opacity: 0.75; }
+                50% { transform: scale(1.08); opacity: 1; }
+            }
+            .orbit-dial {
+                transform-origin: 500px 480px;
+                animation: orbitSpin 180s linear infinite;
+            }
+            .beacon-head {
+                transform-origin: 500px 95px;
+                animation: beaconBloom 4s ease-in-out infinite;
+            }
+            .stream-dash {
+                stroke-dasharray: 16 20;
+                animation: highwayDash 2s linear infinite;
+            }
+            .star-node {
+                transform-origin: 500px 480px;
+                animation: starTwinkle 3.2s ease-in-out infinite;
+            }
+        </style>
+    </defs>
+
+    <!-- Canvas Background -->
+    <rect width="1000" height="1000" rx="50" fill="url(#cosmosBg)"/>
+
+    <!-- Ambient Orbital Dial with 12 EU Stars -->
+    <g class="orbit-dial">
+        <circle cx="500" cy="480" r="370" fill="none" stroke="url(#goldLux)" stroke-width="2" opacity="0.45" filter="url(#glowGold)"/>
+        <circle cx="500" cy="480" r="330" fill="none" stroke="#38BDF8" stroke-width="1.2" opacity="0.35"/>
+        <g id="dialTicks"><line x1="818.0" y1="480.0" x2="830.0" y2="480.0" stroke="#F59E0B" stroke-width="2.2" opacity="0.9"/>
+<line x1="825.2" y1="502.7" x2="829.2" y2="503.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="822.8" y1="525.4" x2="826.8" y2="525.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="818.9" y1="547.8" x2="822.8" y2="548.6" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="813.4" y1="569.9" x2="817.2" y2="571.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="806.3" y1="591.5" x2="810.1" y2="592.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="797.8" y1="612.6" x2="801.5" y2="614.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="787.8" y1="633.0" x2="791.4" y2="634.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="776.5" y1="652.8" x2="779.9" y2="654.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="763.7" y1="671.6" x2="767.0" y2="674.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="749.7" y1="689.5" x2="752.8" y2="692.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="734.5" y1="706.5" x2="737.4" y2="709.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="718.1" y1="722.3" x2="720.8" y2="725.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="700.7" y1="736.9" x2="703.2" y2="740.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="682.3" y1="750.3" x2="684.5" y2="753.6" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="661.0" y1="758.9" x2="665.0" y2="765.8" stroke="#38BDF8" stroke-width="1.2" opacity="0.5"/>
+<line x1="642.9" y1="773.0" x2="644.7" y2="776.6" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="622.1" y1="782.3" x2="623.6" y2="786.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="600.7" y1="790.0" x2="602.0" y2="793.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="578.9" y1="796.3" x2="579.8" y2="800.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="556.6" y1="801.0" x2="557.3" y2="805.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="534.1" y1="804.2" x2="534.5" y2="808.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="511.4" y1="805.8" x2="511.5" y2="809.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="488.6" y1="805.8" x2="488.5" y2="809.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="465.9" y1="804.2" x2="465.5" y2="808.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="443.4" y1="801.0" x2="442.7" y2="805.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="421.1" y1="796.3" x2="420.2" y2="800.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="399.3" y1="790.0" x2="398.0" y2="793.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="377.9" y1="782.3" x2="376.4" y2="786.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="357.1" y1="773.0" x2="355.3" y2="776.6" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="339.0" y1="758.9" x2="335.0" y2="765.8" stroke="#38BDF8" stroke-width="1.2" opacity="0.5"/>
+<line x1="317.7" y1="750.3" x2="315.5" y2="753.6" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="299.3" y1="736.9" x2="296.8" y2="740.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="281.9" y1="722.3" x2="279.2" y2="725.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="265.5" y1="706.5" x2="262.6" y2="709.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="250.3" y1="689.5" x2="247.2" y2="692.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="236.3" y1="671.6" x2="233.0" y2="674.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="223.5" y1="652.8" x2="220.1" y2="654.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="212.2" y1="633.0" x2="208.6" y2="634.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="202.2" y1="612.6" x2="198.5" y2="614.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="193.7" y1="591.5" x2="189.9" y2="592.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="186.6" y1="569.9" x2="182.8" y2="571.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="181.1" y1="547.8" x2="177.2" y2="548.6" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="177.2" y1="525.4" x2="173.2" y2="525.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="174.8" y1="502.7" x2="170.8" y2="503.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="182.0" y1="480.0" x2="170.0" y2="480.0" stroke="#F59E0B" stroke-width="2.2" opacity="0.9"/>
+<line x1="174.8" y1="457.3" x2="170.8" y2="457.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="177.2" y1="434.6" x2="173.2" y2="434.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="181.1" y1="412.2" x2="177.2" y2="411.4" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="186.6" y1="390.1" x2="182.8" y2="389.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="193.7" y1="368.5" x2="189.9" y2="367.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="202.2" y1="347.4" x2="198.5" y2="345.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="212.2" y1="327.0" x2="208.6" y2="325.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="223.5" y1="307.2" x2="220.1" y2="305.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="236.3" y1="288.4" x2="233.0" y2="286.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="250.3" y1="270.5" x2="247.2" y2="267.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="265.5" y1="253.5" x2="262.6" y2="250.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="281.9" y1="237.7" x2="279.2" y2="234.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="299.3" y1="223.1" x2="296.8" y2="220.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="317.7" y1="209.7" x2="315.5" y2="206.4" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="339.0" y1="201.1" x2="335.0" y2="194.2" stroke="#38BDF8" stroke-width="1.2" opacity="0.5"/>
+<line x1="357.1" y1="187.0" x2="355.3" y2="183.4" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="377.9" y1="177.7" x2="376.4" y2="174.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="399.3" y1="170.0" x2="398.0" y2="166.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="421.1" y1="163.7" x2="420.2" y2="159.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="443.4" y1="159.0" x2="442.7" y2="155.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="465.9" y1="155.8" x2="465.5" y2="151.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="488.6" y1="154.2" x2="488.5" y2="150.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="511.4" y1="154.2" x2="511.5" y2="150.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="534.1" y1="155.8" x2="534.5" y2="151.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="556.6" y1="159.0" x2="557.3" y2="155.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="578.9" y1="163.7" x2="579.8" y2="159.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="600.7" y1="170.0" x2="602.0" y2="166.2" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="622.1" y1="177.7" x2="623.6" y2="174.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="642.9" y1="187.0" x2="644.7" y2="183.4" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="661.0" y1="201.1" x2="665.0" y2="194.2" stroke="#38BDF8" stroke-width="1.2" opacity="0.5"/>
+<line x1="682.3" y1="209.7" x2="684.5" y2="206.4" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="700.7" y1="223.1" x2="703.2" y2="220.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="718.1" y1="237.7" x2="720.8" y2="234.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="734.5" y1="253.5" x2="737.4" y2="250.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="749.7" y1="270.5" x2="752.8" y2="267.9" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="763.7" y1="288.4" x2="767.0" y2="286.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="776.5" y1="307.2" x2="779.9" y2="305.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="787.8" y1="327.0" x2="791.4" y2="325.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="797.8" y1="347.4" x2="801.5" y2="345.8" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="806.3" y1="368.5" x2="810.1" y2="367.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="813.4" y1="390.1" x2="817.2" y2="389.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="818.9" y1="412.2" x2="822.8" y2="411.4" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="822.8" y1="434.6" x2="826.8" y2="434.1" stroke="#334155" stroke-width="0.8" opacity="0.2"/>
+<line x1="825.2" y1="457.3" x2="829.2" y2="457.0" stroke="#334155" stroke-width="0.8" opacity="0.2"/></g>
+        <g id="euStars">
+        <g class="star-node" style="animation-delay: 0.00s;">
+            <circle cx="500.0" cy="110.0" r="27.0" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="500.00,92.00 504.04,104.44 517.12,104.44 506.54,112.12 510.58,124.56 500.00,116.88 489.42,124.56 493.46,112.12 482.88,104.44 495.96,104.44" fill="url(#goldStarGrad)"/>
+            <circle cx="500.0" cy="110.0" r="4.5" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 0.25s;">
+            <circle cx="685.0" cy="159.6" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="685.00,148.07 687.58,156.02 695.94,156.02 689.18,160.93 691.76,168.87 685.00,163.96 678.24,168.87 680.82,160.93 674.06,156.02 682.42,156.02" fill="url(#goldStarGrad)"/>
+            <circle cx="685.0" cy="159.6" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 0.50s;">
+            <circle cx="820.4" cy="295.0" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="820.43,283.50 823.01,291.45 831.37,291.45 824.61,296.36 827.19,304.30 820.43,299.39 813.67,304.30 816.25,296.36 809.49,291.45 817.85,291.45" fill="url(#goldStarGrad)"/>
+            <circle cx="820.4" cy="295.0" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 0.75s;">
+            <circle cx="870.0" cy="480.0" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="870.00,468.50 872.58,476.45 880.94,476.45 874.18,481.36 876.76,489.30 870.00,484.39 863.24,489.30 865.82,481.36 859.06,476.45 867.42,476.45" fill="url(#goldStarGrad)"/>
+            <circle cx="870.0" cy="480.0" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 1.00s;">
+            <circle cx="820.4" cy="665.0" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="820.43,653.50 823.01,661.45 831.37,661.45 824.61,666.36 827.19,674.30 820.43,669.39 813.67,674.30 816.25,666.36 809.49,661.45 817.85,661.45" fill="url(#goldStarGrad)"/>
+            <circle cx="820.4" cy="665.0" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 1.25s;">
+            <circle cx="685.0" cy="800.4" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="685.00,788.93 687.58,796.88 695.94,796.88 689.18,801.79 691.76,809.73 685.00,804.82 678.24,809.73 680.82,801.79 674.06,796.88 682.42,796.88" fill="url(#goldStarGrad)"/>
+            <circle cx="685.0" cy="800.4" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 1.50s;">
+            <circle cx="500.0" cy="850.0" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="500.00,838.50 502.58,846.45 510.94,846.45 504.18,851.36 506.76,859.30 500.00,854.39 493.24,859.30 495.82,851.36 489.06,846.45 497.42,846.45" fill="url(#goldStarGrad)"/>
+            <circle cx="500.0" cy="850.0" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 1.75s;">
+            <circle cx="315.0" cy="800.4" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="315.00,788.93 317.58,796.88 325.94,796.88 319.18,801.79 321.76,809.73 315.00,804.82 308.24,809.73 310.82,801.79 304.06,796.88 312.42,796.88" fill="url(#goldStarGrad)"/>
+            <circle cx="315.0" cy="800.4" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 2.00s;">
+            <circle cx="179.6" cy="665.0" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="179.57,653.50 182.15,661.45 190.51,661.45 183.75,666.36 186.33,674.30 179.57,669.39 172.81,674.30 175.39,666.36 168.63,661.45 176.99,661.45" fill="url(#goldStarGrad)"/>
+            <circle cx="179.6" cy="665.0" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 2.25s;">
+            <circle cx="130.0" cy="480.0" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="130.00,468.50 132.58,476.45 140.94,476.45 134.18,481.36 136.76,489.30 130.00,484.39 123.24,489.30 125.82,481.36 119.06,476.45 127.42,476.45" fill="url(#goldStarGrad)"/>
+            <circle cx="130.0" cy="480.0" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 2.50s;">
+            <circle cx="179.6" cy="295.0" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="179.57,283.50 182.15,291.45 190.51,291.45 183.75,296.36 186.33,304.30 179.57,299.39 172.81,304.30 175.39,296.36 168.63,291.45 176.99,291.45" fill="url(#goldStarGrad)"/>
+            <circle cx="179.6" cy="295.0" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        
+
+        <g class="star-node" style="animation-delay: 2.75s;">
+            <circle cx="315.0" cy="159.6" r="17.2" fill="#F59E0B" opacity="0.25" filter="url(#glowGold)"/>
+            <polygon points="315.00,148.07 317.58,156.02 325.94,156.02 319.18,160.93 321.76,168.87 315.00,163.96 308.24,168.87 310.82,160.93 304.06,156.02 312.42,156.02" fill="url(#goldStarGrad)"/>
+            <circle cx="315.0" cy="159.6" r="2.9" fill="#FFFFFF" opacity="0.95"/>
+        </g>
+        </g>
+    </g>
+
+    <!-- Center European Portal Void & Radiant Dawn Horizon -->
+    <circle cx="500" cy="480" r="275" fill="url(#portalAura)"/>
+    <ellipse cx="500" cy="570" rx="220" ry="110" fill="#1E3A8A" opacity="0.25" filter="url(#glowCyan)"/>
+
+    <!-- Perspective Grid Lines Leading Into The Gateway -->
+    <g opacity="0.22" stroke="#38BDF8" stroke-width="1">
+        <line x1="220" y1="880" x2="500" y2="350" stroke-dasharray="6 8"/>
+        <line x1="360" y1="880" x2="500" y2="350" stroke-dasharray="6 6"/>
+        <line x1="640" y1="880" x2="500" y2="350" stroke-dasharray="6 6"/>
+        <line x1="780" y1="880" x2="500" y2="350" stroke-dasharray="6 8"/>
+    </g>
+
+    <!-- ============================================================= -->
+    <!-- MASTER MARK: THE MONUMENTAL "H" GATEWAY + 3D EUROPATH HIGHWAY -->
+    <!-- ============================================================= -->
+    <g id="masterMark" filter="url(#shadow3D)">
+
+        <!-- 1. THE 3D PERSPECTIVE HIGHWAY (EUROPATH) SOARING THROUGH THE "H" GATEWAY -->
+        <!-- Road Under-Extrusion Shadow -->
+        <polygon points="270,760 730,760 590,380 410,380" fill="#040C1A" opacity="0.95"/>
+
+        <!-- Road Upper Deck (Ascending Highway into the Portal Horizon) -->
+        <polygon points="280,740 720,740 580,390 420,390" fill="url(#highwayDeck)" stroke="#1E40AF" stroke-width="1.5"/>
+
+        <!-- Road Outer Golden Rails -->
+        <line x1="280" y1="740" x2="420" y2="390" stroke="url(#goldLux)" stroke-width="4" stroke-linecap="round" filter="url(#glowGold)"/>
+        <line x1="720" y1="740" x2="580" y2="390" stroke="url(#goldLux)" stroke-width="4" stroke-linecap="round" filter="url(#glowGold)"/>
+
+        <!-- Road Inner Cyan Guardrails -->
+        <line x1="330" y1="740" x2="445" y2="390" stroke="url(#neonCyan)" stroke-width="2" opacity="0.8" filter="url(#glowCyan)"/>
+        <line x1="670" y1="740" x2="555" y2="390" stroke="url(#neonCyan)" stroke-width="2" opacity="0.8" filter="url(#glowCyan)"/>
+
+        <!-- Center Glowing Highway Dashes (Streaming towards Europe) -->
+        <line class="stream-dash" x1="500" y1="740" x2="500" y2="390" stroke="url(#roadDashGrad)" stroke-width="4" stroke-linecap="round" filter="url(#glowGold)"/>
+
+        <!-- 2. THE MONUMENTAL LEFT PYLON OF "H" -->
+        <!-- Shadow Left Facet -->
+        <polygon points="295,170 345,130 345,630 295,675" fill="#0A1830" stroke="#1E3A8A" stroke-width="1.2"/>
+        <!-- Front Facet of Left Pylon (24K Gold) -->
+        <polygon points="345,130 400,130 400,625 345,630" fill="url(#goldLux)"/>
+        <line x1="400" y1="130" x2="400" y2="625" stroke="#FFFFFF" stroke-width="2" opacity="0.95"/>
+        <line x1="345" y1="130" x2="345" y2="630" stroke="#FFFBEB" stroke-width="1" opacity="0.8"/>
+
+        <!-- 3. THE MONUMENTAL RIGHT PYLON OF "H" -->
+        <!-- Front Facet of Right Pylon (24K Gold) -->
+        <polygon points="600,130 655,130 655,625 600,630" fill="url(#goldLux)"/>
+        <!-- Shadow Right Facet -->
+        <polygon points="655,130 705,170 705,675 655,625" fill="#0A1830" stroke="#1E3A8A" stroke-width="1.2"/>
+        <line x1="600" y1="130" x2="600" y2="630" stroke="#FFFFFF" stroke-width="2" opacity="0.95"/>
+        <line x1="655" y1="130" x2="655" y2="625" stroke="#FFFBEB" stroke-width="1" opacity="0.8"/>
+
+        <!-- 4. THE ARCHITECTURAL HORIZON ARCH / CROSSBEAM OF "H" (THE GATEWAY ARCH) -->
+        <!-- Upper Horizon Arch Beam connecting the two pylons -->
+        <g filter="url(#shadowSubtle)">
+            <!-- Top Arch Curve -->
+            <path d="M 400 350 
+                     C 440 330 560 330 600 350 
+                     L 600 415 
+                     C 560 395 440 395 400 415 Z" 
+                  fill="url(#goldGloss)"/>
+            <!-- Top Polished Bevel Edge -->
+            <path d="M 400 350 C 440 330 560 330 600 350" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.95"/>
+            <!-- Lower Bevel Rim -->
+            <path d="M 400 415 C 440 395 560 395 600 415" fill="none" stroke="#FFFBEB" stroke-width="1.5" opacity="0.8"/>
+            <!-- Center Portal Star Inlay -->
+            <circle cx="500" cy="372" r="5" fill="#FFFFFF" filter="url(#glowGold)"/>
+        </g>
+
+        <!-- Specular Highlight Sheen on Left Pylon -->
+        <polygon points="345,130 375,130 360,630 330,630" fill="#FFFFFF" opacity="0.14"/>
+        <!-- Specular Highlight Sheen on Right Pylon -->
+        <polygon points="625,130 655,130 640,625 610,625" fill="#FFFFFF" opacity="0.14"/>
+    </g>
+
+    <!-- ============================================================= -->
+    <!-- THE APEX BEACON: RADIANT STAR OF EUROPE (Polaris)             -->
+    <!-- Positioned at True North Apex: (500, 85)                      -->
+    <!-- ============================================================= -->
+    <g id="apexStar" class="beacon-head">
+        <circle cx="500" cy="85" r="100" fill="url(#goldStarGrad)" opacity="0.18" filter="url(#glowGold)"/>
+        <circle cx="500" cy="85" r="55" fill="#FDE047" opacity="0.35" filter="url(#glowGold)"/>
+        <circle cx="500" cy="85" r="24" fill="#FFFFFF" opacity="0.85" filter="url(#glowGold)"/>
+
+        <!-- Flare Spikes -->
+        <line x1="300" y1="85" x2="700" y2="85" stroke="url(#goldLux)" stroke-width="2.5" opacity="0.9" filter="url(#glowGold)"/>
+        <line x1="500" y1="-30" x2="500" y2="200" stroke="url(#goldLux)" stroke-width="2.5" opacity="0.9" filter="url(#glowGold)"/>
+        <line x1="390" y1="-15" x2="610" y2="185" stroke="#FDE047" stroke-width="1.2" opacity="0.6"/>
+        <line x1="390" y1="185" x2="610" y2="-15" stroke="#FDE047" stroke-width="1.2" opacity="0.6"/>
+
+        <!-- 8-Point Diamond Facets -->
+        <polygon points="500,85 500,5 510,85" fill="#FFFDF0"/>
+        <polygon points="500,85 500,5 490,85" fill="#F59E0B"/>
+        <polygon points="500,85 500,165 490,85" fill="#D97706"/>
+        <polygon points="500,85 500,165 510,85" fill="#FDE047"/>
+        <polygon points="500,85 580,85 500,94" fill="#B45309"/>
+        <polygon points="500,85 580,85 500,76" fill="#FEF08A"/>
+        <polygon points="500,85 420,85 500,76" fill="#FDE047"/>
+        <polygon points="500,85 420,85 500,94" fill="#D97706"/>
+        <polygon points="500,85 550,35 500,80" fill="#FFFDF0"/>
+        <polygon points="500,85 550,35 506,85" fill="#F59E0B"/>
+        <polygon points="500,85 450,35 494,85" fill="#FDE047"/>
+        <polygon points="500,85 450,35 500,80" fill="#B45309"/>
+        <polygon points="500,85 550,135 506,85" fill="#D97706"/>
+        <polygon points="500,85 550,135 500,90" fill="#FDE047"/>
+        <polygon points="500,85 450,135 500,90" fill="#92400E"/>
+        <polygon points="500,85 450,135 494,85" fill="#FEF08A"/>
+
+        <!-- Core Gem -->
+        <circle cx="500" cy="85" r="7" fill="#FFFFFF" filter="url(#glowGold)"/>
+    </g>
+
+    <!-- Cardinal Labels -->
+    <text x="500" y="58" text-anchor="middle" font-family="'Montserrat', 'Inter', sans-serif" font-size="12" font-weight="900" fill="#FCD34D" letter-spacing="3" opacity="0.95">N</text>
+    <text x="500" y="890" text-anchor="middle" font-family="'Montserrat', 'Inter', sans-serif" font-size="11" font-weight="700" fill="#64748B" letter-spacing="3" opacity="0.7">S</text>
+    <text x="895" y="484" text-anchor="middle" font-family="'Montserrat', 'Inter', sans-serif" font-size="11" font-weight="700" fill="#64748B" letter-spacing="3" opacity="0.7">E</text>
+    <text x="105" y="484" text-anchor="middle" font-family="'Montserrat', 'Inter', sans-serif" font-size="11" font-weight="700" fill="#64748B" letter-spacing="3" opacity="0.7">W</text>
+
+    <!-- Wordmark & Tagline: HARRY OVERSEAS (IMMIGRATION & LANGUAGE) -->
+    <g transform="translate(500, 930)" text-anchor="middle">
+        <text y="0" font-family="'Montserrat', 'Outfit', 'Inter', sans-serif" font-size="42" font-weight="900" letter-spacing="6" filter="url(#shadowSubtle)">
+            <tspan fill="#FFFFFF">HARRY </tspan><tspan fill="url(#goldLux)">OVERSEAS</tspan>
+        </text>
+        <text y="30" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#38BDF8" letter-spacing="8" opacity="0.9">
+            IMMIGRATION &amp; LANGUAGE
+        </text>
+        <text y="50" font-family="'Inter', sans-serif" font-size="9.5" font-weight="600" fill="#94A3B8" letter-spacing="4" opacity="0.75">
+            EUROPATH GATEWAY • GERMANY &amp; EUROPE
+        </text>
+        <line x1="-160" y1="14" x2="160" y2="14" stroke="url(#goldLux)" stroke-width="1.2" opacity="0.45"/>
+        <circle cx="0" cy="14" r="3" fill="#F59E0B"/>
+    </g>
+
+    <!-- Border Accent -->
+    <rect x="16" y="16" width="968" height="968" rx="42" fill="none" stroke="url(#goldLux)" stroke-width="1.2" opacity="0.25"/>
+    <rect x="22" y="22" width="956" height="956" rx="36" fill="none" stroke="#1E3A8A" stroke-width="1" opacity="0.4"/>
+</svg>

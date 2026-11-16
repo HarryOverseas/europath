@@ -25,6 +25,7 @@ export default function EnquiryWizard() {
   });
 
   const mainServiceOptions = [
+    'Nurse Requirement in Germany',
     'Student Visa',
     'Spouse / Family Reunion Visa',
     'Chancenkarte (Opportunity Card)',

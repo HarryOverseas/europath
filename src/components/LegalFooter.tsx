@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Phone, Mail, MapPin, ShieldAlert } from 'lucide-react';
+import { Globe, Phone, Mail, MapPin, ShieldAlert, Youtube, Instagram } from 'lucide-react';
 
 interface LegalFooterProps {
   onNavigate?: (view: 'public' | 'careers' | 'admin', sectionId?: string) => void;
@@ -27,8 +27,34 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
               </div>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed">
-              Your trusted partner for Germany visa consultancy, German language training (A1-B2), and arrival assistance. Managed between Germany and Anantapur.
+              Your trusted partner for Germany visa consultancy, German language training (A1-B2), nurse recruitment, and arrival assistance. Managed between Germany and Anantapur.
             </p>
+
+            {/* Social Media Links */}
+            <div className="pt-2">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-brand-gold mb-2.5">Follow Us</h5>
+              <div className="flex flex-col space-y-2">
+                <a
+                  href="https://youtube.com/@harryoverseas?si=NfLVoDQIQXjMhmvL"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-red-950/40 border border-slate-700 hover:border-red-500/50 px-3 py-1.5 rounded-lg transition group"
+                >
+                  <Youtube className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium">YouTube: <strong className="text-white">@harryoverseas</strong></span>
+                </a>
+
+                <a
+                  href="https://www.instagram.com/harryoverseas/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-pink-950/40 border border-slate-700 hover:border-pink-500/50 px-3 py-1.5 rounded-lg transition group"
+                >
+                  <Instagram className="w-4 h-4 text-pink-500 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium">Instagram: <strong className="text-white">@harryoverseas</strong></span>
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Contact Column */}

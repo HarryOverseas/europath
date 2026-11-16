@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Phone, Mail, Menu, X, ShieldCheck, Lock, Unlock, LogOut } from 'lucide-react';
+import { Globe, Phone, Mail, Menu, X, ShieldCheck, Lock, Unlock, LogOut, Youtube, Instagram } from 'lucide-react';
 
 interface NavbarProps {
   currentView: 'public' | 'careers' | 'news' | 'admin';
@@ -105,7 +105,29 @@ export default function Navbar({
           </nav>
 
           {/* Right CTA & Admin Switch */}
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-2.5">
+            <a
+              href="https://youtube.com/@harryoverseas?si=NfLVoDQIQXjMhmvL"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-slate-800 hover:bg-red-950/60 text-slate-300 hover:text-white border border-slate-700 hover:border-red-500/50 p-2.5 rounded-lg shadow transition flex items-center justify-center group"
+              title="Watch on YouTube (@harryoverseas)"
+              aria-label="YouTube Channel"
+            >
+              <Youtube className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
+            </a>
+
+            <a
+              href="https://www.instagram.com/harryoverseas/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-slate-800 hover:bg-pink-950/60 text-slate-300 hover:text-white border border-slate-700 hover:border-pink-500/50 p-2.5 rounded-lg shadow transition flex items-center justify-center group"
+              title="Follow on Instagram (@harryoverseas)"
+              aria-label="Instagram Page"
+            >
+              <Instagram className="w-4 h-4 text-pink-500 group-hover:scale-110 transition-transform" />
+            </a>
+
             <a
               href="https://wa.me/916302951891?text=Hello%20Harry%20Global%20Immigration,%20I%20would%20like%20to%20enquire%20about%20Germany%20visas."
               target="_blank"
@@ -236,6 +258,28 @@ export default function Navbar({
             News & Updates
           </button>
           <div className="pt-2 space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href="https://youtube.com/@harryoverseas?si=NfLVoDQIQXjMhmvL"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5"
+              >
+                <Youtube className="w-4 h-4 text-red-500" />
+                <span>YouTube</span>
+              </a>
+
+              <a
+                href="https://www.instagram.com/harryoverseas/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5"
+              >
+                <Instagram className="w-4 h-4 text-pink-500" />
+                <span>Instagram</span>
+              </a>
+            </div>
+
             <a
               href="https://wa.me/916302951891?text=Hello%20Harry%20Global%20Immigration,%20I%20would%20like%20to%20enquire%20about%20Germany%20visas."
               target="_blank"
