@@ -37,7 +37,7 @@ for (const status of enquiryStages) {
     phone: '+91 9440123456',
     referenceId: 'HGI-5521',
     status,
-    serviceInterest: 'German Language Combo Offer (₹43,999)',
+    serviceInterest: 'German Language Combo (₹45,999)',
     destinationCountry: 'Germany',
     stageNotes: `Case updated to ${status}. Assigned counselor: Senior Academic Desk.`
   };

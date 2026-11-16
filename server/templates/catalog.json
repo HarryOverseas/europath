@@ -80,7 +80,7 @@
           { "label": "Batch Start Date", "value": "{{batchStartDate}}" },
           { "label": "Class Schedule", "value": "{{classSchedule}}" },
           { "label": "Training Mode", "value": "{{trainingMode}}" },
-          { "label": "Tuition / Fee Status", "value": "<strong>{{feeStatus}}</strong> (Regular: <del>{{regularPrice}}</del> | Offer: <span style='color: #16a34a; font-weight: bold;'>{{offerPrice}}</span>)" },
+          { "label": "Tuition / Fee Status", "value": "<strong>{{regularPrice}}</strong> ({{feeStatus}})" },
           { "label": "Lead Instructor", "value": "{{instructorName}}" }
         ]
       },

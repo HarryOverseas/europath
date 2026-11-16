@@ -102,7 +102,6 @@ export async function notifyNewEnquiry(lead) {
           clientTemplateId = 'course_enrolment';
           leadData.courseName = lead.language_course || services;
           leadData.regularPrice = '₹45,999';
-          leadData.offerPrice = '₹43,999';
           leadData.batchStartDate = 'Upcoming Monday';
           leadData.classSchedule = 'Mon - Fri | Interactive Batches';
           leadData.trainingMode = 'Live Online (Zoom) / In-Person (Anantapur)';

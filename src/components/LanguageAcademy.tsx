@@ -7,8 +7,7 @@ export default function LanguageAcademy() {
       level: "German A1",
       duration: "2–3 months",
       regularPrice: "₹14,999",
-      offerPrice: "₹12,999",
-      savings: "Save ₹2,000",
+      badge: "Beginner",
       popular: false,
       desc: "Beginner level. Essential for spouse reunion visas and basic daily communication in Germany.",
       features: ["Grammar & Vocabulary Fundamentals", "Speaking & Listening Practice", "Goethe / Telc A1 Exam Preparation", "Study Material & Audio Drills"]
@@ -17,8 +16,7 @@ export default function LanguageAcademy() {
       level: "German A2",
       duration: "2–3 months",
       regularPrice: "₹15,999",
-      offerPrice: "₹13,999",
-      savings: "Save ₹2,000",
+      badge: "Elementary",
       popular: false,
       desc: "Elementary level. Understand sentences and expressions related to areas of immediate relevance.",
       features: ["Advanced Sentence Structure", "Interactive Conversations", "Mock Tests & Evaluation", "Workplace Communication Basics"]
@@ -27,8 +25,7 @@ export default function LanguageAcademy() {
       level: "German B1",
       duration: "3–4 months",
       regularPrice: "₹17,999",
-      offerPrice: "₹15,999",
-      savings: "Save ₹2,000",
+      badge: "Recommended",
       popular: true,
       desc: "Intermediate level. Required for nursing recruitment in Germany, vocational training (Ausbildung), and job seekers.",
       features: ["Complex Grammar & Writing", "Medical & Workplace Professional German", "Extensive Speaking Drills", "Telc / Goethe B1 Certificate Prep"]
@@ -37,8 +34,7 @@ export default function LanguageAcademy() {
       level: "German B2",
       duration: "3–4 months",
       regularPrice: "₹21,999",
-      offerPrice: "₹18,999",
-      savings: "Save ₹3,000",
+      badge: "Advanced",
       popular: false,
       desc: "Upper intermediate level. Necessary for nurse license recognition (Anerkennung) and specialized university courses.",
       features: ["Academic & Technical German", "Advanced Fluency & Nuance Training", "Hospital & Clinical Scenarios", "Official B2 Certification Prep"]
@@ -50,8 +46,6 @@ export default function LanguageAcademy() {
       name: "A1 + A2 Foundation Bundle",
       duration: "4–5 months",
       regularPrice: "₹30,999",
-      offerPrice: "₹25,999",
-      savings: "Save ₹5,000",
       badge: "Beginner Package",
       featured: false,
       desc: "Ideal for beginners aiming for basic fluency and spouse visa requirements."
@@ -60,9 +54,7 @@ export default function LanguageAcademy() {
       name: "A1 + A2 + B1 Complete Combo",
       duration: "7–8 months",
       regularPrice: "₹45,999",
-      offerPrice: "₹43,999",
-      savings: "Special Combo Offer",
-      badge: "🔥 Best Value Combo",
+      badge: "🔥 Complete Combo",
       featured: true,
       desc: "The most recommended roadmap for nurses, healthcare professionals, opportunity card applicants, and job seekers."
     },
@@ -70,8 +62,6 @@ export default function LanguageAcademy() {
       name: "Complete Mastery (A1 to B2)",
       duration: "10–12 months",
       regularPrice: "₹67,999",
-      offerPrice: "₹59,999",
-      savings: "Save ₹8,000",
       badge: "Full Professional",
       featured: false,
       desc: "Comprehensive linguistic roadmap up to full clinical and university fluency."
@@ -124,17 +114,18 @@ export default function LanguageAcademy() {
                   }`}>
                     {course.duration}
                   </span>
-                  <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">
-                    {course.savings}
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
+                    course.popular ? 'bg-brand-gold/20 text-brand-lightGold' : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {course.badge}
                   </span>
                 </div>
 
                 <div className="mb-4">
                   <div className="flex items-baseline space-x-2">
-                    <span className="text-2xl sm:text-3xl font-black text-brand-gold">{course.offerPrice}</span>
-                    <span className="text-sm line-through text-slate-400 font-semibold">{course.regularPrice}</span>
+                    <span className="text-2xl sm:text-3xl font-black text-brand-gold">{course.regularPrice}</span>
                   </div>
-                  <span className="text-[11px] text-emerald-500 font-medium">Limited Period Offer Price</span>
+                  <span className="text-[11px] text-slate-400 font-medium">Regular Course Fee</span>
                 </div>
 
                 <h3 className="text-xl font-bold mb-2">{course.level}</h3>
@@ -210,21 +201,17 @@ export default function LanguageAcademy() {
                   <p className="text-xs text-slate-400 mb-4">{pkg.desc}</p>
 
                   <div className="my-4 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-                    <div className="text-xs text-slate-400 mb-1 flex items-center justify-between">
-                      <span>Regular Fee:</span>
-                      <span className="line-through text-slate-400 font-bold text-sm">{pkg.regularPrice}</span>
-                    </div>
                     <div className="flex items-baseline justify-between">
-                      <span className="text-xs text-emerald-400 font-semibold">Special Offer:</span>
+                      <span className="text-xs text-slate-300 font-semibold">Regular Fee:</span>
                       <span className={`font-black tracking-tight ${
                         pkg.featured ? 'text-3xl sm:text-4xl text-brand-gold' : 'text-2xl text-white'
                       }`}>
-                        {pkg.offerPrice}
+                        {pkg.regularPrice}
                       </span>
                     </div>
                     {pkg.featured && (
                       <div className="mt-2 text-center bg-brand-gold/20 text-brand-lightGold text-[11px] font-bold py-1 rounded-md border border-brand-gold/30">
-                        ⚡ ₹43,999 Special Combo Offer Price (Regular ₹45,999)
+                        ₹45,999 Complete Combo Package (A1 + A2 + B1)
                       </div>
                     )}
                   </div>

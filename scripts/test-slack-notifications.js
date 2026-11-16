@@ -38,7 +38,7 @@ async function runLiveTest() {
     full_name: 'Vikram Malhotra',
     email: 'vikram.malhotra@example.com',
     mobile: '+91 9876543210',
-    service_interest: 'German Language Course Combo (₹43,999 Offer)',
+    service_interest: 'German Language Course Combo (₹45,999)',
     destination_country: 'Germany',
     travel_period: 'Immediate',
     consultation_method: 'WhatsApp',

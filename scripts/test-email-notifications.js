@@ -34,7 +34,7 @@ async function runDiagnostics() {
     full_name: 'Test Candidate',
     email: 'candidate.test@example.com',
     mobile: '+91 9876543210',
-    service_interest: 'German Language Combo Offer (₹43,999)',
+    service_interest: 'German Language Combo (₹45,999)',
     destination_country: 'Germany',
     travel_period: 'Immediate'
   };

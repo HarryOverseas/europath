@@ -13,7 +13,7 @@ interface Message {
 const AI_GIRL_AVATAR = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&h=256&q=80";
 
 const QUICK_REPLIES = [
-  'Special Combo Offer (₹43,999)',
+  'German Course Fees (A1–Combo)',
   'Nurse Requirement in Germany',
   'German Language Courses (A1–B2)',
   'Germany Student & Job Visas',
@@ -29,7 +29,7 @@ export default function Chatbot() {
     {
       id: 'welcome',
       role: 'assistant',
-      text: "👋 Hallo! I'm Clara, your Harry Overseas AI Advisor.\n\nI can help you with our new German Language Course Offer (Combo at ₹43,999), Nurse Requirement in Germany, Student Visas, Opportunity Cards (Chancenkarte), and Arrival Support. How can I assist you today?",
+      text: "👋 Hallo! I'm Clara, your Harry Overseas AI Advisor.\n\nI can help you with our German Language Courses (A1–B1 Combo at ₹45,999), Nurse Requirement in Germany, Student Visas, Opportunity Cards (Chancenkarte), and Arrival Support. How can I assist you today?",
       ts: Date.now(),
     },
   ]);
@@ -73,7 +73,7 @@ export default function Chatbot() {
     let instantReply: string | null = null;
 
     if (lower.includes('combo') || lower.includes('fee') || lower.includes('price') || lower.includes('pricing') || lower.includes('cost')) {
-      instantReply = "🎉 Special Course Offer Fees at Harry Overseas:\n\n• A1 Level: ₹12,999 (Regular ₹14,999)\n• A2 Level: ₹13,999 (Regular ₹15,999)\n• B1 Level: ₹15,999 (Regular ₹17,999)\n\n🔥 SPECIAL COMBO OFFER (A1 + A2 + B1):\nOnly ₹43,999! (Regular ₹45,999 - Save ₹2,000 extra).\n\nFlexible weekday and weekend batches available with study materials and Goethe / Telc exam preparation. Would you like to reserve a seat?";
+      instantReply = "📚 German Language Academy Regular Fees:\n\n• A1 Level: ₹14,999\n• A2 Level: ₹15,999\n• B1 Level: ₹17,999\n\n⭐ Complete German Combo (A1 + A2 + B1):\n₹45,999\n\nFlexible weekday and weekend batches available with study materials and Goethe / Telc exam preparation. Would you like to reserve a seat?";
     } else if (lower.includes('nurse') || lower.includes('nursing') || lower.includes('hospital') || lower.includes('healthcare')) {
       instantReply = "🏥 Nurse Requirement in Germany:\n\nGermany is actively recruiting GNM & B.Sc Registered Nurses with:\n• European Salary: €2,800 to €3,600 / month (approx. ₹2.5L to ₹3.2L)\n• Free hospital placement assistance & contract sponsorship\n• Adaptation training for full German nursing license (Anerkennung)\n• Full family reunion rights for spouse & children\n\nWe provide complete B1/B2 German language training and credential recognition filing. Would you like our healthcare counselor to contact you?";
     } else if (lower.includes('youtube') || lower.includes('instagram') || lower.includes('social') || lower.includes('video')) {
