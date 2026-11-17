@@ -156,16 +156,6 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                   Enquiry Form
                 </button>
               </li>
-              <li>
-                <a
-                  href="/feed.xml"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-brand-gold transition text-left flex items-center space-x-1"
-                >
-                  <span>RSS Feed (XML)</span>
-                </a>
-              </li>
             </ul>
           </div>
 
