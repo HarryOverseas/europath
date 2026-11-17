@@ -36,7 +36,7 @@ export default function EnquiryWizard() {
     'Germany Arrival Assistance'
   ];
 
-  const languageOptions = ['A1', 'A2', 'B1', 'B2', 'C1 & C2', 'Complete Combo (A1-B1)', 'Not Required'];
+  const languageOptions = ['A1', 'A2', 'B1', 'B2', 'Complete Combo (A1-B1)', 'Not Required'];
 
   const getAppAddonPrice = (lang: string) => {
     switch (lang) {
@@ -44,7 +44,6 @@ export default function EnquiryWizard() {
       case 'A2':
       case 'B1': return '₹3,000';
       case 'B2': return '₹5,000';
-      case 'C1 & C2': return '₹8,000';
       case 'Complete Combo (A1-B1)': return '₹5,000';
       default: return '₹3,000';
     }

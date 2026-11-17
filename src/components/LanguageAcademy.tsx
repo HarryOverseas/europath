@@ -85,23 +85,6 @@ export default function LanguageAcademy() {
         "Official B2 Certification Prep",
         "Optional Lifetime App Access (+₹5,000)"
       ]
-    },
-    {
-      level: "German C1 & C2",
-      duration: "4–6 months",
-      regularPrice: "₹29,999",
-      appPrice: "₹8,000",
-      totalWithApp: "₹37,999",
-      badge: "Mastery Level",
-      popular: false,
-      desc: "Near-native fluency for doctors, specialized academic researchers, and legal/scientific translators.",
-      features: [
-        "Idiomatic & Complex Literary Expressions",
-        "Medical Thesis & Scientific Discourse",
-        "Goethe C1 / C2 Full Mastery Drills",
-        "One-on-One Native Speaker Moderation",
-        "Optional Lifetime App Access (+₹8,000)"
-      ]
     }
   ];
 
@@ -142,7 +125,6 @@ export default function LanguageAcademy() {
     { level: "Level A1", price: "₹1,000", note: "Beginner vocab decks, alphabet drills, audio dialogues" },
     { level: "Levels A2 & B1", price: "₹3,000 each", note: "Workplace & clinical German, Telc/Goethe simulation" },
     { level: "Level B2", price: "₹5,000", note: "Advanced medical cases, clinical dialogues, thesis writing" },
-    { level: "Levels C1 & C2", price: "₹8,000", note: "Academic near-native mastery, specialized terminology" },
     { level: "Complete Combo (A1–B1)", price: "₹5,000 bundle", note: "All-inclusive lifetime access for 3 levels (Save ₹2,000)" }
   ];
 
@@ -169,7 +151,7 @@ export default function LanguageAcademy() {
             <span>Harry Overseas German Language Academy</span>
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-4">
-            Master German from A1 to C2
+            Master German from A1 to B2
           </h2>
           <p className="text-slate-600 mt-3 text-base sm:text-lg">
             Certified native & experienced Indian trainers, structured curriculum, online & offline batches tailored for nurses, students, job seekers, and spouses.
@@ -177,7 +159,7 @@ export default function LanguageAcademy() {
         </div>
 
         {/* Individual Course Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {courses.map((course, idx) => {
             const hasApp = !!includeAppMap[course.level];
             const currentPrice = hasApp ? course.totalWithApp : course.regularPrice;
@@ -324,7 +306,7 @@ export default function LanguageAcademy() {
                 </div>
                 <h4 className="text-sm font-bold text-white mb-1">5,000+ Smart Flashcards</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Spaced-repetition vocabulary trainer organized by CEFR levels from A1 basics to specialized C2 terminology.
+                  Spaced-repetition vocabulary trainer organized by CEFR levels from A1 basics to professional B2 terminology.
                 </p>
               </div>
 

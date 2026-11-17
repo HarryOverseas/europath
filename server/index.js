@@ -855,12 +855,27 @@ app.get('/api/news', async (req, res) => {
 });
 
 // ─── Chatbot API ──────────────────────────────────────────────────────────────
-// POST /api/chat  { message: string, history: { role, content }[] }
+// POST /api/chat  { message: string, history: { role, content }[], enquiryId?: string }
 // Uses Claude API when ANTHROPIC_API_KEY is set; falls back to rule-based replies.
 app.post('/api/chat', async (req, res) => {
-  const { message, history = [] } = req.body || {};
+  const { message, history = [], enquiryId } = req.body || {};
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ success: false, error: 'message is required' });
+  }
+
+  // If user is registered with an enquiry ID, log this question to their record
+  if (enquiryId && typeof enquiryId === 'string') {
+    try {
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const existing = await query('SELECT message FROM enquiries WHERE id = $1', [enquiryId]);
+      if (existing.rowCount > 0) {
+        const prevMessage = existing.rows[0].message || '';
+        const updatedMessage = `${prevMessage}\n• [${timestamp}] Asked: "${message.substring(0, 150)}"`.trim();
+        await query('UPDATE enquiries SET message = $1 WHERE id = $2', [updatedMessage, enquiryId]);
+      }
+    } catch (e) {
+      console.warn('[Chat] Could not append question to enquiry:', e.message);
+    }
   }
 
   // ---- Try Claude API (claude-haiku-5-5 for speed + cost) ----
@@ -936,6 +951,33 @@ Your tone is warm, professional, and concise. Answer immigration-related questio
   }
 
   return res.json({ success: true, reply });
+});
+
+// POST /api/chat/activity  { enquiryId: string, topic?: string, activity?: string }
+// Appends user chatbot interactions & checked topics to their registered enquiry record in the database
+app.post('/api/chat/activity', async (req, res) => {
+  const { enquiryId, topic, activity } = req.body || {};
+  if (!enquiryId || typeof enquiryId !== 'string') {
+    return res.status(400).json({ success: false, error: 'enquiryId is required' });
+  }
+
+  const logEntry = topic ? `Checked "${topic}"` : (activity || 'Interacted with chatbot');
+  const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+  try {
+    const existing = await query('SELECT message FROM enquiries WHERE id = $1', [enquiryId]);
+    if (existing.rowCount > 0) {
+      const prevMessage = existing.rows[0].message || '';
+      const updatedMessage = `${prevMessage}\n• [${timestamp}] ${logEntry}`.trim();
+      await query('UPDATE enquiries SET message = $1 WHERE id = $2', [updatedMessage, enquiryId]);
+      return res.json({ success: true, logged: true });
+    } else {
+      return res.status(404).json({ success: false, error: 'Enquiry not found' });
+    }
+  } catch (err) {
+    console.warn('[Chat Activity] Failed to record activity:', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to record chat activity' });
+  }
 });
 
 // Initialize database and start listening
