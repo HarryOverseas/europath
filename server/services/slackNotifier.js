@@ -14,6 +14,8 @@ export function isSlackConfigured(customWebhookUrl) {
   const url = customWebhookUrl ||
               process.env.SLACK_LEADS_WEBHOOK_URL ||
               process.env.SLACK_CAREERS_WEBHOOK_URL ||
+              process.env.CAREER_WEBHOOK_URL ||
+              process.env.CAREERS_WEBHOOK_URL ||
               process.env.SLACK_ALERTS_WEBHOOK_URL ||
               process.env.SLACK_WEBHOOK_URL;
 
@@ -146,11 +148,65 @@ export async function notifySlackNewLead(lead) {
 }
 
 /**
- * 2. Dispatch Job Application to Slack
+ * Dispatches raw JSON payload to generic custom webhook if configured (e.g. ATS, CRM, Zapier)
+ */
+async function dispatchGenericCareerWebhook(application) {
+  const genericUrl = process.env.CAREER_WEBHOOK_URL || process.env.CAREERS_WEBHOOK_URL;
+  if (!genericUrl || typeof genericUrl !== 'string' || !genericUrl.startsWith('http')) {
+    return;
+  }
+  // If it's already a Slack webhook, it is handled by postToSlack
+  if (genericUrl.startsWith('https://hooks.slack.com/')) {
+    return;
+  }
+
+  try {
+    const payload = {
+      event: 'career_application.created',
+      timestamp: new Date().toISOString(),
+      application: {
+        id: application.id,
+        full_name: application.full_name,
+        email: application.email,
+        phone: application.phone,
+        role: application.role,
+        resume_link: application.resume_link || '',
+        notes: application.notes || '',
+        status: application.status || 'New',
+        created_at: application.created_at || new Date().toISOString()
+      }
+    };
+
+    const res = await fetch(genericUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      console.log(`[CareerWebhook] Generic webhook dispatched successfully to ${genericUrl.substring(0, 30)}...`);
+    } else {
+      console.warn(`[CareerWebhook] Generic webhook responded with status ${res.status}`);
+    }
+  } catch (err) {
+    console.error('[CareerWebhook] Error dispatching generic webhook:', err.message);
+  }
+}
+
+/**
+ * 2. Dispatch Job Application to Slack & Career Webhooks
  */
 export async function notifySlackJobApplication(application) {
   setTimeout(async () => {
-    const webhookUrl = process.env.SLACK_CAREERS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
+    // 1. Generic ATS/CRM Webhook (if non-Slack CAREER_WEBHOOK_URL is set)
+    dispatchGenericCareerWebhook(application);
+
+    // 2. Slack Block Kit Webhook
+    const webhookUrl = process.env.SLACK_CAREERS_WEBHOOK_URL ||
+                       process.env.CAREER_WEBHOOK_URL ||
+                       process.env.CAREERS_WEBHOOK_URL ||
+                       process.env.SLACK_WEBHOOK_URL;
+
     if (!isSlackConfigured(webhookUrl)) {
       return;
     }
@@ -290,7 +346,7 @@ export async function notifySlackStageChange(type, item, previousStatus, newStat
     const isEnquiry = type === 'enquiry';
     const webhookUrl = isEnquiry
       ? (process.env.SLACK_LEADS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL)
-      : (process.env.SLACK_CAREERS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL);
+      : (process.env.SLACK_CAREERS_WEBHOOK_URL || process.env.CAREER_WEBHOOK_URL || process.env.CAREERS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL);
 
     if (!isSlackConfigured(webhookUrl)) {
       return;

@@ -9,7 +9,7 @@ console.log('====================================================');
 
 const webhookUrl = process.env.SLACK_WEBHOOK_URL || '';
 const leadsWebhook = process.env.SLACK_LEADS_WEBHOOK_URL || webhookUrl;
-const careersWebhook = process.env.SLACK_CAREERS_WEBHOOK_URL || webhookUrl;
+const careersWebhook = process.env.SLACK_CAREERS_WEBHOOK_URL || process.env.CAREER_WEBHOOK_URL || process.env.CAREERS_WEBHOOK_URL || webhookUrl;
 const alertsWebhook = process.env.SLACK_ALERTS_WEBHOOK_URL || webhookUrl;
 
 console.log('Webhook Configuration:');
