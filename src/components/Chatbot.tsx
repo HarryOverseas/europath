@@ -14,6 +14,7 @@ const AI_GIRL_AVATAR = "https://images.unsplash.com/photo-1573496359142-b8d87734
 
 const QUICK_REPLIES = [
   'German Course Fees (A1–Combo)',
+  '📱 Lifetime App Access (+₹1,000–₹8,000)',
   'Nurse Requirement in Germany',
   'German Language Courses (A1–B2)',
   'Germany Student & Job Visas',
@@ -73,7 +74,9 @@ export default function Chatbot() {
     let instantReply: string | null = null;
 
     if (lower.includes('combo') || lower.includes('fee') || lower.includes('price') || lower.includes('pricing') || lower.includes('cost')) {
-      instantReply = "📚 German Language Academy Regular Fees:\n\n• A1 Level: ₹14,999\n• A2 Level: ₹15,999\n• B1 Level: ₹17,999\n\n⭐ Complete German Combo (A1 + A2 + B1):\n₹45,999\n\nFlexible weekday and weekend batches available with study materials and Goethe / Telc exam preparation. Would you like to reserve a seat?";
+      instantReply = "📚 German Language Academy Regular Fees:\n\n• A1 Level: ₹14,999\n• A2 Level: ₹15,999\n• B1 Level: ₹17,999\n\n⭐ Complete German Combo (A1 + A2 + B1):\n₹45,999\n\n📱 Optional Lifetime App Access Add-on:\n• A1: +₹1,000 | A2/B1: +₹3,000 each | B2: +₹5,000 | C1/C2: +₹8,000\n\nFlexible weekday and weekend batches available with study materials and Goethe / Telc exam preparation. Would you like to reserve a seat?";
+    } else if (lower.includes('app') || lower.includes('lifetime') || lower.includes('mobile')) {
+      instantReply = "📱 Lifetime German Learning App Access Add-on:\n\nEnjoy 24/7 lifetime access to our self-paced learning portal & mobile app (native audio drills, 5,000+ smart vocabulary flashcards, and official Goethe/Telc mock exams):\n\n• A1 Level: +₹1,000 extra\n• A2 Level: +₹3,000 extra\n• B1 Level: +₹3,000 extra\n• B2 Level: +₹5,000 extra\n• C1 & C2 Levels: +₹8,000 extra\n• Complete Combo (A1–B1): +₹5,000 bundle rate\n\nYou can select this optional upgrade anytime during course enrolment!";
     } else if (lower.includes('nurse') || lower.includes('nursing') || lower.includes('hospital') || lower.includes('healthcare')) {
       instantReply = "🏥 Nurse Requirement in Germany:\n\nGermany is actively recruiting GNM & B.Sc Registered Nurses with:\n• European Salary: €2,800 to €3,600 / month (approx. ₹2.5L to ₹3.2L)\n• Free hospital placement assistance & contract sponsorship\n• Adaptation training for full German nursing license (Anerkennung)\n• Full family reunion rights for spouse & children\n\nWe provide complete B1/B2 German language training and credential recognition filing. Would you like our healthcare counselor to contact you?";
     } else if (lower.includes('youtube') || lower.includes('instagram') || lower.includes('social') || lower.includes('video')) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { secureFetch } from '../utils/secureApi';
-import { CheckCircle2, ArrowRight, ArrowLeft, Send, ShieldAlert, Sparkles } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ArrowLeft, Send, ShieldAlert, Sparkles, Smartphone } from 'lucide-react';
 
 export default function EnquiryWizard() {
   const [step, setStep] = useState(1);
@@ -36,9 +36,22 @@ export default function EnquiryWizard() {
     'Germany Arrival Assistance'
   ];
 
-  const languageOptions = ['A1', 'A2', 'B1', 'B2', 'Multiple Levels', 'Not Required'];
+  const languageOptions = ['A1', 'A2', 'B1', 'B2', 'C1 & C2', 'Complete Combo (A1-B1)', 'Not Required'];
+
+  const getAppAddonPrice = (lang: string) => {
+    switch (lang) {
+      case 'A1': return '₹1,000';
+      case 'A2':
+      case 'B1': return '₹3,000';
+      case 'B2': return '₹5,000';
+      case 'C1 & C2': return '₹8,000';
+      case 'Complete Combo (A1-B1)': return '₹5,000';
+      default: return '₹3,000';
+    }
+  };
 
   const additionalOptions = [
+    'Lifetime German Learning App Access (Self-Paced Drills & Mock Tests)',
     'University application assistance',
     'Document preparation & attestation',
     'CV / Statement of Purpose (SOP) assistance',
@@ -381,6 +394,52 @@ export default function EnquiryWizard() {
                       </label>
                     ))}
                   </div>
+
+                  {formData.languageCourse !== 'Not Required' && (
+                    <div
+                      onClick={() => {
+                        const appServiceKey = `Lifetime App Access (${formData.languageCourse} - +${getAppAddonPrice(formData.languageCourse)})`;
+                        const exists = formData.additionalServices.some(s => s.startsWith('Lifetime App Access'));
+                        setFormData(prev => ({
+                          ...prev,
+                          additionalServices: exists
+                            ? prev.additionalServices.filter(s => !s.startsWith('Lifetime App Access'))
+                            : [...prev.additionalServices, appServiceKey]
+                        }));
+                      }}
+                      className={`p-4 rounded-xl border cursor-pointer transition flex items-center justify-between select-none ${
+                        formData.additionalServices.some(s => s.startsWith('Lifetime App Access'))
+                          ? 'bg-amber-50 border-brand-gold text-amber-950 shadow-sm ring-1 ring-brand-gold'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-9 h-9 rounded-lg bg-brand-gold/20 text-brand-dark flex items-center justify-center flex-shrink-0">
+                          <Smartphone className="w-5 h-5 text-amber-700" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold flex items-center space-x-1.5 flex-wrap">
+                            <span>Add Lifetime Mobile &amp; Web App Access</span>
+                            <span className="text-brand-dark font-extrabold bg-brand-gold/40 px-2 py-0.5 rounded text-[11px]">
+                              +{getAppAddonPrice(formData.languageCourse)}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            24/7 audio drills, 5,000+ vocabulary flashcards &amp; Goethe/Telc mock exams
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ml-2 ${
+                        formData.additionalServices.some(s => s.startsWith('Lifetime App Access'))
+                          ? 'bg-amber-600 border-amber-600 text-white'
+                          : 'border-slate-300 bg-white'
+                      }`}>
+                        {formData.additionalServices.some(s => s.startsWith('Lifetime App Access')) && (
+                          <CheckCircle2 className="w-4 h-4" />
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
