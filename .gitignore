@@ -7,4 +7,6 @@ dist/
 *.sqlite
 *.sqlite-journal
 *.log
+archives/*.json
+!archives/.gitkeep
 dist/

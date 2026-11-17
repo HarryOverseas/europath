@@ -16,6 +16,14 @@ import {
   notifySlackAdminAlert,
   notifySlackStageChange
 } from './services/slackNotifier.js';
+import {
+  initArchivalTables,
+  runDataArchival,
+  getArchivalStats,
+  restoreArchivedEnquiry,
+  restoreArchivedApplication,
+  startDailyArchivalScheduler
+} from './services/archivalService.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -203,6 +211,9 @@ async function initDb() {
     );
     console.log(`[DB] Admin user credentials synchronized: ${adminUsername}`);
   }
+
+  // 4. Initialize Data Archival Tables & Audit Schema
+  await initArchivalTables(query);
 }
 
 // Multi-Inbox Notification Service handles email routing across
@@ -980,9 +991,91 @@ app.post('/api/chat/activity', async (req, res) => {
   }
 });
 
+// ─── Data Archival APIs (90-Day Policy) ──────────────────────────────────────
+// 1. Archival statistics and history
+app.get('/api/admin/archive/stats', authenticateToken, async (req, res) => {
+  try {
+    const stats = await getArchivalStats(query);
+    return res.json({ success: true, stats });
+  } catch (err) {
+    console.error('[Archival API] Error fetching stats:', err);
+    return res.status(500).json({ success: false, error: 'Failed to retrieve archival stats' });
+  }
+});
+
+// 2. On-demand manual trigger
+app.post('/api/admin/archive/run', authenticateToken, async (req, res) => {
+  const { daysThreshold = 90 } = req.body || {};
+  try {
+    const result = await runDataArchival(query, {
+      type: 'manual',
+      daysThreshold: parseInt(daysThreshold, 10) || 90
+    });
+    return res.json({ success: true, result });
+  } catch (err) {
+    console.error('[Archival API] Manual archival failed:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Archival execution failed' });
+  }
+});
+
+// 3. View archived enquiries
+app.get('/api/admin/archive/enquiries', authenticateToken, async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM archived_enquiries ORDER BY archived_at DESC LIMIT 500');
+    return res.json({ success: true, enquiries: result.rows, count: result.rowCount });
+  } catch (err) {
+    console.error('[Archival API] Error fetching archived enquiries:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch archived enquiries' });
+  }
+});
+
+// 4. View archived applications
+app.get('/api/admin/archive/applications', authenticateToken, async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM archived_applications ORDER BY archived_at DESC LIMIT 500');
+    return res.json({ success: true, applications: result.rows, count: result.rowCount });
+  } catch (err) {
+    console.error('[Archival API] Error fetching archived applications:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch archived applications' });
+  }
+});
+
+// 5. Restore an archived enquiry back to active enquiries
+app.post('/api/admin/archive/restore/enquiry/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await restoreArchivedEnquiry(query, id);
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    return res.json({ success: true, message: `Enquiry #${id} restored to active enquiries` });
+  } catch (err) {
+    console.error('[Archival API] Error restoring enquiry:', err);
+    return res.status(500).json({ success: false, error: 'Failed to restore enquiry' });
+  }
+});
+
+// 6. Restore an archived application back to active candidates
+app.post('/api/admin/archive/restore/application/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await restoreArchivedApplication(query, id);
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    return res.json({ success: true, message: `Application #${id} restored to active candidates` });
+  } catch (err) {
+    console.error('[Archival API] Error restoring application:', err);
+    return res.status(500).json({ success: false, error: 'Failed to restore application' });
+  }
+});
+
 // Initialize database and start listening
 await connectDb();
 await initDb();
+
+// Start daily automated archival scheduler (checks every 24h for records older than 90 days)
+startDailyArchivalScheduler(query, { daysThreshold: 90 });
 
 let server = null;
 if (process.env.NODE_ENV !== 'test_no_listen' && !process.env.VERCEL) {

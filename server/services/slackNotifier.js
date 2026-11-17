@@ -434,10 +434,61 @@ export async function notifySlackStageChange(type, item, previousStatus, newStat
   }, 50);
 }
 
+/**
+ * 5. Dispatch Data Archival Summary to Slack
+ */
+export async function notifySlackArchivalSummary({
+  enquiriesCount = 0,
+  applicationsCount = 0,
+  daysThreshold = 90,
+  type = 'automated'
+} = {}) {
+  const webhookUrl = process.env.SLACK_ALERTS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
+  if (!isSlackConfigured(webhookUrl)) return;
+
+  const totalArchived = enquiriesCount + applicationsCount;
+  const isAutomated = type === 'automated';
+
+  const payload = {
+    text: `📦 [Data Archival] ${isAutomated ? 'Daily Automated' : 'Manual'} Archival Completed: ${totalArchived} records archived (${daysThreshold}+ days old)`,
+    blocks: [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: `📦 Data Archival Report (${daysThreshold}+ Days)`,
+          emoji: true
+        }
+      },
+      {
+        type: 'section',
+        fields: [
+          { type: 'mrkdwn', text: `*Execution:*\n${isAutomated ? '⏰ Daily Automated Scheduler' : '👤 Manual Admin Execution'}` },
+          { type: 'mrkdwn', text: `*Threshold:*\nOlder than ${daysThreshold} Days` },
+          { type: 'mrkdwn', text: `*Archived Enquiries:*\n\`${enquiriesCount}\` records` },
+          { type: 'mrkdwn', text: `*Archived Candidates:*\n\`${applicationsCount}\` records` }
+        ]
+      },
+      {
+        type: 'context',
+        elements: [
+          { type: 'mrkdwn', text: `🗄️ *Harry Overseas Compliance & Data Retention Engine* • ${new Date().toLocaleString()}` }
+        ]
+      }
+    ]
+  };
+
+  const res = await postToSlack(webhookUrl, payload);
+  if (res.success) {
+    console.log(`[SlackNotifier] Archival summary alert dispatched to Slack.`);
+  }
+}
+
 export default {
   isSlackConfigured,
   notifySlackNewLead,
   notifySlackJobApplication,
   notifySlackAdminAlert,
-  notifySlackStageChange
+  notifySlackStageChange,
+  notifySlackArchivalSummary
 };

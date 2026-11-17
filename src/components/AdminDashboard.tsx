@@ -22,7 +22,10 @@ import {
   AlertCircle,
   X,
   Eye,
-  GraduationCap
+  GraduationCap,
+  Archive,
+  Database,
+  RotateCcw
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -94,8 +97,21 @@ const CANDIDATE_STATUSES = [
 const ENQUIRY_STATUSES = ['All', 'New', 'Contacted', 'In Progress', 'Closed'];
 
 export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardProps) {
-  // Navigation tab: 'enquiries' | 'applications'
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'applications'>('enquiries');
+  // Navigation tab: 'enquiries' | 'applications' | 'archives'
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'applications' | 'archives'>('enquiries');
+
+  // Archival state
+  const [archivalStats, setArchivalStats] = useState<{
+    totalArchivedEnquiries: number;
+    totalArchivedApplications: number;
+    lastExecution: any;
+    recentLogs: any[];
+  } | null>(null);
+  const [archivedEnquiries, setArchivedEnquiries] = useState<any[]>([]);
+  const [archivedApplications, setArchivedApplications] = useState<any[]>([]);
+  const [archivalSubTab, setArchivalSubTab] = useState<'overview' | 'enquiries' | 'applications'>('overview');
+  const [runningArchival, setRunningArchival] = useState(false);
+  const [loadingArchives, setLoadingArchives] = useState(false);
 
   // Enquiries state
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
@@ -463,11 +479,104 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     }
   };
 
+  const loadArchivalData = async () => {
+    setLoadingArchives(true);
+    const token = getAuthToken();
+    try {
+      const [statsRes, enqRes, appRes] = await Promise.all([
+        fetch('/api/admin/archive/stats', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/admin/archive/enquiries', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/admin/archive/applications', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      if (statsRes.ok) {
+        const d = await statsRes.json();
+        setArchivalStats(d.stats);
+      }
+      if (enqRes.ok) {
+        const d = await enqRes.json();
+        setArchivedEnquiries(d.enquiries || []);
+      }
+      if (appRes.ok) {
+        const d = await appRes.json();
+        setArchivedApplications(d.applications || []);
+      }
+    } catch (err) {
+      console.warn('Error loading archival data:', err);
+    } finally {
+      setLoadingArchives(false);
+    }
+  };
+
+  const triggerManualArchival = async () => {
+    if (runningArchival) return;
+    setRunningArchival(true);
+    const token = getAuthToken();
+    try {
+      const res = await fetch('/api/admin/archive/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ daysThreshold: 90 })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotice(`Archival completed! Enquiries: ${data.result.enquiriesArchived}, Candidates: ${data.result.applicationsArchived}`);
+        await loadArchivalData();
+        await loadEnquiries();
+        await loadApplications();
+      } else {
+        showNotice(`Archival failed: ${data.error || 'Server error'}`);
+      }
+    } catch (e: any) {
+      showNotice(`Network error running archival: ${e.message}`);
+    } finally {
+      setRunningArchival(false);
+    }
+  };
+
+  const handleRestoreEnquiry = async (id: string) => {
+    const token = getAuthToken();
+    try {
+      const res = await fetch(`/api/admin/archive/restore/enquiry/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showNotice(`Enquiry #${id} restored to active enquiries`);
+        await loadArchivalData();
+        await loadEnquiries();
+      }
+    } catch {
+      showNotice('Failed to restore enquiry');
+    }
+  };
+
+  const handleRestoreApplication = async (id: number | string) => {
+    const token = getAuthToken();
+    try {
+      const res = await fetch(`/api/admin/archive/restore/application/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showNotice(`Candidate #${id} restored to active applications`);
+        await loadArchivalData();
+        await loadApplications();
+      }
+    } catch {
+      showNotice('Failed to restore application');
+    }
+  };
+
   const handleRefresh = () => {
     if (activeTab === 'enquiries') {
       loadEnquiries();
-    } else {
+    } else if (activeTab === 'applications') {
       loadApplications();
+    } else if (activeTab === 'archives') {
+      loadArchivalData();
     }
   };
 
@@ -573,12 +682,38 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                 {applications.length}
               </span>
             </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('archives');
+                setSelectedEnquiry(null);
+                setSelectedApplication(null);
+                loadArchivalData();
+              }}
+              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
+                activeTab === 'archives'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Archive className="w-4 h-4 text-emerald-600" />
+              <span>Data Archive (90+ Days)</span>
+              {archivalStats && (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  activeTab === 'archives' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/70 text-slate-600'
+                }`}>
+                  {archivalStats.totalArchivedEnquiries + archivalStats.totalArchivedApplications}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="text-xs text-slate-500 font-medium">
             {activeTab === 'enquiries' 
               ? `Showing ${filteredEnquiries.length} of ${enquiries.length} enquiries`
-              : `Showing ${filteredApplications.length} of ${applications.length} candidates`}
+              : activeTab === 'applications'
+                ? `Showing ${filteredApplications.length} of ${applications.length} candidates`
+                : `Cold Storage: ${archivalStats ? (archivalStats.totalArchivedEnquiries + archivalStats.totalArchivedApplications) : 0} archived records`}
           </div>
         </div>
 
@@ -1255,6 +1390,338 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
           </div>
         )}
 
+        {/* ======================================================== */}
+        {/* TAB 3: DATA ARCHIVE VIEW (90+ DAYS RETENTION)            */}
+        {/* ======================================================== */}
+        {activeTab === 'archives' && (
+          <div className="space-y-6">
+            {/* Top Archival Policy Card */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                      Daily Automated Archival Active
+                    </span>
+                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                      Retention Policy: 90 Days
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900">
+                    Automated Data Archival & Cold Storage
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
+                    Customer enquiries and job candidate records older than 90 days are automatically migrated from active operational tables into historical archive tables daily at 02:00 AM off-peak. Backups are exported as immutable JSON snapshots in the <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded">/archives</code> filesystem directory.
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-3 flex-shrink-0">
+                  <button
+                    onClick={loadArchivalData}
+                    disabled={loadingArchives}
+                    className="p-2.5 rounded-xl border border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
+                    title="Refresh Archive Data"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingArchives ? 'animate-spin' : ''}`} />
+                  </button>
+
+                  <button
+                    onClick={triggerManualArchival}
+                    disabled={runningArchival}
+                    className="bg-brand-navy hover:bg-brand-dark text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center space-x-2 disabled:opacity-50"
+                  >
+                    {runningArchival ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-brand-gold" />
+                        <span>Running Archival...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="w-3.5 h-3.5 text-brand-gold" />
+                        <span>Run 90-Day Archival Now</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* KPI Metrics Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-semibold">Archived Enquiries</span>
+                    <MessageCircle className="w-4 h-4 text-brand-navy" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {archivalStats?.totalArchivedEnquiries ?? 0}
+                  </div>
+                  <span className="text-[11px] text-slate-500">Records &gt; 90 days old</span>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-semibold">Archived Candidates</span>
+                    <Briefcase className="w-4 h-4 text-brand-gold" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {archivalStats?.totalArchivedApplications ?? 0}
+                  </div>
+                  <span className="text-[11px] text-slate-500">Past job applications</span>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-semibold">Last Execution</span>
+                    <Clock className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-sm font-bold text-slate-900 mt-2 truncate">
+                    {archivalStats?.lastExecution ? new Date(archivalStats.lastExecution.executed_at).toLocaleString() : 'Pending'}
+                  </div>
+                  <span className="text-[11px] text-emerald-600 font-semibold">
+                    {archivalStats?.lastExecution?.status || 'Scheduled at 02:00 AM'}
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-semibold">Storage Engine</span>
+                    <Database className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="text-sm font-bold text-slate-900 mt-2">
+                    PostgreSQL + JSON
+                  </div>
+                  <span className="text-[11px] text-slate-500">Disk snapshots in /archives</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sub-Tabs for Archive View */}
+            <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
+              <button
+                onClick={() => setArchivalSubTab('overview')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+                  archivalSubTab === 'overview'
+                    ? 'bg-brand-navy text-white shadow'
+                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Execution Audit Logs ({archivalStats?.recentLogs?.length || 0})
+              </button>
+
+              <button
+                onClick={() => setArchivalSubTab('enquiries')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+                  archivalSubTab === 'enquiries'
+                    ? 'bg-brand-navy text-white shadow'
+                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Archived Enquiries ({archivedEnquiries.length})
+              </button>
+
+              <button
+                onClick={() => setArchivalSubTab('applications')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+                  archivalSubTab === 'applications'
+                    ? 'bg-brand-navy text-white shadow'
+                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Archived Candidates ({archivedApplications.length})
+              </button>
+            </div>
+
+            {/* SUB-VIEW 1: AUDIT LOGS */}
+            {archivalSubTab === 'overview' && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 font-bold text-sm text-slate-800">
+                  Recent Archival Executions & Audit Trail
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                      <tr>
+                        <th className="p-4">Execution Time</th>
+                        <th className="p-4">Type</th>
+                        <th className="p-4">Retention Threshold</th>
+                        <th className="p-4">Enquiries Moved</th>
+                        <th className="p-4">Candidates Moved</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {archivalStats?.recentLogs && archivalStats.recentLogs.length > 0 ? (
+                        archivalStats.recentLogs.map((log: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-slate-50/80">
+                            <td className="p-4 font-mono font-semibold text-slate-700">
+                              {new Date(log.executed_at).toLocaleString()}
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-2 py-0.5 rounded-full font-bold ${
+                                log.execution_type === 'automated' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                              }`}>
+                                {log.execution_type}
+                              </span>
+                            </td>
+                            <td className="p-4 text-slate-600 font-semibold">{log.days_threshold} Days</td>
+                            <td className="p-4 font-bold text-slate-800">{log.enquiries_archived}</td>
+                            <td className="p-4 font-bold text-slate-800">{log.applications_archived}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-0.5 rounded-full font-bold ${
+                                log.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                              }`}>
+                                {log.status}
+                              </span>
+                            </td>
+                            <td className="p-4 text-slate-500 max-w-xs truncate" title={log.details}>
+                              {log.details || 'Archived per policy'}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-500">
+                            No archival runs recorded yet. Click "Run 90-Day Archival Now" to execute.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 2: ARCHIVED ENQUIRIES */}
+            {archivalSubTab === 'enquiries' && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                  <span className="font-bold text-sm text-slate-800">Archived Enquiries ({archivedEnquiries.length})</span>
+                  <span className="text-xs text-slate-400">Records older than 90 days</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                      <tr>
+                        <th className="p-4">ID</th>
+                        <th className="p-4">Client Name</th>
+                        <th className="p-4">Contact</th>
+                        <th className="p-4">Service Interest</th>
+                        <th className="p-4">Original Date</th>
+                        <th className="p-4">Archived At</th>
+                        <th className="p-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {archivedEnquiries.length > 0 ? (
+                        archivedEnquiries.map((enq: any) => (
+                          <tr key={enq.id} className="hover:bg-slate-50/80">
+                            <td className="p-4 font-mono font-bold text-brand-navy">{enq.id}</td>
+                            <td className="p-4 font-bold text-slate-900">{enq.full_name}</td>
+                            <td className="p-4 text-slate-600">
+                              <div>{enq.mobile || enq.phone}</div>
+                              <div className="text-[11px] text-slate-400">{enq.email}</div>
+                            </td>
+                            <td className="p-4 text-slate-700">{enq.service_interest || 'N/A'}</td>
+                            <td className="p-4 text-slate-500 font-mono">
+                              {enq.created_at ? new Date(enq.created_at).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="p-4 text-slate-500 font-mono">
+                              {enq.archived_at ? new Date(enq.archived_at).toLocaleString() : 'N/A'}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                onClick={() => handleRestoreEnquiry(enq.id)}
+                                className="inline-flex items-center space-x-1 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-bold hover:bg-emerald-100 transition"
+                                title="Restore to active enquiries"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>Restore</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-500">
+                            No archived enquiries found. All active enquiries are currently under 90 days old.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 3: ARCHIVED APPLICATIONS */}
+            {archivalSubTab === 'applications' && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                  <span className="font-bold text-sm text-slate-800">Archived Job Candidates ({archivedApplications.length})</span>
+                  <span className="text-xs text-slate-400">Records older than 90 days</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                      <tr>
+                        <th className="p-4">ID</th>
+                        <th className="p-4">Candidate</th>
+                        <th className="p-4">Contact</th>
+                        <th className="p-4">Applied Role</th>
+                        <th className="p-4">Original Date</th>
+                        <th className="p-4">Archived At</th>
+                        <th className="p-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {archivedApplications.length > 0 ? (
+                        archivedApplications.map((app: any) => (
+                          <tr key={app.id} className="hover:bg-slate-50/80">
+                            <td className="p-4 font-mono font-bold text-slate-400">#{app.id}</td>
+                            <td className="p-4 font-bold text-slate-900">{app.full_name}</td>
+                            <td className="p-4 text-slate-600">
+                              <div>{app.phone}</div>
+                              <div className="text-[11px] text-slate-400">{app.email}</div>
+                            </td>
+                            <td className="p-4">
+                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${getRoleBadgeColor(app.role)}`}>
+                                {app.role}
+                              </span>
+                            </td>
+                            <td className="p-4 text-slate-500 font-mono">
+                              {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="p-4 text-slate-500 font-mono">
+                              {app.archived_at ? new Date(app.archived_at).toLocaleString() : 'N/A'}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                onClick={() => handleRestoreApplication(app.id)}
+                                className="inline-flex items-center space-x-1 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-bold hover:bg-emerald-100 transition"
+                                title="Restore to active job applications"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>Restore</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-500">
+                            No archived candidates found. All current candidate applications are under 90 days old.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

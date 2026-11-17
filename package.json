@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "server": "node server/index.js",
     "migrate": "node scripts/migrate-to-postgres.js",
+    "archive": "node scripts/archive-old-data.js",
     "test": "node tests/run_tests.mjs"
   },
   "dependencies": {
