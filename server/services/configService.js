@@ -43,6 +43,9 @@ export const CONFIG_KEYS = {
  * @param {Function} queryFn - Database query function
  */
 export async function initConfigService(queryFn) {
+  if (isInitialized) {
+    return;
+  }
   try {
     // 1. Create table if not exists
     await queryFn(`
@@ -57,45 +60,7 @@ export async function initConfigService(queryFn) {
       )
     `);
 
-    // 2. Initial seed items from process.env (only insert if key does not exist yet)
-    const seedItems = [
-      { key: 'EMAIL_HOST', val: process.env.EMAIL_HOST || 'smtp.gmail.com', cat: 'email', desc: 'SMTP Host Server', secret: false },
-      { key: 'EMAIL_PORT', val: process.env.EMAIL_PORT || '587', cat: 'email', desc: 'SMTP Port (587 or 465)', secret: false },
-      { key: 'EMAIL_ADMIN', val: process.env.EMAIL_ADMIN || 'admin.harryoverseas@gmail.com', cat: 'email', desc: 'Administrative Oversight Email', secret: false },
-      { key: 'EMAIL_INFO', val: process.env.EMAIL_INFO || 'info.harryoverseas@gmail.com', cat: 'email', desc: 'Leads & Enquiries Recipient Email', secret: false },
-      { key: 'EMAIL_SUPPORT', val: process.env.EMAIL_SUPPORT || 'support.harryoverseas@gmail.com', cat: 'email', desc: 'Job Applications Recipient Email', secret: false },
-      
-      { key: 'EMAIL_INFO_USER', val: process.env.EMAIL_INFO_USER || process.env.EMAIL_INFO || 'info.harryoverseas@gmail.com', cat: 'email', desc: 'Info Gmail SMTP Username', secret: false },
-      { key: 'EMAIL_INFO_PASS', val: process.env.EMAIL_INFO_PASS || process.env.EMAIL_PASS || '', cat: 'email', desc: 'Info Gmail App Password (16 chars)', secret: true },
-      
-      { key: 'EMAIL_SUPPORT_USER', val: process.env.EMAIL_SUPPORT_USER || process.env.EMAIL_SUPPORT || 'support.harryoverseas@gmail.com', cat: 'email', desc: 'Support Gmail SMTP Username', secret: false },
-      { key: 'EMAIL_SUPPORT_PASS', val: process.env.EMAIL_SUPPORT_PASS || process.env.EMAIL_PASS || '', cat: 'email', desc: 'Support Gmail App Password (16 chars)', secret: true },
-
-      { key: 'EMAIL_ADMIN_USER', val: process.env.EMAIL_ADMIN_USER || '', cat: 'email', desc: 'Admin Gmail SMTP Username (Optional)', secret: false },
-      { key: 'EMAIL_ADMIN_PASS', val: process.env.EMAIL_ADMIN_PASS || '', cat: 'email', desc: 'Admin Gmail App Password (Optional)', secret: true },
-
-      { key: 'SLACK_WEBHOOK_URL', val: process.env.SLACK_WEBHOOK_URL || '', cat: 'slack', desc: 'Primary Slack Incoming Webhook URL', secret: true },
-      { key: 'SLACK_LEADS_WEBHOOK_URL', val: process.env.SLACK_LEADS_WEBHOOK_URL || '', cat: 'slack', desc: 'Slack Webhook for Leads & Enquiries', secret: true },
-      { key: 'SLACK_CAREERS_WEBHOOK_URL', val: process.env.SLACK_CAREERS_WEBHOOK_URL || process.env.CAREER_WEBHOOK_URL || '', cat: 'slack', desc: 'Slack Webhook for Job Applications', secret: true },
-      { key: 'SLACK_ALERTS_WEBHOOK_URL', val: process.env.SLACK_ALERTS_WEBHOOK_URL || '', cat: 'slack', desc: 'Slack Webhook for Security Alerts & Audit', secret: true },
-
-      { key: 'SUPPORT_PHONE', val: '+91 80080 00000', cat: 'general', desc: 'Customer Support Helpline Number', secret: false },
-      { key: 'WHATSAPP_SUPPORT_NUMBER', val: '+91 99999 99999', cat: 'general', desc: 'Official WhatsApp Dispatch / Support Number', secret: false },
-      { key: 'PORTAL_MAINTENANCE_MODE', val: 'false', cat: 'general', desc: 'Maintenance Mode Flag (true/false)', secret: false }
-    ];
-
-    for (const item of seedItems) {
-      if (item.val) {
-        await queryFn(
-          `INSERT INTO system_settings (key, value, category, description, is_secret, updated_by)
-           VALUES ($1, $2, $3, $4, $5, 'system_init')
-           ON CONFLICT (key) DO NOTHING`,
-          [item.key, item.val, item.cat, item.desc, item.secret]
-        );
-      }
-    }
-
-    // 3. Load all rows into memory cache
+    // 2. Load all rows into memory cache
     await refreshCache(queryFn);
     isInitialized = true;
     console.log(`[ConfigService] Initialized with ${Object.keys(cachedSettings).length} dynamic database settings.`);

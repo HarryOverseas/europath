@@ -231,7 +231,7 @@ async function initDb() {
   // 4. Initialize Data Archival Tables & Audit Schema
   await initArchivalTables(query);
 
-  // 5. Initialize Dynamic System Configuration & Settings Table
+  // 5. Initialize Dynamic System Configuration Cache (Schema & records seeded via seedSettings.js)
   await initConfigService(query);
 }
 
