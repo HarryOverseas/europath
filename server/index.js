@@ -203,35 +203,10 @@ async function initDb() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // Admin seeding / credentials synchronization from .env
-  const adminUsername = (process.env.ADMIN_USERNAME || 'admin').trim();
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin_harry_2026_secure';
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin.harryoverseas@gmail.com').trim();
-
-  const salt = bcrypt.genSaltSync(10);
-  const hash = bcrypt.hashSync(adminPassword, salt);
-  const superAdminPerms = JSON.stringify(['*']);
-
-  const existing = await query('SELECT * FROM users WHERE username = $1', [adminUsername]);
-  if (existing.rows.length === 0) {
-    await query(
-      'INSERT INTO users (username, email, password_hash, role, permissions) VALUES ($1, $2, $3, $4, $5)',
-      [adminUsername, adminEmail, hash, 'Super Admin', superAdminPerms]
-    );
-    console.log(`[DB] Admin user created: ${adminUsername}`);
-  } else {
-    // Keep password hash synchronized with current environment configuration and ensure permissions
-    await query(
-      'UPDATE users SET password_hash = $1, permissions = $2 WHERE username = $3',
-      [hash, superAdminPerms, adminUsername]
-    );
-    console.log(`[DB] Admin user credentials synchronized: ${adminUsername}`);
-  }
-
   // 4. Initialize Data Archival Tables & Audit Schema
   await initArchivalTables(query);
 
-  // 5. Initialize Dynamic System Configuration Cache (Schema & records seeded via seedSettings.js)
+  // 5. Initialize Dynamic System Configuration Cache (User accounts & system settings are managed in database)
   await initConfigService(query);
 }
 
@@ -1145,7 +1120,7 @@ app.post('/api/chat', async (req, res) => {
   }
 
   // ---- Try Claude API (claude-haiku-5-5 for speed + cost) ----
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = getConfig('ANTHROPIC_API_KEY');
   if (apiKey) {
     try {
       const systemPrompt = `You are Harry, a friendly and knowledgeable immigration assistant for Harry Overseas Immigration, based in Anantapur, Andhra Pradesh, India. You help prospective students and workers navigate visa applications, language courses, and relocation to Germany and Europe.

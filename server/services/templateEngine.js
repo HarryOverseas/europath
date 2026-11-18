@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getConfig } from './configService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,10 +75,10 @@ function enrichData(data = {}) {
   enriched.year = new Date().getFullYear();
   enriched.currentDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-  // 4. Contact inboxes
-  enriched.emailAdmin = process.env.EMAIL_ADMIN || 'admin.harryoverseas@gmail.com';
-  enriched.emailInfo = process.env.EMAIL_INFO || 'info.harryoverseas@gmail.com';
-  enriched.emailSupport = process.env.EMAIL_SUPPORT || 'support.harryoverseas@gmail.com';
+  // 4. Contact inboxes (read dynamically from database settings)
+  enriched.emailAdmin = getConfig('EMAIL_ADMIN', 'admin.harryoverseas@gmail.com');
+  enriched.emailInfo = getConfig('EMAIL_INFO', 'info.harryoverseas@gmail.com');
+  enriched.emailSupport = getConfig('EMAIL_SUPPORT', 'support.harryoverseas@gmail.com');
 
   return enriched;
 }

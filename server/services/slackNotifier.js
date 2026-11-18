@@ -152,7 +152,7 @@ export async function notifySlackNewLead(lead) {
  * Dispatches raw JSON payload to generic custom webhook if configured (e.g. ATS, CRM, Zapier)
  */
 async function dispatchGenericCareerWebhook(application) {
-  const genericUrl = process.env.CAREER_WEBHOOK_URL || process.env.CAREERS_WEBHOOK_URL;
+  const genericUrl = getConfig('CAREER_WEBHOOK_URL') || getConfig('CAREERS_WEBHOOK_URL');
   if (!genericUrl || typeof genericUrl !== 'string' || !genericUrl.startsWith('http')) {
     return;
   }
@@ -346,8 +346,8 @@ export async function notifySlackStageChange(type, item, previousStatus, newStat
   setTimeout(async () => {
     const isEnquiry = type === 'enquiry';
     const webhookUrl = isEnquiry
-      ? (process.env.SLACK_LEADS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL)
-      : (process.env.SLACK_CAREERS_WEBHOOK_URL || process.env.CAREER_WEBHOOK_URL || process.env.CAREERS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL);
+      ? (getConfig('SLACK_LEADS_WEBHOOK_URL') || getConfig('SLACK_WEBHOOK_URL'))
+      : (getConfig('SLACK_CAREERS_WEBHOOK_URL') || getConfig('CAREER_WEBHOOK_URL') || getConfig('CAREERS_WEBHOOK_URL') || getConfig('SLACK_WEBHOOK_URL'));
 
     if (!isSlackConfigured(webhookUrl)) {
       return;
@@ -444,7 +444,7 @@ export async function notifySlackArchivalSummary({
   daysThreshold = 90,
   type = 'automated'
 } = {}) {
-  const webhookUrl = process.env.SLACK_ALERTS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
+  const webhookUrl = getConfig('SLACK_ALERTS_WEBHOOK_URL') || getConfig('SLACK_WEBHOOK_URL');
   if (!isSlackConfigured(webhookUrl)) return;
 
   const totalArchived = enquiriesCount + applicationsCount;
