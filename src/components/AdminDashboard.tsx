@@ -1722,6 +1722,24 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             )}
           </div>
         )}
+
+        {/* Developer & System Caretaker Footer Badge */}
+        <div className="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Platform Status: Fully Operational</span>
+            <span className="text-slate-300">•</span>
+            <span>Multi-Inbox SMTP & Slack Realtime Webhooks Active</span>
+          </div>
+
+          <div className="flex items-center space-x-2 bg-white px-3.5 py-1.5 rounded-full border border-slate-200 shadow-sm text-[11px]">
+            <span className="text-slate-500">System Architect & Caretaker:</span>
+            <strong className="text-brand-navy font-bold">Yathin</strong>
+            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              Lead Support & Engineering
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

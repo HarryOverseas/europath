@@ -1,5 +1,8 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 import { renderTemplate } from './templateEngine.js';
+
+dotenv.config();
 
 /**
  * Multi-Inbox Email Notification Service
@@ -15,33 +18,42 @@ const EMAIL_SUPPORT = process.env.EMAIL_SUPPORT || 'support.harryoverseas@gmail.
 
 const EMAIL_HOST = process.env.EMAIL_HOST || 'smtp.gmail.com';
 const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || '587', 10);
-const EMAIL_USER = process.env.EMAIL_USER || '';
-const EMAIL_PASS = process.env.EMAIL_PASS || '';
 
-// Initialize Nodemailer Transporter
-const transporter = nodemailer.createTransport({
-  host: EMAIL_HOST,
-  port: EMAIL_PORT,
-  secure: EMAIL_PORT === 465, // true for 465, false for 587
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS
+// Specialized account credentials for Multi-Inbox
+const INFO_USER = process.env.EMAIL_INFO_USER || process.env.EMAIL_USER || EMAIL_INFO;
+const INFO_PASS = (process.env.EMAIL_INFO_PASS || process.env.EMAIL_PASS || '').trim();
+
+const SUPPORT_USER = process.env.EMAIL_SUPPORT_USER || process.env.EMAIL_USER || EMAIL_SUPPORT;
+const SUPPORT_PASS = (process.env.EMAIL_SUPPORT_PASS || process.env.EMAIL_PASS || '').trim();
+
+// Administrative inbox uses info or support credentials as fallback if dedicated pass not specified
+const ADMIN_USER = process.env.EMAIL_ADMIN_USER || INFO_USER;
+const ADMIN_PASS = (process.env.EMAIL_ADMIN_PASS || INFO_PASS || SUPPORT_PASS || '').trim();
+
+function createTransporter(user, pass) {
+  if (!user || !pass || pass === 'sample_app_password' || pass === 'your_16_char_google_app_password') {
+    return null;
   }
-});
+  return nodemailer.createTransport({
+    host: EMAIL_HOST,
+    port: EMAIL_PORT,
+    secure: EMAIL_PORT === 465,
+    auth: { user, pass }
+  });
+}
+
+// Dedicated transporters per business inbox
+const infoTransporter = createTransporter(INFO_USER, INFO_PASS);
+const supportTransporter = createTransporter(SUPPORT_USER, SUPPORT_PASS);
+const adminTransporter = createTransporter(ADMIN_USER, ADMIN_PASS) || infoTransporter || supportTransporter;
 
 /**
- * Checks if SMTP credentials are configured and not using placeholder sample values.
+ * Checks if at least one SMTP inbox is configured
  */
-function isSmtpConfigured() {
-  if (!EMAIL_USER || !EMAIL_PASS) return false;
-  if (
-    EMAIL_PASS === 'sample_app_password' ||
-    EMAIL_PASS === 'your_16_char_google_app_password' ||
-    EMAIL_USER === 'sample@example.com'
-  ) {
-    return false;
-  }
-  return true;
+function isSmtpConfigured(category = 'info') {
+  if (category === 'support') return !!supportTransporter;
+  if (category === 'admin') return !!adminTransporter;
+  return !!infoTransporter;
 }
 
 /**
@@ -52,8 +64,8 @@ function isSmtpConfigured() {
 export async function notifyNewEnquiry(lead) {
   setTimeout(async () => {
     try {
-      if (!isSmtpConfigured()) {
-        console.log(`[Notifier Note]: SMTP credentials not fully configured in .env. Enquiry notification skipped for lead #${lead.id}.`);
+      if (!isSmtpConfigured('info')) {
+        console.log(`[Notifier Note]: SMTP credentials not fully configured in .env for info. Enquiry notification skipped for lead #${lead.id}.`);
         return;
       }
 
@@ -80,8 +92,8 @@ export async function notifyNewEnquiry(lead) {
       const internalEmail = renderTemplate('admin_lead_alert', leadData);
       const ccList = isUrgent ? [EMAIL_ADMIN] : [];
 
-      await transporter.sendMail({
-        from: `"Harry Overseas Leads" <${EMAIL_USER}>`,
+      await infoTransporter.sendMail({
+        from: `"Harry Overseas Leads" <${INFO_USER}>`,
         to: EMAIL_INFO,
         cc: ccList.length > 0 ? ccList.join(', ') : undefined,
         replyTo: lead.email,
@@ -111,8 +123,8 @@ export async function notifyNewEnquiry(lead) {
 
         const clientEmail = renderTemplate(clientTemplateId, leadData);
 
-        await transporter.sendMail({
-          from: `"Harry Overseas Advisory" <${EMAIL_USER}>`,
+        await infoTransporter.sendMail({
+          from: `"Harry Overseas Advisory" <${INFO_USER}>`,
           to: lead.email,
           replyTo: EMAIL_INFO,
           subject: clientEmail.subject,
@@ -134,8 +146,8 @@ export async function notifyNewEnquiry(lead) {
 export async function notifyNewJobApplication(application) {
   setTimeout(async () => {
     try {
-      if (!isSmtpConfigured()) {
-        console.log(`[Notifier Note]: SMTP credentials not configured in .env. Application notification skipped for application #${application.id}.`);
+      if (!isSmtpConfigured('support')) {
+        console.log(`[Notifier Note]: SMTP credentials not configured in .env for support. Application notification skipped for application #${application.id}.`);
         return;
       }
 
@@ -152,8 +164,8 @@ export async function notifyNewJobApplication(application) {
       // 1. Dispatch Support Team Alert (via support_career_alert JSON template)
       const internalEmail = renderTemplate('support_career_alert', appData);
 
-      await transporter.sendMail({
-        from: `"Harry Overseas Recruitment" <${EMAIL_USER}>`,
+      await supportTransporter.sendMail({
+        from: `"Harry Overseas Recruitment" <${SUPPORT_USER}>`,
         to: EMAIL_SUPPORT,
         replyTo: application.email,
         subject: internalEmail.subject,
@@ -166,8 +178,8 @@ export async function notifyNewJobApplication(application) {
       if (application.email && application.email.includes('@')) {
         const applicantEmail = renderTemplate('job_applicant_receipt', appData);
 
-        await transporter.sendMail({
-          from: `"Harry Overseas Careers" <${EMAIL_USER}>`,
+        await supportTransporter.sendMail({
+          from: `"Harry Overseas Careers" <${SUPPORT_USER}>`,
           to: application.email,
           replyTo: EMAIL_SUPPORT,
           subject: applicantEmail.subject,
@@ -189,7 +201,7 @@ export async function notifyNewJobApplication(application) {
 export async function notifyAdminAlert(subject, message, details = {}) {
   setTimeout(async () => {
     try {
-      if (!isSmtpConfigured()) return;
+      if (!isSmtpConfigured('admin')) return;
 
       const alertData = {
         eventTitle: subject,
@@ -202,8 +214,8 @@ export async function notifyAdminAlert(subject, message, details = {}) {
 
       const adminEmail = renderTemplate('admin_security_alert', alertData);
 
-      await transporter.sendMail({
-        from: `"Harry Overseas Security" <${EMAIL_USER}>`,
+      await adminTransporter.sendMail({
+        from: `"Harry Overseas Security" <${ADMIN_USER}>`,
         to: EMAIL_ADMIN,
         subject: adminEmail.subject,
         html: adminEmail.html,
@@ -222,7 +234,7 @@ export async function notifyAdminAlert(subject, message, details = {}) {
 export async function notifyApplicationStageChange(application, previousStatus, newStatus, customNotes = '') {
   setTimeout(async () => {
     try {
-      if (!isSmtpConfigured() || !application.email || !application.email.includes('@')) {
+      if (!isSmtpConfigured('support') || !application.email || !application.email.includes('@')) {
         return;
       }
 
@@ -246,8 +258,8 @@ export async function notifyApplicationStageChange(application, previousStatus, 
 
       const stageEmail = renderTemplate(templateId, appData);
 
-      await transporter.sendMail({
-        from: `"Harry Overseas Careers" <${EMAIL_USER}>`,
+      await supportTransporter.sendMail({
+        from: `"Harry Overseas Careers" <${SUPPORT_USER}>`,
         to: application.email,
         replyTo: EMAIL_SUPPORT,
         subject: stageEmail.subject,
@@ -267,7 +279,7 @@ export async function notifyApplicationStageChange(application, previousStatus, 
 export async function notifyEnquiryStageChange(enquiry, previousStatus, newStatus, customNotes = '') {
   setTimeout(async () => {
     try {
-      if (!isSmtpConfigured() || !enquiry.email || !enquiry.email.includes('@')) {
+      if (!isSmtpConfigured('info') || !enquiry.email || !enquiry.email.includes('@')) {
         return;
       }
 
@@ -285,8 +297,8 @@ export async function notifyEnquiryStageChange(enquiry, previousStatus, newStatu
 
       const stageEmail = renderTemplate('enquiry_stage_update', leadData);
 
-      await transporter.sendMail({
-        from: `"Harry Overseas Advisory" <${EMAIL_USER}>`,
+      await infoTransporter.sendMail({
+        from: `"Harry Overseas Advisory" <${INFO_USER}>`,
         to: enquiry.email,
         replyTo: EMAIL_INFO,
         subject: stageEmail.subject,
@@ -304,18 +316,30 @@ export async function notifyEnquiryStageChange(enquiry, previousStatus, newStatu
  * Test SMTP connection diagnostics
  */
 export async function verifySmtpConnection() {
-  if (!isSmtpConfigured()) {
-    return {
-      connected: false,
-      reason: 'SMTP credentials missing or set to placeholder values in .env'
-    };
+  const results = {};
+  if (infoTransporter) {
+    try {
+      await infoTransporter.verify();
+      results.info = { connected: true, user: INFO_USER };
+    } catch (e) {
+      results.info = { connected: false, error: e.message };
+    }
+  } else {
+    results.info = { connected: false, reason: 'Credentials not configured' };
   }
-  try {
-    await transporter.verify();
-    return { connected: true, user: EMAIL_USER };
-  } catch (err) {
-    return { connected: false, error: err.message };
+
+  if (supportTransporter) {
+    try {
+      await supportTransporter.verify();
+      results.support = { connected: true, user: SUPPORT_USER };
+    } catch (e) {
+      results.support = { connected: false, error: e.message };
+    }
+  } else {
+    results.support = { connected: false, reason: 'Credentials not configured' };
   }
+
+  return results;
 }
 
 export default {

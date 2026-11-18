@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Phone, Mail, MapPin, ShieldAlert, Youtube, Instagram } from 'lucide-react';
+import { Globe, Phone, Mail, MapPin, ShieldAlert, Youtube, Instagram, Code, Heart, LifeBuoy } from 'lucide-react';
 
 interface LegalFooterProps {
   onNavigate?: (view: 'public' | 'careers' | 'admin', sectionId?: string) => void;
@@ -173,11 +173,29 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
         </div>
 
         {/* Disclaimer Bar */}
-        <div className="mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-400 space-y-2">
+        <div className="mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-400 space-y-3">
           <p>
             <strong>Disclaimer:</strong> Harry Overseas Immigration is an independent consultancy and language training provider. Visa decisions are solely at the discretion of the respective embassies and government authorities. We do not guarantee visa approvals.
           </p>
           <p>© {new Date().getFullYear()} Harry Overseas Immigration. All rights reserved. • Tagline: Your Global Journey Starts Here.</p>
+
+          {/* Developer & System Caretaker Signature */}
+          <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-[11px] text-slate-400">
+            <div className="flex items-center space-x-1.5">
+              <Code className="w-3.5 h-3.5 text-brand-gold" />
+              <span>Engineered & Maintained with</span>
+              <Heart className="w-3 h-3 text-red-500 fill-red-500 inline" />
+              <span>by</span>
+              <span className="text-brand-gold font-bold">Yathin</span>
+            </div>
+            <span className="hidden sm:inline text-slate-600">•</span>
+            <div className="flex items-center space-x-1.5">
+              <LifeBuoy className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-slate-300">
+                Official Web Platform Caretaker & Technical Support Specialist
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
