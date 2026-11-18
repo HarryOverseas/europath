@@ -187,8 +187,18 @@ async function initDb() {
     additional_reqs TEXT,
     message TEXT,
     status VARCHAR(50) DEFAULT 'New',
+    documents TEXT DEFAULT '[]',
+    stage_history TEXT DEFAULT '[]',
+    is_deleted BOOLEAN DEFAULT false,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
+  try {
+    await query(`ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS documents TEXT DEFAULT '[]'`);
+    await query(`ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS stage_history TEXT DEFAULT '[]'`);
+    await query(`ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false`);
+    await query(`ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP`);
+  } catch (err) {}
 
   // 3. Applications table
   await query(`CREATE TABLE IF NOT EXISTS applications (
@@ -200,8 +210,16 @@ async function initDb() {
     resume_link TEXT,
     notes TEXT,
     status VARCHAR(50) DEFAULT 'New',
+    stage_history TEXT DEFAULT '[]',
+    is_deleted BOOLEAN DEFAULT false,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
+  try {
+    await query(`ALTER TABLE applications ADD COLUMN IF NOT EXISTS stage_history TEXT DEFAULT '[]'`);
+    await query(`ALTER TABLE applications ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false`);
+    await query(`ALTER TABLE applications ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP`);
+  } catch (err) {}
 
   // 4. Initialize Data Archival Tables & Audit Schema
   await initArchivalTables(query);
@@ -213,6 +231,84 @@ async function initDb() {
 // Multi-Inbox Notification Service handles email routing across
 // admin.harryoverseas@gmail.com, info.harryoverseas@gmail.com, and support.harryoverseas@gmail.com
 // via server/services/notifier.js
+
+// Helper to produce predefined document checklists by service interest / pathway
+function getDefaultDocumentsForLead(serviceInterest = '', languageCourse = '') {
+  const s = String(serviceInterest).toLowerCase();
+  const c = String(languageCourse).toLowerCase();
+
+  // Baseline documents required for all candidates/leads
+  const commonDocs = [
+    { id: 'doc-pass', name: 'Passport (Front & Back Copy)', category: 'Identity', required: true, status: 'Pending', drive_link: '', notes: '' },
+    { id: 'doc-photo', name: 'Biometric Passport Photo', category: 'Identity', required: true, status: 'Pending', drive_link: '', notes: '' },
+    { id: 'doc-cv', name: 'Updated CV (Europass Format)', category: 'Professional', required: true, status: 'Pending', drive_link: '', notes: '' },
+    { id: 'doc-id', name: 'Government National ID / Aadhaar', category: 'Identity', required: false, status: 'Pending', drive_link: '', notes: '' }
+  ];
+
+  const docs = [...commonDocs];
+
+  // 1. Language Academy / German Course
+  if (s.includes('language') || s.includes('german') || c) {
+    docs.push(
+      { id: 'doc-lang-1', name: 'Academic Certificates (10th, 12th & Degree)', category: 'Academic', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-lang-2', name: 'Language Level Placement / Prior Certificates (A1/A2/B1/B2)', category: 'Language', required: false, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-lang-3', name: 'German Course Registration / Fee Receipt', category: 'Enrollment', required: true, status: 'Pending', drive_link: '', notes: '' }
+    );
+  }
+
+  // 2. Student Visa / University Admission
+  if (s.includes('student') || s.includes('study') || s.includes('university') || s.includes('admission') || s.includes('master') || s.includes('bachelor')) {
+    docs.push(
+      { id: 'doc-stu-1', name: 'University Transcripts & Degree Certificates', category: 'Academic', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-stu-2', name: 'APS Certificate (India Mandatory for Germany)', category: 'Visa Mandatory', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-stu-3', name: 'Blocked Account Proof (Finanzierungsnachweis)', category: 'Financial', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-stu-4', name: 'University Admission Letter (Zulassungsbescheid)', category: 'Academic', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-stu-5', name: 'Statement of Purpose (SOP) & Letter of Motivation', category: 'Academic', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-stu-6', name: 'IELTS / TOEFL / Goethe Language Score Card', category: 'Language', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-stu-7', name: 'Expat Travel & Incoming Health Insurance', category: 'Insurance', required: true, status: 'Pending', drive_link: '', notes: '' }
+    );
+  }
+
+  // 3. Nursing / Healthcare Pathway
+  if (s.includes('nurse') || s.includes('nursing') || s.includes('health') || s.includes('medical') || s.includes('hospital')) {
+    docs.push(
+      { id: 'doc-nurse-1', name: 'B.Sc / GNM Nursing Degree & Transcripts', category: 'Qualifications', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-nurse-2', name: 'State Nursing Registration Council Certificate', category: 'Qualifications', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-nurse-3', name: 'German B1 / B2 Official Certificate (Goethe/Telc/ÖSD)', category: 'Language', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-nurse-4', name: 'Deficit Assessment Notice (Defizitbescheid)', category: 'Recognition', required: false, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-nurse-5', name: 'Clinical Work Experience Letters & Service Certificates', category: 'Professional', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-nurse-6', name: 'Police Clearance Certificate (PCC)', category: 'Compliance', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-nurse-7', name: 'Medical Fitness Certificate & Immunization Record', category: 'Medical', required: true, status: 'Pending', drive_link: '', notes: '' }
+    );
+  }
+
+  // 4. Job Seeker / Opportunity Card (Chancenkarte) / Work Visa
+  if (s.includes('work') || s.includes('job') || s.includes('chancenkarte') || s.includes('employment') || s.includes('opportunity')) {
+    docs.push(
+      { id: 'doc-work-1', name: 'ZAB Statement of Comparability / Anabin Degree Equivalence', category: 'Recognition', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-work-2', name: 'Work Experience Letters & Relieving Certificates', category: 'Professional', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-work-3', name: 'Chancenkarte Points Tally & Proof of Funds / Blocked Account', category: 'Visa Mandatory', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-work-4', name: 'German / English Language Proficiency Certificate', category: 'Language', required: true, status: 'Pending', drive_link: '', notes: '' }
+    );
+  }
+
+  // 5. Relocation / Arrival Assistance
+  if (s.includes('arrival') || s.includes('relocation') || s.includes('housing') || s.includes('accommodation')) {
+    docs.push(
+      { id: 'doc-arr-1', name: 'Flight Itinerary / Ticket Copy', category: 'Travel', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-arr-2', name: 'Visa Stamping Copy / German Entry Visa', category: 'Visa Mandatory', required: true, status: 'Pending', drive_link: '', notes: '' },
+      { id: 'doc-arr-3', name: 'Accommodation / Rental Agreement (Wohnungsgeberbestätigung)', category: 'Relocation', required: false, status: 'Pending', drive_link: '', notes: '' }
+    );
+  }
+
+  // Deduplicate by id
+  const seen = new Set();
+  return docs.filter(d => {
+    if (seen.has(d.id)) return false;
+    seen.add(d.id);
+    return true;
+  });
+}
 
 // Authentication & RBAC Middleware
 function authenticateToken(req, res, next) {
@@ -429,14 +525,23 @@ app.post('/api/applications', async (req, res) => {
   }
 });
 
-// 4. Get Job Applications (Protected Endpoint with Filtering/Search)
+// 4. Get Job Applications (Protected Endpoint with Filtering/Search & Soft Delete Support)
 app.get('/api/applications', authenticateToken, requirePermission(['applications:read', '*']), async (req, res) => {
   try {
+    const { role, status, search, include_deleted } = req.query;
     let sql = 'SELECT * FROM applications WHERE 1=1';
     const params = [];
     let paramIdx = 1;
 
-    const { role, status, search } = req.query;
+    // By default, filter out soft-deleted records unless explicitly requested
+    if (include_deleted === 'true') {
+      // Return all or only deleted
+      if (req.query.only_deleted === 'true') {
+        sql += ' AND is_deleted = true';
+      }
+    } else {
+      sql += ' AND (is_deleted = false OR is_deleted IS NULL)';
+    }
 
     if (role && role !== 'All') {
       sql += ` AND LOWER(role) = LOWER($${paramIdx++})`;
@@ -458,9 +563,22 @@ app.get('/api/applications', authenticateToken, requirePermission(['applications
     sql += ' ORDER BY created_at DESC, id DESC';
 
     const result = await query(sql, params);
+    const parsed = result.rows.map(row => {
+      let stageHistory = [];
+      try {
+        stageHistory = row.stage_history ? JSON.parse(row.stage_history) : [];
+      } catch {
+        stageHistory = [];
+      }
+      return {
+        ...row,
+        stage_history: Array.isArray(stageHistory) ? stageHistory : []
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      applications: result.rows
+      applications: parsed
     });
   } catch (err) {
     console.error('Error fetching job applications:', err);
@@ -468,7 +586,7 @@ app.get('/api/applications', authenticateToken, requirePermission(['applications
   }
 });
 
-// 5. Update Job Application Status (Protected Endpoint)
+// 5. Update Job Application Status (Protected Endpoint with Mandatory Comment & Audit History)
 app.patch('/api/applications/:id/status', authenticateToken, requirePermission(['applications:write', '*']), async (req, res) => {
   const rawId = req.params.id;
   const id = parseInt(rawId, 10);
@@ -476,7 +594,8 @@ app.patch('/api/applications/:id/status', authenticateToken, requirePermission([
     return res.status(400).json({ success: false, error: 'Invalid application ID' });
   }
 
-  const { status, notes } = req.body || {};
+  const { status, notes, comment } = req.body || {};
+  const stageComment = (comment || notes || '').trim();
   const validStatuses = ['New', 'Reviewing', 'Shortlisted', 'Interviewed', 'Hired', 'Rejected'];
 
   if (!status || typeof status !== 'string' || !validStatuses.includes(status)) {
@@ -486,32 +605,68 @@ app.patch('/api/applications/:id/status', authenticateToken, requirePermission([
     });
   }
 
+  // Strict rule: No stage change without a comment
+  if (!stageComment) {
+    return res.status(400).json({
+      success: false,
+      error: 'A mandatory comment is required for every candidate stage transition.'
+    });
+  }
+
   try {
     const existing = await query('SELECT * FROM applications WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Application not found' });
     }
-    const prevStatus = existing.rows[0].status;
+    const currentApp = existing.rows[0];
+    const prevStatus = currentApp.status;
+
+    let history = [];
+    try {
+      history = currentApp.stage_history ? JSON.parse(currentApp.stage_history) : [];
+    } catch {
+      history = [];
+    }
+    if (!Array.isArray(history)) history = [];
+
+    const newHistoryEntry = {
+      id: `trans-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      from_status: prevStatus,
+      to_status: status,
+      comment: stageComment,
+      changed_by: req.user?.username || req.user?.email || 'Admin Staff',
+      changed_at: new Date().toISOString()
+    };
+    history.push(newHistoryEntry);
 
     const result = await query(
-      'UPDATE applications SET status = $1 WHERE id = $2 RETURNING *',
-      [status, id]
+      'UPDATE applications SET status = $1, stage_history = $2 WHERE id = $3 RETURNING *',
+      [status, JSON.stringify(history), id]
     );
 
     const updatedApp = result.rows[0];
+    let parsedHistory = [];
+    try {
+      parsedHistory = JSON.parse(updatedApp.stage_history);
+    } catch {
+      parsedHistory = history;
+    }
 
     // Dispatch stage-transition notifications (Email + Slack)
     if (prevStatus !== status) {
-      notifyApplicationStageChange(updatedApp, prevStatus, status, notes);
-      notifySlackStageChange('application', updatedApp, prevStatus, status, req.user?.username || 'Admin', notes);
+      notifyApplicationStageChange(updatedApp, prevStatus, status, stageComment);
+      notifySlackStageChange('application', updatedApp, prevStatus, status, req.user?.username || 'Admin', stageComment);
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Status updated successfully',
+      message: `Status updated successfully to "${status}"`,
       id,
       status,
-      application: updatedApp
+      application: {
+        ...updatedApp,
+        stage_history: parsedHistory
+      }
     });
   } catch (err) {
     console.error('Error updating application status:', err);
@@ -519,7 +674,7 @@ app.patch('/api/applications/:id/status', authenticateToken, requirePermission([
   }
 });
 
-// 6. Delete Job Application (Protected Endpoint)
+// 6. Delete Job Application (Soft Delete by default; Hard delete via ?permanent=true)
 app.delete('/api/applications/:id', authenticateToken, requirePermission(['applications:delete', 'applications:write', '*']), async (req, res) => {
   const rawId = req.params.id;
   const id = parseInt(rawId, 10);
@@ -527,20 +682,64 @@ app.delete('/api/applications/:id', authenticateToken, requirePermission(['appli
     return res.status(400).json({ success: false, error: 'Invalid application ID' });
   }
 
-  try {
-    const result = await query('DELETE FROM applications WHERE id = $1 RETURNING id', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Application not found' });
-    }
+  const isPermanent = req.query.permanent === 'true';
 
-    return res.status(200).json({
-      success: true,
-      message: 'Application deleted successfully',
-      id
-    });
+  try {
+    if (isPermanent) {
+      const result = await query('DELETE FROM applications WHERE id = $1 RETURNING id', [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Application not found' });
+      }
+      return res.status(200).json({
+        success: true,
+        message: 'Application permanently deleted',
+        id
+      });
+    } else {
+      const result = await query(
+        'UPDATE applications SET is_deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, full_name',
+        [id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Application not found' });
+      }
+      return res.status(200).json({
+        success: true,
+        message: 'Application moved to trash (soft deleted). Can be restored or purged.',
+        id,
+        is_deleted: true
+      });
+    }
   } catch (err) {
     console.error('Error deleting application:', err);
     return res.status(500).json({ success: false, error: 'Internal server error. Please try again later.' });
+  }
+});
+
+// 6b. Restore Soft-Deleted Job Application
+app.post('/api/applications/:id/restore', authenticateToken, requirePermission(['applications:write', '*']), async (req, res) => {
+  const rawId = req.params.id;
+  const id = parseInt(rawId, 10);
+  if (isNaN(id)) {
+    return res.status(400).json({ success: false, error: 'Invalid application ID' });
+  }
+
+  try {
+    const result = await query(
+      'UPDATE applications SET is_deleted = false, deleted_at = NULL WHERE id = $1 RETURNING id, full_name',
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Application not found' });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Application #${id} (${result.rows[0].full_name}) successfully restored from trash.`,
+      id
+    });
+  } catch (err) {
+    console.error('Error restoring application:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
@@ -580,18 +779,19 @@ app.post('/api/enquiries', async (req, res) => {
   const serviceInterest = Array.isArray(mainServicesRaw) ? mainServicesRaw.join(', ') : String(mainServicesRaw);
   const destCountry = lead.intendedDestination || lead.intended_destination || lead.destination_country || 'Germany';
   const reqMessage = lead.additionalReqs || lead.additional_reqs || lead.message || '';
+  const initialDocs = getDefaultDocumentsForLead(serviceInterest, lead.languageCourse || lead.language_course || '');
 
   const insertSql = `
     INSERT INTO enquiries (
       id, full_name, mobile, phone, whatsapp, email, city, country,
       main_services, service_interest, language_course, additional_services,
       intended_destination, destination_country, travel_period, consultation_method,
-      additional_reqs, message, status
+      additional_reqs, message, status, documents, stage_history
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8,
       $9, $10, $11, $12,
       $13, $14, $15, $16,
-      $17, $18, $19
+      $17, $18, $19, $20, $21
     ) RETURNING *
   `;
 
@@ -615,7 +815,16 @@ app.post('/api/enquiries', async (req, res) => {
       lead.consultationMethod || lead.consultation_method || 'WhatsApp',
       reqMessage,
       reqMessage,
-      'New'
+      'New',
+      JSON.stringify(initialDocs),
+      JSON.stringify([{
+        id: `trans-${Date.now()}`,
+        from_status: null,
+        to_status: 'New',
+        comment: 'Initial enquiry submission received.',
+        changed_by: 'Customer / Web Portal',
+        changed_at: new Date().toISOString()
+      }])
     ];
 
     const result = await query(insertSql, values);
@@ -632,7 +841,16 @@ app.post('/api/enquiries', async (req, res) => {
       lead: {
         ...createdLead,
         main_services: Array.isArray(mainServicesRaw) ? mainServicesRaw : [],
-        additional_services: Array.isArray(addServicesRaw) ? addServicesRaw : []
+        additional_services: Array.isArray(addServicesRaw) ? addServicesRaw : [],
+        documents: initialDocs,
+        stage_history: [{
+          id: `trans-${Date.now()}`,
+          from_status: null,
+          to_status: 'New',
+          comment: 'Initial enquiry submission received.',
+          changed_by: 'Customer / Web Portal',
+          changed_at: new Date().toISOString()
+        }]
       }
     });
   } catch (err) {
@@ -641,13 +859,26 @@ app.post('/api/enquiries', async (req, res) => {
   }
 });
 
-// 8. Get All Enquiries (Protected Endpoint)
+// 8. Get All Enquiries (Protected Endpoint with Soft Delete Support)
 app.get('/api/enquiries', authenticateToken, requirePermission(['enquiries:read', '*']), async (req, res) => {
   try {
-    const result = await query('SELECT * FROM enquiries ORDER BY created_at DESC');
+    const { include_deleted, only_deleted } = req.query;
+    let sql = 'SELECT * FROM enquiries WHERE 1=1';
+    if (include_deleted === 'true') {
+      if (only_deleted === 'true') {
+        sql += ' AND is_deleted = true';
+      }
+    } else {
+      sql += ' AND (is_deleted = false OR is_deleted IS NULL)';
+    }
+
+    sql += ' ORDER BY created_at DESC';
+    const result = await query(sql);
     const formatted = result.rows.map(row => {
       let main_services = [];
       let additional_services = [];
+      let documents = [];
+      let stage_history = [];
       try {
         main_services = row.main_services ? JSON.parse(row.main_services) : [];
       } catch {
@@ -658,10 +889,28 @@ app.get('/api/enquiries', authenticateToken, requirePermission(['enquiries:read'
       } catch {
         additional_services = row.additional_services ? [row.additional_services] : [];
       }
+      try {
+        documents = row.documents ? JSON.parse(row.documents) : [];
+      } catch {
+        documents = [];
+      }
+      try {
+        stage_history = row.stage_history ? JSON.parse(row.stage_history) : [];
+      } catch {
+        stage_history = [];
+      }
+
+      // If existing lead has no documents yet, pre-populate default documents checklist
+      if (!Array.isArray(documents) || documents.length === 0) {
+        documents = getDefaultDocumentsForLead(row.service_interest || row.main_services, row.language_course);
+      }
+
       return {
         ...row,
         main_services,
-        additional_services
+        additional_services,
+        documents: Array.isArray(documents) ? documents : [],
+        stage_history: Array.isArray(stage_history) ? stage_history : []
       };
     });
 
@@ -672,13 +921,22 @@ app.get('/api/enquiries', authenticateToken, requirePermission(['enquiries:read'
   }
 });
 
-// 9. Update Enquiry Status (Protected Endpoint)
+// 9. Update Enquiry Status (Protected Endpoint with Mandatory Comment & Audit Trail)
 app.patch('/api/enquiries/:id/status', authenticateToken, requirePermission(['enquiries:write', '*']), async (req, res) => {
   const { id } = req.params;
-  const { status, notes } = req.body || {};
+  const { status, notes, comment } = req.body || {};
+  const stageComment = (comment || notes || '').trim();
 
   if (!status || typeof status !== 'string') {
     return res.status(400).json({ success: false, error: 'Status is required' });
+  }
+
+  // Strict rule: No stage change without a mandatory comment
+  if (!stageComment) {
+    return res.status(400).json({
+      success: false,
+      error: 'A mandatory comment is required for every lead stage transition.'
+    });
   }
 
   try {
@@ -686,23 +944,52 @@ app.patch('/api/enquiries/:id/status', authenticateToken, requirePermission(['en
     if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Enquiry not found' });
     }
-    const prevStatus = existing.rows[0].status;
+    const currentLead = existing.rows[0];
+    const prevStatus = currentLead.status;
 
-    const result = await query('UPDATE enquiries SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+    let history = [];
+    try {
+      history = currentLead.stage_history ? JSON.parse(currentLead.stage_history) : [];
+    } catch {
+      history = [];
+    }
+    if (!Array.isArray(history)) history = [];
+
+    const newHistoryEntry = {
+      id: `trans-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      from_status: prevStatus,
+      to_status: status,
+      comment: stageComment,
+      changed_by: req.user?.username || req.user?.email || 'Admin Staff',
+      changed_at: new Date().toISOString()
+    };
+    history.push(newHistoryEntry);
+
+    const result = await query(
+      'UPDATE enquiries SET status = $1, stage_history = $2 WHERE id = $3 RETURNING *',
+      [status, JSON.stringify(history), id]
+    );
     const updatedEnquiry = result.rows[0];
 
     // Dispatch stage-transition notifications (Email + Slack)
     if (prevStatus !== status) {
-      notifyEnquiryStageChange(updatedEnquiry, prevStatus, status, notes);
-      notifySlackStageChange('enquiry', updatedEnquiry, prevStatus, status, req.user?.username || 'Admin', notes);
+      notifyEnquiryStageChange(updatedEnquiry, prevStatus, status, stageComment);
+      notifySlackStageChange('enquiry', updatedEnquiry, prevStatus, status, req.user?.username || 'Admin', stageComment);
     }
+
+    let parsedDocs = [];
+    try { parsedDocs = JSON.parse(updatedEnquiry.documents); } catch { parsedDocs = []; }
 
     return res.status(200).json({
       success: true,
-      message: 'Status updated successfully',
+      message: `Status updated successfully to "${status}"`,
       id,
       status,
-      enquiry: updatedEnquiry
+      enquiry: {
+        ...updatedEnquiry,
+        documents: parsedDocs,
+        stage_history: history
+      }
     });
   } catch (err) {
     console.error('Error updating enquiry status:', err);
@@ -710,19 +997,181 @@ app.patch('/api/enquiries/:id/status', authenticateToken, requirePermission(['en
   }
 });
 
-// 10. Delete Enquiry (Protected Endpoint)
-app.delete('/api/enquiries/:id', authenticateToken, requirePermission(['enquiries:delete', 'enquiries:write', '*']), async (req, res) => {
+// 9b. Update Lead Details (Protected Endpoint)
+app.patch('/api/enquiries/:id', authenticateToken, requirePermission(['enquiries:write', '*']), async (req, res) => {
   const { id } = req.params;
+  const updates = req.body || {};
 
   try {
-    const result = await query('DELETE FROM enquiries WHERE id = $1 RETURNING id', [id]);
-    if (result.rows.length === 0) {
+    const existing = await query('SELECT * FROM enquiries WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Enquiry not found' });
     }
-    return res.status(200).json({ success: true, message: 'Enquiry deleted successfully', id });
+    const current = existing.rows[0];
+
+    const fullName = updates.full_name !== undefined ? updates.full_name : (updates.fullName !== undefined ? updates.fullName : current.full_name);
+    const email = updates.email !== undefined ? updates.email : current.email;
+    const phone = updates.phone !== undefined ? updates.phone : current.phone;
+    const mobile = updates.mobile !== undefined ? updates.mobile : (updates.phone !== undefined ? updates.phone : current.mobile);
+    const whatsapp = updates.whatsapp !== undefined ? updates.whatsapp : current.whatsapp;
+    const city = updates.city !== undefined ? updates.city : current.city;
+    const country = updates.country !== undefined ? updates.country : current.country;
+    const serviceInterest = updates.service_interest !== undefined ? updates.service_interest : current.service_interest;
+    const languageCourse = updates.language_course !== undefined ? updates.language_course : current.language_course;
+    const destinationCountry = updates.destination_country !== undefined ? updates.destination_country : current.destination_country;
+    const travelPeriod = updates.travel_period !== undefined ? updates.travel_period : current.travel_period;
+    const consultationMethod = updates.consultation_method !== undefined ? updates.consultation_method : current.consultation_method;
+    const message = updates.message !== undefined ? updates.message : current.message;
+    const additionalReqs = updates.additional_reqs !== undefined ? updates.additional_reqs : current.additional_reqs;
+
+    const updateSql = `
+      UPDATE enquiries SET
+        full_name = $1,
+        email = $2,
+        phone = $3,
+        mobile = $4,
+        whatsapp = $5,
+        city = $6,
+        country = $7,
+        service_interest = $8,
+        language_course = $9,
+        destination_country = $10,
+        intended_destination = $10,
+        travel_period = $11,
+        consultation_method = $12,
+        message = $13,
+        additional_reqs = $14
+      WHERE id = $15
+      RETURNING *
+    `;
+
+    const values = [
+      fullName, email, phone, mobile, whatsapp,
+      city, country, serviceInterest, languageCourse,
+      destinationCountry, travelPeriod, consultationMethod,
+      message, additionalReqs, id
+    ];
+
+    const result = await query(updateSql, values);
+    const updatedLead = result.rows[0];
+
+    let docs = [];
+    let history = [];
+    try { docs = JSON.parse(updatedLead.documents); } catch {}
+    try { history = JSON.parse(updatedLead.stage_history); } catch {}
+
+    return res.status(200).json({
+      success: true,
+      message: `Lead details updated successfully for #${id}`,
+      enquiry: {
+        ...updatedLead,
+        documents: docs,
+        stage_history: history
+      }
+    });
+  } catch (err) {
+    console.error('Error updating lead details:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error while updating lead details' });
+  }
+});
+
+// 9c. Update Lead Documents Checklist and Drive Links (Protected Endpoint)
+app.patch('/api/enquiries/:id/documents', authenticateToken, requirePermission(['enquiries:write', '*']), async (req, res) => {
+  const { id } = req.params;
+  const { documents } = req.body || {};
+
+  if (!Array.isArray(documents)) {
+    return res.status(400).json({ success: false, error: 'Documents must be an array of document entries' });
+  }
+
+  try {
+    const existing = await query('SELECT * FROM enquiries WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Enquiry not found' });
+    }
+
+    const docsJson = JSON.stringify(documents);
+    const result = await query(
+      'UPDATE enquiries SET documents = $1 WHERE id = $2 RETURNING *',
+      [docsJson, id]
+    );
+
+    const updated = result.rows[0];
+    let parsedDocs = [];
+    let parsedHistory = [];
+    try { parsedDocs = JSON.parse(updated.documents); } catch {}
+    try { parsedHistory = JSON.parse(updated.stage_history); } catch {}
+
+    return res.status(200).json({
+      success: true,
+      message: 'Documents updated successfully',
+      id,
+      documents: parsedDocs,
+      enquiry: {
+        ...updated,
+        documents: parsedDocs,
+        stage_history: parsedHistory
+      }
+    });
+  } catch (err) {
+    console.error('Error updating lead documents:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error while saving documents' });
+  }
+});
+
+// 10. Delete Enquiry (Soft Delete by default; Hard delete via ?permanent=true)
+app.delete('/api/enquiries/:id', authenticateToken, requirePermission(['enquiries:delete', 'enquiries:write', '*']), async (req, res) => {
+  const { id } = req.params;
+  const isPermanent = req.query.permanent === 'true';
+
+  try {
+    if (isPermanent) {
+      const result = await query('DELETE FROM enquiries WHERE id = $1 RETURNING id', [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Enquiry not found' });
+      }
+      return res.status(200).json({ success: true, message: 'Enquiry permanently deleted', id });
+    } else {
+      const result = await query(
+        'UPDATE enquiries SET is_deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, full_name',
+        [id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Enquiry not found' });
+      }
+      return res.status(200).json({
+        success: true,
+        message: 'Enquiry moved to trash (soft deleted). Can be restored or purged.',
+        id,
+        is_deleted: true
+      });
+    }
   } catch (err) {
     console.error('Error deleting enquiry:', err);
     return res.status(500).json({ success: false, error: 'Internal server error. Please try again later.' });
+  }
+});
+
+// 10b. Restore Soft-Deleted Enquiry
+app.post('/api/enquiries/:id/restore', authenticateToken, requirePermission(['enquiries:write', '*']), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await query(
+      'UPDATE enquiries SET is_deleted = false, deleted_at = NULL WHERE id = $1 RETURNING id, full_name',
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Enquiry not found' });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Enquiry #${id} (${result.rows[0].full_name}) successfully restored from trash.`,
+      id
+    });
+  } catch (err) {
+    console.error('Error restoring enquiry:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
