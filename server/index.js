@@ -24,6 +24,13 @@ import {
   restoreArchivedApplication,
   startDailyArchivalScheduler
 } from './services/archivalService.js';
+import {
+  initConfigService,
+  refreshCache,
+  getConfig,
+  getAllSettingsForAdmin,
+  updateSettings
+} from './services/configService.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -148,8 +155,16 @@ async function initDb() {
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL,
+    permissions TEXT DEFAULT '[]',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  // Ensure permissions column exists for existing tables
+  try {
+    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions TEXT DEFAULT '[]'`);
+  } catch (err) {
+    // Column might already exist
+  }
 
   // 2. Enquiries table
   await query(`CREATE TABLE IF NOT EXISTS enquiries (
@@ -195,32 +210,36 @@ async function initDb() {
 
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(adminPassword, salt);
+  const superAdminPerms = JSON.stringify(['*']);
 
   const existing = await query('SELECT * FROM users WHERE username = $1', [adminUsername]);
   if (existing.rows.length === 0) {
     await query(
-      'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4)',
-      [adminUsername, adminEmail, hash, 'Super Admin']
+      'INSERT INTO users (username, email, password_hash, role, permissions) VALUES ($1, $2, $3, $4, $5)',
+      [adminUsername, adminEmail, hash, 'Super Admin', superAdminPerms]
     );
     console.log(`[DB] Admin user created: ${adminUsername}`);
   } else {
-    // Keep password hash synchronized with current environment configuration
+    // Keep password hash synchronized with current environment configuration and ensure permissions
     await query(
-      'UPDATE users SET password_hash = $1 WHERE username = $2',
-      [hash, adminUsername]
+      'UPDATE users SET password_hash = $1, permissions = $2 WHERE username = $3',
+      [hash, superAdminPerms, adminUsername]
     );
     console.log(`[DB] Admin user credentials synchronized: ${adminUsername}`);
   }
 
   // 4. Initialize Data Archival Tables & Audit Schema
   await initArchivalTables(query);
+
+  // 5. Initialize Dynamic System Configuration & Settings Table
+  await initConfigService(query);
 }
 
 // Multi-Inbox Notification Service handles email routing across
 // admin.harryoverseas@gmail.com, info.harryoverseas@gmail.com, and support.harryoverseas@gmail.com
 // via server/services/notifier.js
 
-// Authentication Middleware
+// Authentication & RBAC Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
@@ -241,6 +260,76 @@ function authenticateToken(req, res, next) {
     req.user = decoded;
     next();
   });
+}
+
+/**
+ * Role-Based Access Control (RBAC) guard middleware
+ * @param {string|string[]} requiredPermissions - Required permission flag(s)
+ */
+function requirePermission(requiredPermissions) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    // Super Admin has unrestricted access to all resources
+    if (req.user.role === 'Super Admin') {
+      return next();
+    }
+
+    const perms = Array.isArray(req.user.permissions) ? req.user.permissions : [];
+    if (perms.includes('*')) {
+      return next();
+    }
+
+    const needed = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
+    const hasPermission = needed.some(np => perms.includes(np));
+
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: `Access denied. Requires permission: ${needed.join(' or ')}`
+      });
+    }
+
+    next();
+  };
+}
+
+/**
+ * Helper to parse permissions array from user record
+ */
+function parseUserPermissions(user) {
+  if (user.role === 'Super Admin') {
+    return ['*'];
+  }
+  let perms = [];
+  try {
+    perms = user.permissions ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions) : [];
+  } catch {
+    perms = [];
+  }
+  // Default permissions according to role if empty
+  if (!perms.length) {
+    switch (user.role) {
+      case 'Operations Manager':
+        perms = ['enquiries:read', 'enquiries:write', 'applications:read', 'applications:write', 'archive:read'];
+        break;
+      case 'Counselor':
+        perms = ['enquiries:read', 'enquiries:write'];
+        break;
+      case 'Recruiter':
+        perms = ['applications:read', 'applications:write'];
+        break;
+      case 'Auditor':
+      case 'Viewer':
+        perms = ['enquiries:read', 'applications:read', 'archive:read'];
+        break;
+      default:
+        perms = ['enquiries:read'];
+    }
+  }
+  return perms;
 }
 
 // --- API ROUTES ---
@@ -271,8 +360,10 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid username or password' });
     }
 
+    const permissions = parseUserPermissions(user);
+
     const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email, role: user.role },
+      { id: user.id, username: user.username, email: user.email, role: user.role, permissions },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -284,7 +375,8 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        permissions
       }
     });
   } catch (err) {
@@ -363,7 +455,7 @@ app.post('/api/applications', async (req, res) => {
 });
 
 // 4. Get Job Applications (Protected Endpoint with Filtering/Search)
-app.get('/api/applications', authenticateToken, async (req, res) => {
+app.get('/api/applications', authenticateToken, requirePermission(['applications:read', '*']), async (req, res) => {
   try {
     let sql = 'SELECT * FROM applications WHERE 1=1';
     const params = [];
@@ -402,7 +494,7 @@ app.get('/api/applications', authenticateToken, async (req, res) => {
 });
 
 // 5. Update Job Application Status (Protected Endpoint)
-app.patch('/api/applications/:id/status', authenticateToken, async (req, res) => {
+app.patch('/api/applications/:id/status', authenticateToken, requirePermission(['applications:write', '*']), async (req, res) => {
   const rawId = req.params.id;
   const id = parseInt(rawId, 10);
   if (isNaN(id) || String(id) !== String(rawId).trim()) {
@@ -453,7 +545,7 @@ app.patch('/api/applications/:id/status', authenticateToken, async (req, res) =>
 });
 
 // 6. Delete Job Application (Protected Endpoint)
-app.delete('/api/applications/:id', authenticateToken, async (req, res) => {
+app.delete('/api/applications/:id', authenticateToken, requirePermission(['applications:delete', 'applications:write', '*']), async (req, res) => {
   const rawId = req.params.id;
   const id = parseInt(rawId, 10);
   if (isNaN(id) || String(id) !== String(rawId).trim()) {
@@ -575,7 +667,7 @@ app.post('/api/enquiries', async (req, res) => {
 });
 
 // 8. Get All Enquiries (Protected Endpoint)
-app.get('/api/enquiries', authenticateToken, async (req, res) => {
+app.get('/api/enquiries', authenticateToken, requirePermission(['enquiries:read', '*']), async (req, res) => {
   try {
     const result = await query('SELECT * FROM enquiries ORDER BY created_at DESC');
     const formatted = result.rows.map(row => {
@@ -606,7 +698,7 @@ app.get('/api/enquiries', authenticateToken, async (req, res) => {
 });
 
 // 9. Update Enquiry Status (Protected Endpoint)
-app.patch('/api/enquiries/:id/status', authenticateToken, async (req, res) => {
+app.patch('/api/enquiries/:id/status', authenticateToken, requirePermission(['enquiries:write', '*']), async (req, res) => {
   const { id } = req.params;
   const { status, notes } = req.body || {};
 
@@ -644,7 +736,7 @@ app.patch('/api/enquiries/:id/status', authenticateToken, async (req, res) => {
 });
 
 // 10. Delete Enquiry (Protected Endpoint)
-app.delete('/api/enquiries/:id', authenticateToken, async (req, res) => {
+app.delete('/api/enquiries/:id', authenticateToken, requirePermission(['enquiries:delete', 'enquiries:write', '*']), async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -662,11 +754,19 @@ app.delete('/api/enquiries/:id', authenticateToken, async (req, res) => {
 // 11. System Users Management (Super Admin only, Protected)
 app.get('/api/users', authenticateToken, async (req, res) => {
   if (req.user?.role !== 'Super Admin') {
-    return res.status(403).json({ success: false, error: 'Unauthorized access' });
+    return res.status(403).json({ success: false, error: 'Unauthorized access. Super Admin required.' });
   }
   try {
-    const result = await query('SELECT id, username, email, role, created_at FROM users ORDER BY id ASC');
-    return res.status(200).json(result.rows);
+    const result = await query('SELECT id, username, email, role, permissions, created_at FROM users ORDER BY id ASC');
+    const formatted = result.rows.map(user => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      permissions: parseUserPermissions(user),
+      created_at: user.created_at
+    }));
+    return res.status(200).json(formatted);
   } catch (err) {
     console.error('Error fetching users:', err);
     return res.status(500).json({ success: false, error: 'Internal server error. Please try again later.' });
@@ -675,21 +775,28 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 
 app.post('/api/users', authenticateToken, async (req, res) => {
   if (req.user?.role !== 'Super Admin') {
-    return res.status(403).json({ success: false, error: 'Unauthorized access' });
+    return res.status(403).json({ success: false, error: 'Unauthorized access. Super Admin required.' });
   }
-  const { username, email, password, role } = req.body || {};
+  const { username, email, password, role, permissions } = req.body || {};
   if (!username || !email || !password || !role) {
-    return res.status(400).json({ success: false, error: 'All fields required' });
+    return res.status(400).json({ success: false, error: 'Username, email, password, and role are required' });
   }
 
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
 
+  let permsToSave = permissions;
+  if (!permsToSave || !Array.isArray(permsToSave)) {
+    permsToSave = parseUserPermissions({ role });
+  }
+
   try {
     const result = await query(
-      'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id',
-      [username.trim(), email.trim(), hash, role.trim()]
+      'INSERT INTO users (username, email, password_hash, role, permissions) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, created_at',
+      [username.trim(), email.trim(), hash, role.trim(), JSON.stringify(permsToSave)]
     );
+    const newUser = result.rows[0];
+
     notifyAdminAlert('New User Account Created', `User account '${username.trim()}' with role '${role.trim()}' was created by ${req.user?.username || 'Super Admin'}.`, {
       Username: username.trim(),
       Email: email.trim(),
@@ -705,11 +812,159 @@ app.post('/api/users', authenticateToken, async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'User created successfully',
-      userId: result.rows[0].id
+      user: {
+        ...newUser,
+        permissions: permsToSave
+      }
     });
   } catch (err) {
     console.error('Error creating user:', err);
-    return res.status(500).json({ success: false, error: 'Username or email already exists' });
+    return res.status(400).json({ success: false, error: 'Username or email already exists' });
+  }
+});
+
+// Update User (Role, Permissions, Password)
+app.patch('/api/users/:id', authenticateToken, async (req, res) => {
+  if (req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ success: false, error: 'Unauthorized access. Super Admin required.' });
+  }
+  const { id } = req.params;
+  const { role, permissions, password } = req.body || {};
+
+  try {
+    const existing = await query('SELECT * FROM users WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    const updates = [];
+    const params = [];
+    let idx = 1;
+
+    if (role && typeof role === 'string') {
+      updates.push(`role = $${idx++}`);
+      params.push(role.trim());
+    }
+
+    if (permissions && Array.isArray(permissions)) {
+      updates.push(`permissions = $${idx++}`);
+      params.push(JSON.stringify(permissions));
+    }
+
+    if (password && typeof password === 'string' && password.trim()) {
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(password, salt);
+      updates.push(`password_hash = $${idx++}`);
+      params.push(hash);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update provided' });
+    }
+
+    params.push(id);
+    const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, username, email, role, permissions, created_at`;
+    const result = await query(sql, params);
+    const updated = result.rows[0];
+
+    return res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      user: {
+        ...updated,
+        permissions: parseUserPermissions(updated)
+      }
+    });
+  } catch (err) {
+    console.error('Error updating user:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Delete User
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+  if (req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ success: false, error: 'Unauthorized access. Super Admin required.' });
+  }
+  const { id } = req.params;
+
+  // Prevent admin from deleting themselves
+  if (String(req.user.id) === String(id)) {
+    return res.status(400).json({ success: false, error: 'Cannot delete your own active Super Admin account.' });
+  }
+
+  try {
+    const result = await query('DELETE FROM users WHERE id = $1 RETURNING id, username', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `User '${result.rows[0].username}' deleted successfully`
+    });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// 11b. System Configurations & Dynamic Settings (Super Admin Only)
+app.get('/api/admin/settings', authenticateToken, async (req, res) => {
+  if (req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ success: false, error: 'Unauthorized access. Super Admin required.' });
+  }
+  try {
+    const settings = getAllSettingsForAdmin();
+    return res.status(200).json({ success: true, settings });
+  } catch (err) {
+    console.error('Error fetching settings:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch settings' });
+  }
+});
+
+app.post('/api/admin/settings', authenticateToken, async (req, res) => {
+  if (req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ success: false, error: 'Unauthorized access. Super Admin required.' });
+  }
+  const { settings } = req.body || {};
+  if (!settings || typeof settings !== 'object') {
+    return res.status(400).json({ success: false, error: 'Invalid settings payload' });
+  }
+
+  try {
+    await updateSettings(settings, req.user?.username || 'Super Admin', query);
+    notifyAdminAlert('System Configuration Updated', `Database system settings were updated by ${req.user?.username || 'Super Admin'}.`, {
+      UpdatedBy: req.user?.username || 'Super Admin',
+      KeysModified: Object.keys(settings).join(', ')
+    });
+    notifySlackAdminAlert('System Configuration Updated', `System settings updated dynamically by ${req.user?.username || 'Super Admin'}.`, {
+      UpdatedBy: req.user?.username || 'Super Admin',
+      Keys: Object.keys(settings).join(', ')
+    });
+
+    const updatedList = getAllSettingsForAdmin();
+    return res.status(200).json({
+      success: true,
+      message: 'System settings updated successfully and active immediately without restart.',
+      settings: updatedList
+    });
+  } catch (err) {
+    console.error('Error updating settings:', err);
+    return res.status(500).json({ success: false, error: 'Failed to update settings' });
+  }
+});
+
+// Test SMTP connection live
+app.get('/api/admin/settings/test-smtp', authenticateToken, async (req, res) => {
+  if (req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ success: false, error: 'Unauthorized access. Super Admin required.' });
+  }
+  try {
+    const { verifySmtpConnection } = await import('./services/notifier.js');
+    const results = await verifySmtpConnection();
+    return res.status(200).json({ success: true, results });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -993,7 +1248,7 @@ app.post('/api/chat/activity', async (req, res) => {
 
 // ─── Data Archival APIs (90-Day Policy) ──────────────────────────────────────
 // 1. Archival statistics and history
-app.get('/api/admin/archive/stats', authenticateToken, async (req, res) => {
+app.get('/api/admin/archive/stats', authenticateToken, requirePermission(['archive:read', '*']), async (req, res) => {
   try {
     const stats = await getArchivalStats(query);
     return res.json({ success: true, stats });
@@ -1004,7 +1259,7 @@ app.get('/api/admin/archive/stats', authenticateToken, async (req, res) => {
 });
 
 // 2. On-demand manual trigger
-app.post('/api/admin/archive/run', authenticateToken, async (req, res) => {
+app.post('/api/admin/archive/run', authenticateToken, requirePermission(['archive:write', '*']), async (req, res) => {
   const { daysThreshold = 90 } = req.body || {};
   try {
     const result = await runDataArchival(query, {
@@ -1019,7 +1274,7 @@ app.post('/api/admin/archive/run', authenticateToken, async (req, res) => {
 });
 
 // 3. View archived enquiries
-app.get('/api/admin/archive/enquiries', authenticateToken, async (req, res) => {
+app.get('/api/admin/archive/enquiries', authenticateToken, requirePermission(['archive:read', '*']), async (req, res) => {
   try {
     const result = await query('SELECT * FROM archived_enquiries ORDER BY archived_at DESC LIMIT 500');
     return res.json({ success: true, enquiries: result.rows, count: result.rowCount });
@@ -1030,7 +1285,7 @@ app.get('/api/admin/archive/enquiries', authenticateToken, async (req, res) => {
 });
 
 // 4. View archived applications
-app.get('/api/admin/archive/applications', authenticateToken, async (req, res) => {
+app.get('/api/admin/archive/applications', authenticateToken, requirePermission(['archive:read', '*']), async (req, res) => {
   try {
     const result = await query('SELECT * FROM archived_applications ORDER BY archived_at DESC LIMIT 500');
     return res.json({ success: true, applications: result.rows, count: result.rowCount });
@@ -1041,7 +1296,7 @@ app.get('/api/admin/archive/applications', authenticateToken, async (req, res) =
 });
 
 // 5. Restore an archived enquiry back to active enquiries
-app.post('/api/admin/archive/restore/enquiry/:id', authenticateToken, async (req, res) => {
+app.post('/api/admin/archive/restore/enquiry/:id', authenticateToken, requirePermission(['archive:write', '*']), async (req, res) => {
   const { id } = req.params;
   try {
     const result = await restoreArchivedEnquiry(query, id);
@@ -1056,7 +1311,7 @@ app.post('/api/admin/archive/restore/enquiry/:id', authenticateToken, async (req
 });
 
 // 6. Restore an archived application back to active candidates
-app.post('/api/admin/archive/restore/application/:id', authenticateToken, async (req, res) => {
+app.post('/api/admin/archive/restore/application/:id', authenticateToken, requirePermission(['archive:write', '*']), async (req, res) => {
   const { id } = req.params;
   try {
     const result = await restoreArchivedApplication(query, id);

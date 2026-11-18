@@ -7,17 +7,18 @@
  * - Security & Alerts: SLACK_ALERTS_WEBHOOK_URL || SLACK_WEBHOOK_URL
  */
 
+import { getConfig } from './configService.js';
+
 /**
- * Checks whether Slack webhook is configured
+ * Checks whether Slack webhook is configured dynamically
  */
 export function isSlackConfigured(customWebhookUrl) {
   const url = customWebhookUrl ||
-              process.env.SLACK_LEADS_WEBHOOK_URL ||
-              process.env.SLACK_CAREERS_WEBHOOK_URL ||
-              process.env.CAREER_WEBHOOK_URL ||
-              process.env.CAREERS_WEBHOOK_URL ||
-              process.env.SLACK_ALERTS_WEBHOOK_URL ||
-              process.env.SLACK_WEBHOOK_URL;
+              getConfig('SLACK_LEADS_WEBHOOK_URL') ||
+              getConfig('SLACK_CAREERS_WEBHOOK_URL') ||
+              getConfig('CAREER_WEBHOOK_URL') ||
+              getConfig('SLACK_ALERTS_WEBHOOK_URL') ||
+              getConfig('SLACK_WEBHOOK_URL');
 
   if (!url || typeof url !== 'string' || !url.startsWith('https://hooks.slack.com/')) {
     return false;
@@ -58,7 +59,7 @@ async function postToSlack(webhookUrl, payload) {
  */
 export async function notifySlackNewLead(lead) {
   setTimeout(async () => {
-    const webhookUrl = process.env.SLACK_LEADS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
+    const webhookUrl = getConfig('SLACK_LEADS_WEBHOOK_URL') || getConfig('SLACK_WEBHOOK_URL');
     if (!isSlackConfigured(webhookUrl)) {
       return;
     }
@@ -202,10 +203,10 @@ export async function notifySlackJobApplication(application) {
     dispatchGenericCareerWebhook(application);
 
     // 2. Slack Block Kit Webhook
-    const webhookUrl = process.env.SLACK_CAREERS_WEBHOOK_URL ||
-                       process.env.CAREER_WEBHOOK_URL ||
-                       process.env.CAREERS_WEBHOOK_URL ||
-                       process.env.SLACK_WEBHOOK_URL;
+    const webhookUrl = getConfig('SLACK_CAREERS_WEBHOOK_URL') ||
+                       getConfig('CAREER_WEBHOOK_URL') ||
+                       getConfig('CAREERS_WEBHOOK_URL') ||
+                       getConfig('SLACK_WEBHOOK_URL');
 
     if (!isSlackConfigured(webhookUrl)) {
       return;
@@ -288,7 +289,7 @@ export async function notifySlackJobApplication(application) {
  */
 export async function notifySlackAdminAlert(subject, message, details = {}) {
   setTimeout(async () => {
-    const webhookUrl = process.env.SLACK_ALERTS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
+    const webhookUrl = getConfig('SLACK_ALERTS_WEBHOOK_URL') || getConfig('SLACK_WEBHOOK_URL');
     if (!isSlackConfigured(webhookUrl)) {
       return;
     }

@@ -25,12 +25,39 @@ import {
   GraduationCap,
   Archive,
   Database,
-  RotateCcw
+  RotateCcw,
+  Settings,
+  UserPlus,
+  Key,
+  Lock,
+  Sliders,
+  Check,
+  Server
 } from 'lucide-react';
 
 interface AdminDashboardProps {
-  adminUser?: { username: string; role: string } | null;
+  adminUser?: { username: string; role: string; permissions?: string[] } | null;
   onLogout?: () => void;
+}
+
+interface UserAccount {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  permissions: string[];
+  created_at: string;
+}
+
+interface SystemConfigItem {
+  key: string;
+  value: string;
+  hasValue: boolean;
+  category: string;
+  description: string;
+  is_secret: boolean;
+  updated_at: string;
+  updated_by: string;
 }
 
 interface Enquiry {
@@ -97,8 +124,41 @@ const CANDIDATE_STATUSES = [
 const ENQUIRY_STATUSES = ['All', 'New', 'Contacted', 'In Progress', 'Closed'];
 
 export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardProps) {
-  // Navigation tab: 'enquiries' | 'applications' | 'archives'
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'applications' | 'archives'>('enquiries');
+  // Role & Permission Checks
+  const isSuperAdmin = adminUser?.role === 'Super Admin';
+  const userPerms = adminUser?.permissions || (isSuperAdmin ? ['*'] : []);
+
+  const hasPerm = (perm: string) => {
+    if (isSuperAdmin || userPerms.includes('*')) return true;
+    return userPerms.includes(perm);
+  };
+
+  const canViewEnquiries = hasPerm('enquiries:read');
+  const canViewApplications = hasPerm('applications:read');
+  const canViewArchives = hasPerm('archive:read');
+  const canManageUsers = isSuperAdmin || hasPerm('users:manage');
+  const canManageSettings = isSuperAdmin || hasPerm('settings:manage');
+
+  const defaultTab = canViewEnquiries ? 'enquiries' : (canViewApplications ? 'applications' : (canManageUsers ? 'users' : 'settings'));
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'applications' | 'archives' | 'users' | 'settings'>(defaultTab as any);
+
+  // User Management state (Super Admin)
+  const [userList, setUserList] = useState<UserAccount[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [newUserUsername, setNewUserUsername] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState('Counselor');
+  const [newUserPerms, setNewUserPerms] = useState<string[]>(['enquiries:read', 'enquiries:write']);
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  // Dynamic System Configs state (Super Admin)
+  const [configsList, setConfigsList] = useState<SystemConfigItem[]>([]);
+  const [loadingConfigs, setLoadingConfigs] = useState(false);
+  const [configForm, setConfigForm] = useState<Record<string, string>>({});
+  const [savingConfigs, setSavingConfigs] = useState(false);
+  const [smtpDiagnostics, setSmtpDiagnostics] = useState<any>(null);
+  const [testingSmtp, setTestingSmtp] = useState(false);
 
   // Archival state
   const [archivalStats, setArchivalStats] = useState<{
@@ -154,9 +214,223 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   // Initial data loading
   useEffect(() => {
-    loadEnquiries();
-    loadApplications();
+    if (canViewEnquiries) {
+      loadEnquiries();
+    }
+    if (canViewApplications) {
+      loadApplications();
+    }
+    if (canManageUsers) {
+      loadUsers();
+    }
+    if (canManageSettings) {
+      loadConfigs();
+    }
   }, []);
+
+  // Update default permissions when changing new user role in form
+  const handleRoleSelectionChange = (newRole: string) => {
+    setNewUserRole(newRole);
+    switch (newRole) {
+      case 'Super Admin':
+        setNewUserPerms(['*']);
+        break;
+      case 'Operations Manager':
+        setNewUserPerms(['enquiries:read', 'enquiries:write', 'applications:read', 'applications:write', 'archive:read']);
+        break;
+      case 'Counselor':
+        setNewUserPerms(['enquiries:read', 'enquiries:write']);
+        break;
+      case 'Recruiter':
+        setNewUserPerms(['applications:read', 'applications:write']);
+        break;
+      case 'Auditor':
+      case 'Viewer':
+        setNewUserPerms(['enquiries:read', 'applications:read', 'archive:read']);
+        break;
+      default:
+        setNewUserPerms(['enquiries:read']);
+    }
+  };
+
+  const togglePermission = (perm: string) => {
+    if (newUserPerms.includes('*')) {
+      setNewUserPerms([perm]);
+      return;
+    }
+    if (newUserPerms.includes(perm)) {
+      setNewUserPerms(newUserPerms.filter(p => p !== perm));
+    } else {
+      setNewUserPerms([...newUserPerms, perm]);
+    }
+  };
+
+  // --- USERS MANAGEMENT (SUPER ADMIN) ---
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    const token = getAuthToken();
+    try {
+      const res = await fetch('/api/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserList(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.warn('Failed to load users:', err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserUsername.trim() || !newUserEmail.trim() || !newUserPassword.trim()) {
+      showNotice('Please provide username, email, and password.');
+      return;
+    }
+    setCreatingUser(true);
+    const token = getAuthToken();
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          username: newUserUsername.trim(),
+          email: newUserEmail.trim(),
+          password: newUserPassword,
+          role: newUserRole,
+          permissions: newUserPerms
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showNotice(`User '${newUserUsername}' created with role '${newUserRole}'`);
+        setNewUserUsername('');
+        setNewUserEmail('');
+        setNewUserPassword('');
+        handleRoleSelectionChange('Counselor');
+        loadUsers();
+      } else {
+        showNotice(`Failed to create user: ${data.error || 'Server error'}`);
+      }
+    } catch (err: any) {
+      showNotice(`Error creating user: ${err.message}`);
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: number, username: string) => {
+    if (!confirm(`Are you sure you want to delete staff account '${username}'?`)) return;
+    const token = getAuthToken();
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotice(`User '${username}' deleted.`);
+        loadUsers();
+      } else {
+        showNotice(data.error || 'Failed to delete user');
+      }
+    } catch (err: any) {
+      showNotice(`Error deleting user: ${err.message}`);
+    }
+  };
+
+  // --- SYSTEM CONFIGURATIONS (DATABASE BACKED) ---
+  const loadConfigs = async () => {
+    setLoadingConfigs(true);
+    const token = getAuthToken();
+    try {
+      const res = await fetch('/api/admin/settings', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const settings = data.settings || [];
+        setConfigsList(settings);
+        const formObj: Record<string, string> = {};
+        for (const s of settings) {
+          formObj[s.key] = s.is_secret && s.hasValue ? '' : s.value;
+        }
+        setConfigForm(formObj);
+      }
+    } catch (err) {
+      console.warn('Failed to load configs:', err);
+    } finally {
+      setLoadingConfigs(false);
+    }
+  };
+
+  const handleSaveConfigs = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingConfigs(true);
+    const token = getAuthToken();
+    try {
+      const payload: Record<string, string> = {};
+      for (const [k, v] of Object.entries(configForm)) {
+        if (v !== undefined && v !== null && v.trim() !== '') {
+          payload[k] = v.trim();
+        }
+      }
+
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ settings: payload })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotice('Settings saved directly to database. Active immediately without restart!');
+        if (data.settings) {
+          setConfigsList(data.settings);
+        }
+      } else {
+        showNotice(data.error || 'Failed to save settings');
+      }
+    } catch (err: any) {
+      showNotice(`Error saving settings: ${err.message}`);
+    } finally {
+      setSavingConfigs(false);
+    }
+  };
+
+  const handleTestSmtpLive = async () => {
+    setTestingSmtp(true);
+    setSmtpDiagnostics(null);
+    const token = getAuthToken();
+    try {
+      const res = await fetch('/api/admin/settings/test-smtp', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.results) {
+        setSmtpDiagnostics(data.results);
+        const infoOk = data.results.info?.connected;
+        const supportOk = data.results.support?.connected;
+        if (infoOk && supportOk) {
+          showNotice('All Multi-Inbox SMTP connections verified successfully!');
+        } else {
+          showNotice(`SMTP Diagnostics: Info: ${infoOk ? 'OK' : 'Error'}, Support: ${supportOk ? 'OK' : 'Error'}`);
+        }
+      }
+    } catch (err: any) {
+      showNotice(`Test failed: ${err.message}`);
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
 
   // --- ENQUIRIES API CALLS ---
   const loadEnquiries = async () => {
@@ -577,6 +851,10 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
       loadApplications();
     } else if (activeTab === 'archives') {
       loadArchivalData();
+    } else if (activeTab === 'users') {
+      loadUsers();
+    } else if (activeTab === 'settings') {
+      loadConfigs();
     }
   };
 
@@ -642,70 +920,119 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
         {/* Tabbed Navigation Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center space-x-2 bg-slate-200/80 p-1.5 rounded-2xl w-fit">
-            <button
-              onClick={() => {
-                setActiveTab('enquiries');
-                setSelectedApplication(null);
-              }}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                activeTab === 'enquiries'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <MessageCircle className="w-4 h-4 text-brand-navy" />
-              <span>Customer Enquiries</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                activeTab === 'enquiries' ? 'bg-brand-navy/10 text-brand-navy' : 'bg-slate-300/70 text-slate-600'
-              }`}>
-                {enquiries.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                setActiveTab('applications');
-                setSelectedEnquiry(null);
-              }}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                activeTab === 'applications'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Briefcase className="w-4 h-4 text-brand-gold" />
-              <span>Job Applications</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                activeTab === 'applications' ? 'bg-amber-100 text-amber-800' : 'bg-slate-300/70 text-slate-600'
-              }`}>
-                {applications.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                setActiveTab('archives');
-                setSelectedEnquiry(null);
-                setSelectedApplication(null);
-                loadArchivalData();
-              }}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                activeTab === 'archives'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Archive className="w-4 h-4 text-emerald-600" />
-              <span>Data Archive (90+ Days)</span>
-              {archivalStats && (
+          <div className="flex flex-wrap items-center gap-2 bg-slate-200/80 p-1.5 rounded-2xl w-fit">
+            {canViewEnquiries && (
+              <button
+                onClick={() => {
+                  setActiveTab('enquiries');
+                  setSelectedApplication(null);
+                }}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
+                  activeTab === 'enquiries'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <MessageCircle className="w-4 h-4 text-brand-navy" />
+                <span>Customer Enquiries</span>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  activeTab === 'archives' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/70 text-slate-600'
+                  activeTab === 'enquiries' ? 'bg-brand-navy/10 text-brand-navy' : 'bg-slate-300/70 text-slate-600'
                 }`}>
-                  {archivalStats.totalArchivedEnquiries + archivalStats.totalArchivedApplications}
+                  {enquiries.length}
                 </span>
-              )}
-            </button>
+              </button>
+            )}
+
+            {canViewApplications && (
+              <button
+                onClick={() => {
+                  setActiveTab('applications');
+                  setSelectedEnquiry(null);
+                }}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
+                  activeTab === 'applications'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Briefcase className="w-4 h-4 text-brand-gold" />
+                <span>Job Applications</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  activeTab === 'applications' ? 'bg-amber-100 text-amber-800' : 'bg-slate-300/70 text-slate-600'
+                }`}>
+                  {applications.length}
+                </span>
+              </button>
+            )}
+
+            {canViewArchives && (
+              <button
+                onClick={() => {
+                  setActiveTab('archives');
+                  setSelectedEnquiry(null);
+                  setSelectedApplication(null);
+                  loadArchivalData();
+                }}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
+                  activeTab === 'archives'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Archive className="w-4 h-4 text-emerald-600" />
+                <span>Data Archive</span>
+                {archivalStats && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    activeTab === 'archives' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/70 text-slate-600'
+                  }`}>
+                    {archivalStats.totalArchivedEnquiries + archivalStats.totalArchivedApplications}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {canManageUsers && (
+              <button
+                onClick={() => {
+                  setActiveTab('users');
+                  setSelectedEnquiry(null);
+                  setSelectedApplication(null);
+                  loadUsers();
+                }}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
+                  activeTab === 'users'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Users className="w-4 h-4 text-indigo-600" />
+                <span>Team & Access (RBAC)</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  activeTab === 'users' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-300/70 text-slate-600'
+                }`}>
+                  {userList.length}
+                </span>
+              </button>
+            )}
+
+            {canManageSettings && (
+              <button
+                onClick={() => {
+                  setActiveTab('settings');
+                  setSelectedEnquiry(null);
+                  setSelectedApplication(null);
+                  loadConfigs();
+                }}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
+                  activeTab === 'settings'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Settings className="w-4 h-4 text-brand-navy" />
+                <span>System Configs</span>
+              </button>
+            )}
           </div>
 
           <div className="text-xs text-slate-500 font-medium">
@@ -1720,6 +2047,407 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── TAB 4: TEAM & ACCESS MANAGEMENT (RBAC) ─── */}
+        {activeTab === 'users' && canManageUsers && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Add User Form Section */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+              <div className="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-100">
+                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-900">Add Staff Account & Permissions</h2>
+                  <p className="text-xs text-slate-500">Create login credentials and grant role-based access directly to database</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleCreateUser} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Username *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newUserUsername}
+                      onChange={e => setNewUserUsername(e.target.value)}
+                      placeholder="e.g. counselor_anantapur"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={newUserEmail}
+                      onChange={e => setNewUserEmail(e.target.value)}
+                      placeholder="e.g. staff@harryoverseas.com"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Password *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={newUserPassword}
+                      onChange={e => setNewUserPassword(e.target.value)}
+                      placeholder="Min 8 characters"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Staff Role *
+                    </label>
+                    <select
+                      value={newUserRole}
+                      onChange={e => handleRoleSelectionChange(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-semibold text-slate-800"
+                    >
+                      <option value="Counselor">Counselor (Enquiries Only)</option>
+                      <option value="Recruiter">Recruiter (Job Applications Only)</option>
+                      <option value="Operations Manager">Operations Manager (Enquiries + Candidates + Archives)</option>
+                      <option value="Viewer">Viewer / Auditor (Read-only)</option>
+                      <option value="Super Admin">Super Admin (Full Unrestricted Access)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Granular Permission Toggles */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-1.5">
+                      <Lock className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Granular Access Permissions</span>
+                    </span>
+                    {newUserPerms.includes('*') && (
+                      <span className="text-xs font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">
+                        Full Administrator Authority (*)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                    {[
+                      { key: 'enquiries:read', label: 'View Enquiries' },
+                      { key: 'enquiries:write', label: 'Update Enquiry Status' },
+                      { key: 'enquiries:delete', label: 'Delete Enquiries' },
+                      { key: 'applications:read', label: 'View Candidate CVs' },
+                      { key: 'applications:write', label: 'Update Application Status' },
+                      { key: 'applications:delete', label: 'Delete Applications' },
+                      { key: 'archive:read', label: 'View 90+ Day Archives' },
+                      { key: 'archive:write', label: 'Trigger Archival & Restore' }
+                    ].map(p => {
+                      const isChecked = newUserPerms.includes('*') || newUserPerms.includes(p.key);
+                      return (
+                        <label
+                          key={p.key}
+                          onClick={() => togglePermission(p.key)}
+                          className={`flex items-center space-x-2 p-2.5 rounded-lg border text-xs font-medium cursor-pointer transition select-none ${
+                            isChecked
+                              ? 'bg-indigo-50/80 border-indigo-200 text-indigo-900 font-bold'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={newUserRole === 'Super Admin'}
+                            readOnly
+                            className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
+                          />
+                          <span>{p.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={creatingUser}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm shadow-md flex items-center space-x-2 transition disabled:opacity-50"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>{creatingUser ? 'Creating Account...' : 'Create Staff Member'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Existing Users Table */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-slate-900">Configured Portal Accounts</h3>
+                  <p className="text-xs text-slate-500">Active accounts authorized to access Staff Portal modules</p>
+                </div>
+                <button
+                  onClick={loadUsers}
+                  className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition"
+                  title="Reload users"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loadingUsers ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-700">
+                  <thead className="bg-slate-50/70 text-slate-500 uppercase text-[11px] font-bold border-b border-slate-100">
+                    <tr>
+                      <th className="p-4">User</th>
+                      <th className="p-4">Email</th>
+                      <th className="p-4">Role</th>
+                      <th className="p-4">Assigned Permissions</th>
+                      <th className="p-4">Created Date</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {userList.map(u => (
+                      <tr key={u.id} className="hover:bg-slate-50/80 transition">
+                        <td className="p-4 font-bold text-slate-900 flex items-center space-x-2">
+                          <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 text-xs font-bold uppercase">
+                            {u.username.substring(0, 2)}
+                          </div>
+                          <span>{u.username}</span>
+                        </td>
+                        <td className="p-4 text-slate-600 font-mono text-xs">{u.email}</td>
+                        <td className="p-4">
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-bold border ${
+                            u.role === 'Super Admin'
+                              ? 'bg-purple-100 text-purple-800 border-purple-200'
+                              : u.role === 'Operations Manager'
+                                ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                                : u.role === 'Counselor'
+                                  ? 'bg-blue-100 text-blue-800 border-blue-200'
+                                  : u.role === 'Recruiter'
+                                    ? 'bg-amber-100 text-amber-800 border-amber-200'
+                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                          }`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-wrap gap-1 max-w-xs">
+                            {u.permissions?.includes('*') ? (
+                              <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 font-bold">
+                                Full System Access (*)
+                              </span>
+                            ) : (
+                              u.permissions?.map((p, idx) => (
+                                <span key={idx} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                                  {p}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 text-slate-400 font-mono text-xs">
+                          {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="p-4 text-right">
+                          {u.role !== 'Super Admin' && (
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.username)}
+                              className="text-rose-600 hover:text-rose-800 p-1.5 hover:bg-rose-50 rounded-lg transition"
+                              title="Delete user"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB 5: SYSTEM CONFIGS (DATABASE BACKED, NO RESTART NEEDED) ─── */}
+        {activeTab === 'settings' && canManageSettings && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Header info */}
+            <div className="bg-gradient-to-r from-brand-navy to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
+              <div className="flex items-center space-x-3 mb-2">
+                <Sliders className="w-6 h-6 text-brand-gold" />
+                <h2 className="text-xl font-extrabold tracking-tight">Database-Backed Dynamic System Settings</h2>
+              </div>
+              <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
+                All credentials, email configurations, and Slack webhooks are securely stored in the PostgreSQL database.
+                Updating values here takes effect immediately in the runtime engine <strong>without requiring any server reboot</strong>.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveConfigs} className="space-y-6">
+              {/* Email & SMTP Settings Group */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+                  <div className="flex items-center space-x-2">
+                    <Mail className="w-5 h-5 text-brand-navy" />
+                    <h3 className="font-extrabold text-slate-900">Multi-Inbox Gmail SMTP Configuration</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTestSmtpLive}
+                    disabled={testingSmtp}
+                    className="text-xs font-bold px-3 py-1.5 bg-brand-navy text-white rounded-lg hover:bg-slate-800 transition flex items-center space-x-1.5 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${testingSmtp ? 'animate-spin' : ''}`} />
+                    <span>{testingSmtp ? 'Testing Live...' : 'Verify SMTP Live'}</span>
+                  </button>
+                </div>
+
+                {smtpDiagnostics && (
+                  <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    <div className="font-bold text-slate-800 mb-2">Diagnostic Results:</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                        smtpDiagnostics.info?.connected ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+                      }`}>
+                        <span>Info Inbox ({smtpDiagnostics.info?.user || 'info'}):</span>
+                        <span className="font-bold">{smtpDiagnostics.info?.connected ? 'Connected (OK)' : (smtpDiagnostics.info?.error || 'Failed')}</span>
+                      </div>
+                      <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                        smtpDiagnostics.support?.connected ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+                      }`}>
+                        <span>Support Inbox ({smtpDiagnostics.support?.user || 'support'}):</span>
+                        <span className="font-bold">{smtpDiagnostics.support?.connected ? 'Connected (OK)' : (smtpDiagnostics.support?.error || 'Failed')}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">EMAIL_INFO_USER (Leads Recipient & Sender)</label>
+                    <input
+                      type="text"
+                      value={configForm['EMAIL_INFO_USER'] || ''}
+                      onChange={e => setConfigForm({ ...configForm, EMAIL_INFO_USER: e.target.value })}
+                      placeholder="info.harryoverseas@gmail.com"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      EMAIL_INFO_PASS (Google 16-char App Password)
+                    </label>
+                    <input
+                      type="password"
+                      value={configForm['EMAIL_INFO_PASS'] || ''}
+                      onChange={e => setConfigForm({ ...configForm, EMAIL_INFO_PASS: e.target.value })}
+                      placeholder="Enter new 16-char password to update"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">EMAIL_SUPPORT_USER (Candidate Submissions)</label>
+                    <input
+                      type="text"
+                      value={configForm['EMAIL_SUPPORT_USER'] || ''}
+                      onChange={e => setConfigForm({ ...configForm, EMAIL_SUPPORT_USER: e.target.value })}
+                      placeholder="support.harryoverseas@gmail.com"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      EMAIL_SUPPORT_PASS (Google 16-char App Password)
+                    </label>
+                    <input
+                      type="password"
+                      value={configForm['EMAIL_SUPPORT_PASS'] || ''}
+                      onChange={e => setConfigForm({ ...configForm, EMAIL_SUPPORT_PASS: e.target.value })}
+                      placeholder="Enter new 16-char password to update"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Slack Webhooks Group */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
+                  <MessageCircle className="w-5 h-5 text-emerald-600" />
+                  <h3 className="font-extrabold text-slate-900">Real-Time Slack Webhook Routing</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">SLACK_LEADS_WEBHOOK_URL</label>
+                    <input
+                      type="password"
+                      value={configForm['SLACK_LEADS_WEBHOOK_URL'] || ''}
+                      onChange={e => setConfigForm({ ...configForm, SLACK_LEADS_WEBHOOK_URL: e.target.value })}
+                      placeholder="https://hooks.slack.com/services/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">SLACK_CAREERS_WEBHOOK_URL</label>
+                    <input
+                      type="password"
+                      value={configForm['SLACK_CAREERS_WEBHOOK_URL'] || ''}
+                      onChange={e => setConfigForm({ ...configForm, SLACK_CAREERS_WEBHOOK_URL: e.target.value })}
+                      placeholder="https://hooks.slack.com/services/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">SLACK_ALERTS_WEBHOOK_URL</label>
+                    <input
+                      type="password"
+                      value={configForm['SLACK_ALERTS_WEBHOOK_URL'] || ''}
+                      onChange={e => setConfigForm({ ...configForm, SLACK_ALERTS_WEBHOOK_URL: e.target.value })}
+                      placeholder="https://hooks.slack.com/services/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={loadConfigs}
+                  className="px-5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Discard Changes
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingConfigs}
+                  className="bg-brand-navy hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md flex items-center space-x-2 transition disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{savingConfigs ? 'Updating Database...' : 'Save Changes to Database'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
