@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { secureFetch } from '../utils/secureApi';
 import { CheckCircle2, ArrowRight, ArrowLeft, Send, ShieldAlert, Sparkles, Smartphone, AlertCircle, Wrench } from 'lucide-react';
+import {
+  COUNTRY_PHONE_CONFIGS,
+  CountryPhoneConfig,
+  getCountryConfig,
+  formatFullPhoneNumber,
+  validateInternationalPhone
+} from '../utils/countryData';
+import { InternationalPhoneInput } from './InternationalPhoneInput';
 
 interface FormErrors {
   fullName?: string;
@@ -19,6 +27,8 @@ export default function EnquiryWizard() {
   const [maintenanceError, setMaintenanceError] = useState<string | null>(null);
 
   // Form State
+  const [mobileCountry, setMobileCountry] = useState<CountryPhoneConfig>(() => getCountryConfig('IN'));
+  const [whatsappCountry, setWhatsappCountry] = useState<CountryPhoneConfig>(() => getCountryConfig('IN'));
   const [formData, setFormData] = useState({
     fullName: '',
     mobile: '',
@@ -93,23 +103,21 @@ export default function EnquiryWizard() {
     });
   };
 
-  const validateField = (field: keyof FormErrors, value: string): string | undefined => {
+  const validateField = (
+    field: keyof FormErrors,
+    value: string,
+    currentMobileCountry = mobileCountry,
+    currentWhatsappCountry = whatsappCountry
+  ): string | undefined => {
     switch (field) {
       case 'fullName':
         if (!value.trim()) return 'Full name is required.';
-        if (value.trim().length < 2) return 'Full name must be at least 2 characters.';
+        if (value.trim().length < 6) return 'Full name must be at least 6 characters.';
         return undefined;
       case 'mobile':
-        if (!value.trim()) return 'Mobile number is required.';
-        if (value.trim().replace(/[\s\-\+\(\)]/g, '').length < 6) {
-          return 'Please enter a valid phone/mobile number.';
-        }
-        return undefined;
+        return validateInternationalPhone(value, currentMobileCountry, true, 'Mobile number');
       case 'whatsapp':
-        if (value.trim() && value.trim().replace(/[\s\-\+\(\)]/g, '').length < 6) {
-          return 'Please enter a valid WhatsApp number.';
-        }
-        return undefined;
+        return validateInternationalPhone(value, currentWhatsappCountry, false, 'WhatsApp number');
       case 'email':
         if (!value.trim()) return 'Email address is required.';
         if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(value.trim())) {
@@ -127,11 +135,23 @@ export default function EnquiryWizard() {
     setFormErrors(prev => ({ ...prev, [field]: error }));
   };
 
+  const handleMobileCountryChange = (country: CountryPhoneConfig) => {
+    setMobileCountry(country);
+    const error = validateField('mobile', formData.mobile, country, whatsappCountry);
+    setFormErrors(prev => ({ ...prev, mobile: error }));
+  };
+
+  const handleWhatsappCountryChange = (country: CountryPhoneConfig) => {
+    setWhatsappCountry(country);
+    const error = validateField('whatsapp', formData.whatsapp, mobileCountry, country);
+    setFormErrors(prev => ({ ...prev, whatsapp: error }));
+  };
+
   const validateStep1 = (): boolean => {
     const errs: FormErrors = {};
     errs.fullName = validateField('fullName', formData.fullName);
-    errs.mobile = validateField('mobile', formData.mobile);
-    errs.whatsapp = validateField('whatsapp', formData.whatsapp);
+    errs.mobile = validateField('mobile', formData.mobile, mobileCountry, whatsappCountry);
+    errs.whatsapp = validateField('whatsapp', formData.whatsapp, mobileCountry, whatsappCountry);
     errs.email = validateField('email', formData.email);
 
     const hasError = Object.values(errs).some(Boolean);
@@ -177,14 +197,19 @@ export default function EnquiryWizard() {
 
     const newId = `HGI-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    const fullMobile = formatFullPhoneNumber(mobileCountry.dialCode, formData.mobile);
+    const fullWhatsapp = formData.whatsapp
+      ? formatFullPhoneNumber(whatsappCountry.dialCode, formData.whatsapp)
+      : fullMobile;
+
     const payload = {
       id: newId,
       full_name: formData.fullName,
       fullName: formData.fullName,
       email: formData.email,
-      phone: formData.mobile,
-      mobile: formData.mobile,
-      whatsapp: formData.whatsapp || formData.mobile,
+      phone: fullMobile,
+      mobile: fullMobile,
+      whatsapp: fullWhatsapp,
       city: formData.city || 'Anantapur',
       country: formData.country || 'India',
       main_services: formData.mainServices,
@@ -357,42 +382,30 @@ export default function EnquiryWizard() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Mobile Number *</label>
-                      <input
-                        type="tel"
+                      <InternationalPhoneInput
+                        id="wizard-mobile"
+                        label="Mobile Number"
                         required
+                        country={mobileCountry}
+                        onCountryChange={handleMobileCountryChange}
                         value={formData.mobile}
-                        onChange={e => handleInputChange('mobile', e.target.value)}
-                        placeholder="+91 98765 43210"
-                        className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
-                          formErrors.mobile ? 'border-rose-500 focus:ring-2 focus:ring-rose-200' : 'border-slate-300 focus:ring-2 focus:ring-brand-gold'
-                        }`}
+                        onChange={val => handleInputChange('mobile', val)}
+                        error={formErrors.mobile}
+                        placeholder={mobileCountry.placeholder}
                       />
-                      {formErrors.mobile && (
-                        <p className="text-xs text-rose-600 mt-1 flex items-center space-x-1">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                          <span>{formErrors.mobile}</span>
-                        </p>
-                      )}
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">WhatsApp Number</label>
-                      <input
-                        type="tel"
+                      <InternationalPhoneInput
+                        id="wizard-whatsapp"
+                        label="WhatsApp Number"
+                        country={whatsappCountry}
+                        onCountryChange={handleWhatsappCountryChange}
                         value={formData.whatsapp}
-                        onChange={e => handleInputChange('whatsapp', e.target.value)}
-                        placeholder="+91 98765 43210"
-                        className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
-                          formErrors.whatsapp ? 'border-rose-500 focus:ring-2 focus:ring-rose-200' : 'border-slate-300 focus:ring-2 focus:ring-brand-gold'
-                        }`}
+                        onChange={val => handleInputChange('whatsapp', val)}
+                        error={formErrors.whatsapp}
+                        placeholder={whatsappCountry.placeholder}
                       />
-                      {formErrors.whatsapp && (
-                        <p className="text-xs text-rose-600 mt-1 flex items-center space-x-1">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                          <span>{formErrors.whatsapp}</span>
-                        </p>
-                      )}
                     </div>
 
                     <div>
@@ -427,13 +440,27 @@ export default function EnquiryWizard() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Country</label>
-                      <input
-                        type="text"
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Country of Residence</label>
+                      <select
                         value={formData.country}
-                        onChange={e => setFormData({ ...formData, country: e.target.value })}
+                        onChange={e => {
+                          const newCountry = e.target.value;
+                          setFormData({ ...formData, country: newCountry });
+                          // Optionally sync dialing code if mobile has not been entered yet
+                          const matchingConfig = COUNTRY_PHONE_CONFIGS.find(c => c.name === newCountry);
+                          if (matchingConfig && !formData.mobile) {
+                            setMobileCountry(matchingConfig);
+                            setWhatsappCountry(matchingConfig);
+                          }
+                        }}
                         className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand-gold focus:outline-none"
-                      />
+                      >
+                        {COUNTRY_PHONE_CONFIGS.map(c => (
+                          <option key={c.code} value={c.name}>
+                            {c.flag} {c.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>

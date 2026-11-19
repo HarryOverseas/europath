@@ -25,6 +25,13 @@ import {
   RotateCcw,
   Check
 } from 'lucide-react';
+import {
+  CountryPhoneConfig,
+  getCountryConfig,
+  formatFullPhoneNumber,
+  validateInternationalPhone
+} from '../utils/countryData';
+import { InternationalPhoneInput } from './InternationalPhoneInput';
 
 export interface JobVacancy {
   id: string;
@@ -146,6 +153,7 @@ export default function Careers() {
     notes: ''
   });
 
+  const [phoneCountry, setPhoneCountry] = useState<CountryPhoneConfig>(() => getCountryConfig('IN'));
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -178,7 +186,11 @@ export default function Careers() {
   };
 
   // Field validation
-  const validateField = (name: keyof ApplicationFormData, value: string): string | undefined => {
+  const validateField = (
+    name: keyof ApplicationFormData,
+    value: string,
+    currentPhoneCountry = phoneCountry
+  ): string | undefined => {
     switch (name) {
       case 'fullName':
         if (!value.trim()) return 'Full name is required.';
@@ -191,11 +203,7 @@ export default function Careers() {
         }
         return undefined;
       case 'phone':
-        if (!value.trim()) return 'Phone number is required.';
-        if (value.trim().replace(/[\s\-\+\(\)]/g, '').length < 6) {
-          return 'Please enter a valid phone number with digits.';
-        }
-        return undefined;
+        return validateInternationalPhone(value, currentPhoneCountry, true, 'Phone number');
       case 'role':
         if (!value.trim()) return 'Please select a target role.';
         return undefined;
@@ -215,11 +223,17 @@ export default function Careers() {
     setFormErrors(prev => ({ ...prev, [field]: error }));
   };
 
+  const handlePhoneCountryChange = (country: CountryPhoneConfig) => {
+    setPhoneCountry(country);
+    const error = validateField('phone', formData.phone, country);
+    setFormErrors(prev => ({ ...prev, phone: error }));
+  };
+
   const validateAll = (): boolean => {
     const errors: FormErrors = {};
     errors.fullName = validateField('fullName', formData.fullName);
     errors.email = validateField('email', formData.email);
-    errors.phone = validateField('phone', formData.phone);
+    errors.phone = validateField('phone', formData.phone, phoneCountry);
     errors.role = validateField('role', formData.role);
     errors.resumeLink = validateField('resumeLink', formData.resumeLink);
 
@@ -243,10 +257,12 @@ export default function Careers() {
 
     const generatedId = `REF-HG-${Math.floor(100000 + Math.random() * 900000)}`;
 
+    const fullPhone = formatFullPhoneNumber(phoneCountry.dialCode, formData.phone);
+
     const payload = {
       full_name: formData.fullName.trim(),
       email: formData.email.trim(),
-      phone: formData.phone.trim(),
+      phone: fullPhone,
       role: formData.role.trim(),
       resume_link: formData.resumeLink.trim() || undefined,
       notes: formData.notes.trim() || undefined
@@ -852,27 +868,17 @@ export default function Careers() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Phone / WhatsApp <span className="text-rose-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="tel"
-                          placeholder="+49 151 23456789 or +91 9876543210"
-                          value={formData.phone}
-                          onChange={e => handleInputChange('phone', e.target.value)}
-                          className={`w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm border rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-navy ${
-                            formErrors.phone ? 'border-rose-400 bg-rose-50/50' : 'border-slate-300'
-                          }`}
-                        />
-                      </div>
-                      {formErrors.phone && (
-                        <p className="text-xs text-rose-500 mt-1 flex items-center space-x-1">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>{formErrors.phone}</span>
-                        </p>
-                      )}
+                      <InternationalPhoneInput
+                        id="career-phone"
+                        label="Phone / WhatsApp"
+                        required
+                        country={phoneCountry}
+                        onCountryChange={handlePhoneCountryChange}
+                        value={formData.phone}
+                        onChange={val => handleInputChange('phone', val)}
+                        error={formErrors.phone}
+                        placeholder={phoneCountry.placeholder}
+                      />
                     </div>
                   </div>
 

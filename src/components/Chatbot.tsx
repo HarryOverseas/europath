@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { secureFetch } from '../utils/secureApi';
 import { MessageCircle, X, Send, User, Loader2, Sparkles, CheckCircle2, ShieldCheck, Phone, Mail, MapPin, RefreshCw } from 'lucide-react';
+import {
+  CountryPhoneConfig,
+  getCountryConfig,
+  formatFullPhoneNumber,
+  validateInternationalPhone
+} from '../utils/countryData';
+import { InternationalPhoneInput } from './InternationalPhoneInput';
 
 interface Message {
   id: string;
@@ -47,6 +54,7 @@ export default function Chatbot() {
   const [registeredUser, setRegisteredUser] = useState<RegisteredUser | null>(null);
 
   // Registration Form State
+  const [regCountry, setRegCountry] = useState<CountryPhoneConfig>(() => getCountryConfig('IN'));
   const [regName, setRegName] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regEmail, setRegEmail] = useState('');
@@ -135,8 +143,9 @@ export default function Chatbot() {
       return;
     }
 
-    if (!phoneTrimmed || phoneTrimmed.replace(/[^0-9]/g, '').length < 8) {
-      setRegError('Please enter a valid 10-digit mobile or WhatsApp number');
+    const phoneError = validateInternationalPhone(phoneTrimmed, regCountry, true, 'Mobile / WhatsApp number');
+    if (phoneError) {
+      setRegError(phoneError);
       return;
     }
 
@@ -147,14 +156,15 @@ export default function Chatbot() {
     }
 
     setRegSubmitting(true);
+    const fullPhoneNumber = formatFullPhoneNumber(regCountry.dialCode, phoneTrimmed);
     try {
       const payload = {
         fullName: nameTrimmed,
         email: emailTrimmed,
-        phone: phoneTrimmed,
-        whatsapp: phoneTrimmed,
+        phone: fullPhoneNumber,
+        whatsapp: fullPhoneNumber,
         city: regCity.trim() || 'Anantapur',
-        country: 'India',
+        country: regCountry.name || 'India',
         mainServices: ['AI Chatbot Registration', regInterest],
         serviceInterest: regInterest,
         languageCourse: regInterest.includes('German') ? 'A1-B1 Combo' : '',
@@ -163,7 +173,7 @@ export default function Chatbot() {
           regInterest.includes('App') ? 'Lifetime App Access Inquiry' : 'Interactive Chatbot Consultation'
         ],
         intendedDestination: 'Germany',
-        message: `[AI Chatbot Registered Lead - Clara]\n• Name: ${nameTrimmed}\n• WhatsApp: ${phoneTrimmed}\n• Email: ${emailTrimmed}\n• Primary Interest: ${regInterest}\n• Location: ${regCity.trim() || 'Anantapur, AP'}\n\n[Chat Activity & Checked Topics]:\n• ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}: User registered via Clara AI Chatbot`
+        message: `[AI Chatbot Registered Lead - Clara]\n• Name: ${nameTrimmed}\n• WhatsApp: ${fullPhoneNumber}\n• Email: ${emailTrimmed}\n• Primary Interest: ${regInterest}\n• Location: ${regCity.trim() || 'Anantapur, AP'}\n\n[Chat Activity & Checked Topics]:\n• ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}: User registered via Clara AI Chatbot`
       };
 
       const res = await secureFetch(`${API_BASE}/api/enquiries`, {
@@ -183,7 +193,7 @@ export default function Chatbot() {
         id: enquiryId,
         fullName: nameTrimmed,
         email: emailTrimmed,
-        phone: phoneTrimmed,
+        phone: fullPhoneNumber,
         interest: regInterest,
         city: regCity.trim() || 'Anantapur'
       };
@@ -577,23 +587,18 @@ export default function Chatbot() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">
-                      WhatsApp / Mobile *
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
-                      <input
-                        type="tel"
-                        required
-                        value={regPhone}
-                        onChange={e => setRegPhone(e.target.value)}
-                        placeholder="+91 98765 43210"
-                        className="w-full text-xs pl-8 pr-2 py-1.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none"
-                      />
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <InternationalPhoneInput
+                    id="chatbot-phone"
+                    label="WhatsApp / Mobile"
+                    required
+                    size="sm"
+                    country={regCountry}
+                    onCountryChange={setRegCountry}
+                    value={regPhone}
+                    onChange={setRegPhone}
+                    placeholder={regCountry.placeholder}
+                  />
 
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">

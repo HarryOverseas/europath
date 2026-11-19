@@ -173,7 +173,7 @@ export async function notifyNewJobApplication(application) {
       };
 
       // 1. Dispatch Internal Recruiter Notification
-      const recruiterEmail = renderTemplate('admin_application_alert', appData);
+      const recruiterEmail = renderTemplate('support_career_alert', appData);
       await transporter.sendMail({
         from: `"Harry Overseas Careers" <${user}>`,
         to: emailSupport,
@@ -186,7 +186,7 @@ export async function notifyNewJobApplication(application) {
 
       // 2. Dispatch Candidate Confirmation Receipt
       if (application.email && application.email.includes('@')) {
-        const candidateEmail = renderTemplate('career_application_ack', appData);
+        const candidateEmail = renderTemplate('job_applicant_receipt', appData);
         await transporter.sendMail({
           from: `"Harry Overseas Careers Team" <${user}>`,
           to: application.email,
@@ -253,10 +253,24 @@ export async function notifyApplicationStageChange(application, newStatus) {
         fullName: application.full_name,
         role: application.role,
         applicationId: application.id,
-        currentStage: newStatus
+        currentStage: newStatus,
+        status: newStatus
       };
 
-      const candidateEmail = renderTemplate('career_stage_update', candidateData);
+      // Select specific candidate update template based on stage
+      let templateId = 'candidate_shortlisted';
+      const statusLower = (newStatus || '').toLowerCase();
+      if (statusLower.includes('shortlist')) {
+        templateId = 'candidate_shortlisted';
+      } else if (statusLower.includes('interview')) {
+        templateId = 'candidate_interviewed';
+      } else if (statusLower.includes('hire') || statusLower.includes('offer') || statusLower.includes('select')) {
+        templateId = 'candidate_hired';
+      } else if (statusLower.includes('reject') || statusLower.includes('decline') || statusLower.includes('closed')) {
+        templateId = 'candidate_rejected';
+      }
+
+      const candidateEmail = renderTemplate(templateId, candidateData);
       await transporter.sendMail({
         from: `"Harry Overseas Recruitment Team" <${user}>`,
         to: application.email,
@@ -265,7 +279,7 @@ export async function notifyApplicationStageChange(application, newStatus) {
         html: candidateEmail.html,
         text: candidateEmail.text
       });
-      console.log(`[Notifier] Candidate stage update (${newStatus}) delivered to ${application.email}`);
+      console.log(`[Notifier] Candidate stage update (${newStatus} -> ${templateId}) delivered to ${application.email}`);
     } catch (err) {
       console.error('[Notifier Error - Application Stage Change]:', err.message);
     }
@@ -275,7 +289,7 @@ export async function notifyApplicationStageChange(application, newStatus) {
 /**
  * 5. NOTIFY ENQUIRY STAGE CHANGE
  */
-export async function notifyEnquiryStageChange(enquiry, newStatus) {
+export async function notifyEnquiryStageChange(enquiry, prevStatus, newStatus, stageNotes = '') {
   setTimeout(async () => {
     try {
       const transporter = getTransporter('info');
@@ -283,11 +297,14 @@ export async function notifyEnquiryStageChange(enquiry, newStatus) {
 
       if (!transporter || !enquiry.email) return;
 
-      const stageEmail = renderTemplate('enquiry_status_update', {
+      const stageEmail = renderTemplate('enquiry_stage_update', {
         fullName: enquiry.full_name,
         referenceId: enquiry.id,
         serviceInterest: enquiry.service_interest || enquiry.language_course || 'European Migration',
-        newStatus
+        destinationCountry: enquiry.destination_country || enquiry.intended_destination || 'Germany',
+        status: newStatus,
+        prevStatus,
+        stageNotes: stageNotes || 'Your counselor is actively processing your case documentation.'
       });
 
       await transporter.sendMail({

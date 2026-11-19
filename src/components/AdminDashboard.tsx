@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { secureFetch } from '../utils/secureApi';
 import {
+  CountryPhoneConfig,
+  COUNTRY_PHONE_CONFIGS,
+  getCountryConfig,
+  parsePhoneParts,
+  formatFullPhoneNumber,
+  validateInternationalPhone
+} from '../utils/countryData';
+import { InternationalPhoneInput } from './InternationalPhoneInput';
+import {
   Search,
   Filter,
   Phone,
@@ -221,6 +230,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   // Lead Editing State
   const [isEditingLead, setIsEditingLead] = useState(false);
+  const [leadPhoneCountry, setLeadPhoneCountry] = useState<CountryPhoneConfig>(() => getCountryConfig('IN'));
+  const [leadPhoneError, setLeadPhoneError] = useState<string | undefined>(undefined);
   const [leadEditForm, setLeadEditForm] = useState<{
     full_name: string;
     email: string;
@@ -650,10 +661,15 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   // Helper to open edit lead form
   const handleStartEditLead = (lead: Enquiry) => {
+    const rawPhone = lead.mobile || lead.phone || '';
+    const { country: parsedCountry, nationalNumber } = parsePhoneParts(rawPhone, 'IN');
+    setLeadPhoneCountry(parsedCountry);
+    setLeadPhoneError(undefined);
+
     setLeadEditForm({
       full_name: lead.full_name || lead.fullName || '',
       email: lead.email || '',
-      phone: lead.mobile || lead.phone || '',
+      phone: nationalNumber,
       city: lead.city || 'Anantapur',
       country: lead.country || 'India',
       service_interest: lead.service_interest || (Array.isArray(lead.main_services) ? lead.main_services.join(', ') : String(lead.main_services || '')),
@@ -669,8 +685,23 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
   const handleSaveLeadEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEnquiry) return;
+
+    const phoneValidation = validateInternationalPhone(leadEditForm.phone, leadPhoneCountry, true, 'Phone number');
+    if (phoneValidation) {
+      setLeadPhoneError(phoneValidation);
+      return;
+    }
+    setLeadPhoneError(undefined);
+
     setSavingLeadEdit(true);
     const token = getAuthToken();
+
+    const fullFormattedPhone = formatFullPhoneNumber(leadPhoneCountry.dialCode, leadEditForm.phone);
+    const submissionData = {
+      ...leadEditForm,
+      phone: fullFormattedPhone,
+      mobile: fullFormattedPhone
+    };
 
     try {
       const res = await secureFetch(`/api/enquiries/${selectedEnquiry.id}`, {
@@ -679,7 +710,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(leadEditForm)
+        body: JSON.stringify(submissionData)
       });
       const data = await res.json();
       if (res.ok && data.enquiry) {
@@ -1473,7 +1504,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
                             <label className="block text-slate-600 font-semibold mb-1">Email *</label>
                             <input
@@ -1485,13 +1516,25 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                             />
                           </div>
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">Phone / WhatsApp *</label>
-                            <input
-                              type="text"
+                            <InternationalPhoneInput
+                              id="admin-edit-phone"
+                              label="Phone / WhatsApp"
                               required
+                              size="sm"
+                              country={leadPhoneCountry}
+                              onCountryChange={c => {
+                                setLeadPhoneCountry(c);
+                                const err = validateInternationalPhone(leadEditForm.phone, c, true, 'Phone number');
+                                setLeadPhoneError(err);
+                              }}
                               value={leadEditForm.phone}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, phone: e.target.value })}
-                              className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
+                              onChange={val => {
+                                setLeadEditForm({ ...leadEditForm, phone: val });
+                                const err = validateInternationalPhone(val, leadPhoneCountry, true, 'Phone number');
+                                setLeadPhoneError(err);
+                              }}
+                              error={leadPhoneError}
+                              placeholder={leadPhoneCountry.placeholder}
                             />
                           </div>
                         </div>
@@ -1508,12 +1551,24 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                           </div>
                           <div>
                             <label className="block text-slate-600 font-semibold mb-1">Country</label>
-                            <input
-                              type="text"
+                            <select
                               value={leadEditForm.country}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, country: e.target.value })}
+                              onChange={e => {
+                                const selectedCountry = e.target.value;
+                                setLeadEditForm({ ...leadEditForm, country: selectedCountry });
+                                const conf = COUNTRY_PHONE_CONFIGS.find(c => c.name === selectedCountry);
+                                if (conf && !leadEditForm.phone) {
+                                  setLeadPhoneCountry(conf);
+                                }
+                              }}
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
-                            />
+                            >
+                              {COUNTRY_PHONE_CONFIGS.map(c => (
+                                <option key={c.code} value={c.name}>
+                                  {c.flag} {c.name}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         </div>
 
