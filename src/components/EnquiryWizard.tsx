@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
 import { secureFetch } from '../utils/secureApi';
-import { CheckCircle2, ArrowRight, ArrowLeft, Send, ShieldAlert, Sparkles, Smartphone } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ArrowLeft, Send, ShieldAlert, Sparkles, Smartphone, AlertCircle, Wrench } from 'lucide-react';
+
+interface FormErrors {
+  fullName?: string;
+  mobile?: string;
+  whatsapp?: string;
+  email?: string;
+  mainServices?: string;
+}
 
 export default function EnquiryWizard() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [generatedId, setGeneratedId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [maintenanceError, setMaintenanceError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -83,16 +93,67 @@ export default function EnquiryWizard() {
     });
   };
 
+  const validateField = (field: keyof FormErrors, value: string): string | undefined => {
+    switch (field) {
+      case 'fullName':
+        if (!value.trim()) return 'Full name is required.';
+        if (value.trim().length < 2) return 'Full name must be at least 2 characters.';
+        return undefined;
+      case 'mobile':
+        if (!value.trim()) return 'Mobile number is required.';
+        if (value.trim().replace(/[\s\-\+\(\)]/g, '').length < 6) {
+          return 'Please enter a valid phone/mobile number.';
+        }
+        return undefined;
+      case 'whatsapp':
+        if (value.trim() && value.trim().replace(/[\s\-\+\(\)]/g, '').length < 6) {
+          return 'Please enter a valid WhatsApp number.';
+        }
+        return undefined;
+      case 'email':
+        if (!value.trim()) return 'Email address is required.';
+        if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(value.trim())) {
+          return 'Please enter a valid email address (e.g. name@domain.com).';
+        }
+        return undefined;
+      default:
+        return undefined;
+    }
+  };
+
+  const handleInputChange = (field: 'fullName' | 'mobile' | 'whatsapp' | 'email', value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    const error = validateField(field, value);
+    setFormErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const validateStep1 = (): boolean => {
+    const errs: FormErrors = {};
+    errs.fullName = validateField('fullName', formData.fullName);
+    errs.mobile = validateField('mobile', formData.mobile);
+    errs.whatsapp = validateField('whatsapp', formData.whatsapp);
+    errs.email = validateField('email', formData.email);
+
+    const hasError = Object.values(errs).some(Boolean);
+    if (hasError) {
+      setFormErrors(errs);
+      return false;
+    }
+    setFormErrors({});
+    return true;
+  };
+
   const handleNext = () => {
     if (step === 1) {
-      if (!formData.fullName || !formData.mobile || !formData.email) {
-        alert('Please fill in your full name, mobile number, and email address.');
+      if (!validateStep1()) {
         return;
       }
     }
     if (step === 2 && formData.mainServices.length === 0) {
-      alert('Please select at least one main service.');
+      setFormErrors({ mainServices: 'Please select at least one main service.' });
       return;
+    } else if (step === 2) {
+      setFormErrors({});
     }
     setStep(prev => Math.min(prev + 1, 6));
   };
@@ -101,7 +162,18 @@ export default function EnquiryWizard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateStep1()) {
+      setStep(1);
+      return;
+    }
+    if (formData.mainServices.length === 0) {
+      setFormErrors({ mainServices: 'Please select at least one main service.' });
+      setStep(2);
+      return;
+    }
+
     setIsSubmitting(true);
+    setMaintenanceError(null);
 
     const newId = `HGI-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -154,6 +226,11 @@ export default function EnquiryWizard() {
         }
       } else {
         const errData = await response.json().catch(() => ({}));
+        if (response.status === 503 || errData.maintenance) {
+          setMaintenanceError(errData.error || 'The enquiry system is undergoing scheduled maintenance. Please try again shortly or contact us on WhatsApp.');
+          setIsSubmitting(false);
+          return;
+        }
         console.warn('API returned non-OK status for enquiry submission:', response.status, errData);
       }
     } catch (err) {
@@ -265,10 +342,18 @@ export default function EnquiryWizard() {
                         type="text"
                         required
                         value={formData.fullName}
-                        onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                        onChange={e => handleInputChange('fullName', e.target.value)}
                         placeholder="e.g. Rahul Sharma"
-                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand-gold focus:outline-none"
+                        className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
+                          formErrors.fullName ? 'border-rose-500 focus:ring-2 focus:ring-rose-200' : 'border-slate-300 focus:ring-2 focus:ring-brand-gold'
+                        }`}
                       />
+                      {formErrors.fullName && (
+                        <p className="text-xs text-rose-600 mt-1 flex items-center space-x-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{formErrors.fullName}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -277,10 +362,18 @@ export default function EnquiryWizard() {
                         type="tel"
                         required
                         value={formData.mobile}
-                        onChange={e => setFormData({ ...formData, mobile: e.target.value })}
+                        onChange={e => handleInputChange('mobile', e.target.value)}
                         placeholder="+91 98765 43210"
-                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand-gold focus:outline-none"
+                        className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
+                          formErrors.mobile ? 'border-rose-500 focus:ring-2 focus:ring-rose-200' : 'border-slate-300 focus:ring-2 focus:ring-brand-gold'
+                        }`}
                       />
+                      {formErrors.mobile && (
+                        <p className="text-xs text-rose-600 mt-1 flex items-center space-x-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{formErrors.mobile}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -288,10 +381,18 @@ export default function EnquiryWizard() {
                       <input
                         type="tel"
                         value={formData.whatsapp}
-                        onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}
+                        onChange={e => handleInputChange('whatsapp', e.target.value)}
                         placeholder="+91 98765 43210"
-                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand-gold focus:outline-none"
+                        className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
+                          formErrors.whatsapp ? 'border-rose-500 focus:ring-2 focus:ring-rose-200' : 'border-slate-300 focus:ring-2 focus:ring-brand-gold'
+                        }`}
                       />
+                      {formErrors.whatsapp && (
+                        <p className="text-xs text-rose-600 mt-1 flex items-center space-x-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{formErrors.whatsapp}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -300,10 +401,18 @@ export default function EnquiryWizard() {
                         type="email"
                         required
                         value={formData.email}
-                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                        onChange={e => handleInputChange('email', e.target.value)}
                         placeholder="rahul@example.com"
-                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand-gold focus:outline-none"
+                        className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
+                          formErrors.email ? 'border-rose-500 focus:ring-2 focus:ring-rose-200' : 'border-slate-300 focus:ring-2 focus:ring-brand-gold'
+                        }`}
                       />
+                      {formErrors.email && (
+                        <p className="text-xs text-rose-600 mt-1 flex items-center space-x-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{formErrors.email}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -336,6 +445,12 @@ export default function EnquiryWizard() {
                   <div>
                     <h3 className="text-xl font-bold text-slate-900">Step 2 — Select Main Service(s)</h3>
                     <p className="text-slate-500 text-xs mt-1">You can select multiple services if needed.</p>
+                    {formErrors.mainServices && (
+                      <p className="text-xs text-rose-600 mt-2 bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center space-x-1.5 font-medium">
+                        <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                        <span>{formErrors.mainServices}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -601,6 +716,16 @@ export default function EnquiryWizard() {
                       <strong>Important Notice:</strong> Submitting this enquiry does not automatically charge fees or guarantee visa approval. Staff at Harry Overseas Immigration will review your requirements and contact you with a formal quotation.
                     </p>
                   </div>
+
+                  {maintenanceError && (
+                    <div className="bg-rose-50 border border-rose-300 rounded-xl p-4 flex items-start space-x-3 text-xs text-rose-800 animate-fade-in">
+                      <Wrench className="w-5 h-5 flex-shrink-0 text-rose-600 mt-0.5" />
+                      <div>
+                        <strong className="block font-bold">Maintenance Notice:</strong>
+                        <span>{maintenanceError}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

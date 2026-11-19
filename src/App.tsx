@@ -10,10 +10,32 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import LegalFooter from './components/LegalFooter';
 import Chatbot from './components/Chatbot';
+import { AlertTriangle, Wrench } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'public' | 'careers' | 'admin'>('public');
   const [adminUser, setAdminUser] = useState<{ username: string; role: string } | null>(null);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+
+  // Poll or check maintenance status on mount
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.maintenance === 'boolean') {
+            setIsMaintenanceMode(data.maintenance);
+          }
+        }
+      } catch (err) {
+        // Quiet fail, default to false
+      }
+    };
+    checkMaintenance();
+    const interval = setInterval(checkMaintenance, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Sync view state with URL hash on mount & hash changes
   useEffect(() => {
@@ -97,6 +119,16 @@ export default function App() {
         isAdminAuthenticated={!!adminUser}
         onLogout={handleLogout}
       />
+
+      {/* Global Maintenance Banner when PORTAL_MAINTENANCE_MODE is active */}
+      {isMaintenanceMode && (
+        <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 shadow-sm border-b border-amber-800 flex items-center justify-center space-x-2.5 sticky top-0 z-50 animate-fade-in">
+          <Wrench className="w-4 h-4 animate-pulse shrink-0" />
+          <span>
+            <strong>Scheduled System Maintenance:</strong> Online enquiry & candidate application submissions are temporarily in read-only / maintenance mode. For urgent consultations, please contact us directly on WhatsApp (+91 6302951891).
+          </span>
+        </div>
+      )}
 
       {currentView === 'public' && (
         <main className="flex-grow">

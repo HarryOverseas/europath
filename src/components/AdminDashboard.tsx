@@ -38,7 +38,9 @@ import {
   Plus,
   History,
   Link,
-  FileCheck
+  FileCheck,
+  Power,
+  ShieldAlert
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -3103,6 +3105,82 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       placeholder="https://hooks.slack.com/services/..."
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Maintenance Mode & Operations Control */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
+                  <Power className="w-5 h-5 text-amber-500" />
+                  <h3 className="font-extrabold text-slate-900">Operations & Maintenance Mode Control</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-slate-900">PORTAL_MAINTENANCE_MODE</span>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                          (configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() === 'true'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        }`}>
+                          {(configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() === 'true' ? 'MAINTENANCE ACTIVE' : 'LIVE / NORMAL'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 max-w-xl">
+                        When active, public enquiry and candidate submissions display a polite maintenance notice and are temporarily paused while administrators retain full access.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setConfigForm({ ...configForm, PORTAL_MAINTENANCE_MODE: 'false' })}
+                        className={`px-4 py-2 text-xs font-bold rounded-xl border transition ${
+                          (configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() !== 'true'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow'
+                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                        }`}
+                      >
+                        Normal (Live)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfigForm({ ...configForm, PORTAL_MAINTENANCE_MODE: 'true' })}
+                        className={`px-4 py-2 text-xs font-bold rounded-xl border transition ${
+                          (configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() === 'true'
+                            ? 'bg-amber-600 text-white border-amber-600 shadow'
+                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                        }`}
+                      >
+                        Maintenance Mode
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">SUPPORT_PHONE</label>
+                      <input
+                        type="text"
+                        value={configForm['SUPPORT_PHONE'] || ''}
+                        onChange={e => setConfigForm({ ...configForm, SUPPORT_PHONE: e.target.value })}
+                        placeholder="+91 6302951891"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">WHATSAPP_SUPPORT_NUMBER</label>
+                      <input
+                        type="text"
+                        value={configForm['WHATSAPP_SUPPORT_NUMBER'] || ''}
+                        onChange={e => setConfigForm({ ...configForm, WHATSAPP_SUPPORT_NUMBER: e.target.value })}
+                        placeholder="+91 6302951891"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -23,19 +23,39 @@ export default function AdminLogin({ onLoginSuccess, onCancel }: AdminLoginProps
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  const validateLoginForm = (): boolean => {
+    const errors: { username?: string; password?: string } = {};
+    const cleanUser = username.trim();
+
+    if (!cleanUser) {
+      errors.username = 'Username or email address is required.';
+    } else if (cleanUser.length < 3) {
+      errors.username = 'Username or email must be at least 3 characters.';
+    }
+
+    if (!password) {
+      errors.password = 'Password is required.';
+    } else if (password.length < 4) {
+      errors.password = 'Password must be at least 4 characters.';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
-    const cleanUsername = username.trim();
-    const cleanPassword = password;
-
-    if (!cleanUsername || !cleanPassword) {
-      setErrorMessage('Please enter both username/email and password.');
+    if (!validateLoginForm()) {
       return;
     }
+
+    const cleanUsername = username.trim();
+    const cleanPassword = password;
 
     setIsLoading(true);
 
@@ -139,12 +159,23 @@ export default function AdminLogin({ onLoginSuccess, onCancel }: AdminLoginProps
                   type="text"
                   required
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (fieldErrors.username) setFieldErrors(prev => ({ ...prev, username: undefined }));
+                  }}
                   placeholder="Enter admin username or email"
                   autoComplete="username"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none transition ${
+                    fieldErrors.username ? 'border-rose-500 focus:ring-2 focus:ring-rose-400' : 'border-slate-700 focus:ring-2 focus:ring-brand-gold'
+                  }`}
                 />
               </div>
+              {fieldErrors.username && (
+                <p className="text-xs text-rose-400 mt-1 flex items-center space-x-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{fieldErrors.username}</span>
+                </p>
+              )}
             </div>
 
             <div>
@@ -159,10 +190,15 @@ export default function AdminLogin({ onLoginSuccess, onCancel }: AdminLoginProps
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: undefined }));
+                  }}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition"
+                  className={`w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none transition ${
+                    fieldErrors.password ? 'border-rose-500 focus:ring-2 focus:ring-rose-400' : 'border-slate-700 focus:ring-2 focus:ring-brand-gold'
+                  }`}
                 />
                 <button
                   type="button"
@@ -173,6 +209,12 @@ export default function AdminLogin({ onLoginSuccess, onCancel }: AdminLoginProps
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="text-xs text-rose-400 mt-1 flex items-center space-x-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{fieldErrors.password}</span>
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-between text-xs pt-1">

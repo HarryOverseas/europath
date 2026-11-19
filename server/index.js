@@ -405,6 +405,16 @@ function parseUserPermissions(user) {
 
 // --- API ROUTES ---
 
+// 0. Public System Status / Maintenance Status Endpoint
+app.get('/api/status', (req, res) => {
+  const isMaintenance = String(getConfig('PORTAL_MAINTENANCE_MODE', 'false')).toLowerCase() === 'true';
+  return res.status(200).json({
+    success: true,
+    maintenance: isMaintenance,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // 1. Admin Login
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body || {};
@@ -466,6 +476,15 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
 
 // 3. Create Job Application (Public Endpoint)
 app.post('/api/applications', async (req, res) => {
+  const isMaintenance = String(getConfig('PORTAL_MAINTENANCE_MODE', 'false')).toLowerCase() === 'true';
+  if (isMaintenance) {
+    return res.status(503).json({
+      success: false,
+      maintenance: true,
+      error: 'Portal is currently undergoing scheduled maintenance. Submissions are temporarily paused. Please try again shortly or contact support.'
+    });
+  }
+
   const body = req.body || {};
   const fullName = body.full_name || body.fullName;
   const email = body.email;
@@ -745,6 +764,15 @@ app.post('/api/applications/:id/restore', authenticateToken, requirePermission([
 
 // 7. Create New Customer Enquiry (Public Endpoint)
 app.post('/api/enquiries', async (req, res) => {
+  const isMaintenance = String(getConfig('PORTAL_MAINTENANCE_MODE', 'false')).toLowerCase() === 'true';
+  if (isMaintenance) {
+    return res.status(503).json({
+      success: false,
+      maintenance: true,
+      error: 'Portal is currently undergoing scheduled maintenance. Submissions are temporarily paused. Please try again shortly or contact support.'
+    });
+  }
+
   const lead = req.body || {};
   const fullName = lead.fullName || lead.full_name;
   const email = lead.email;
