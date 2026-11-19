@@ -52,12 +52,16 @@ export default function Navbar({
         <div className="flex items-center justify-between h-20">
 
           {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={navigateToPublicHome}>
-            <div className="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-brand-dark shadow-inner">
-              <Globe className="w-7 h-7" />
+          <div className="flex items-center space-x-3 cursor-pointer group" onClick={navigateToPublicHome}>
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 p-1 flex items-center justify-center border border-brand-gold/40 shadow-inner group-hover:scale-105 transition-transform duration-300">
+              <img
+                src="/harryoverseas-airplane-logo.svg"
+                alt="Harry Overseas Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-white block">Harry Overseas</span>
+              <span className="text-xl font-bold tracking-tight text-white block group-hover:text-brand-gold transition-colors">Harry Overseas</span>
               <span className="text-xs text-brand-gold tracking-widest uppercase font-semibold">Immigration & Language</span>
             </div>
           </div>

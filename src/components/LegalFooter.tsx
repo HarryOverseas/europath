@@ -18,8 +18,12 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
           {/* Brand Column */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center text-brand-dark">
-                <Globe className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 p-0.5 flex items-center justify-center border border-brand-gold/40">
+                <img
+                  src="/harryoverseas-airplane-logo.svg"
+                  alt="Harry Overseas Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <span className="text-lg font-bold tracking-tight text-white block">Harry Overseas</span>
