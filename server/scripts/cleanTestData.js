@@ -8,9 +8,10 @@ async function executeCleanup() {
     DELETE FROM enquiries 
     WHERE email LIKE '%example.%' 
        OR email LIKE '%domain..%' 
+       OR email LIKE '%test.%' 
        OR email LIKE '%remediation%' 
        OR full_name ILIKE '%test%' 
-       OR email = 'hkrishna@gmail.com'
+       OR email LIKE '%hkrishna%@gmail.com'
     RETURNING id
   `;
   const enqRes = await query(delEnqSql);
