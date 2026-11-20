@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { secureFetch } from '../utils/secureApi';
+import React, { useState, useEffect } from "react";
+import { secureFetch } from "../utils/secureApi";
 import {
   CountryPhoneConfig,
   COUNTRY_PHONE_CONFIGS,
   getCountryConfig,
   parsePhoneParts,
   formatFullPhoneNumber,
-  validateInternationalPhone
-} from '../utils/countryData';
-import { InternationalPhoneInput } from './InternationalPhoneInput';
+  validateInternationalPhone,
+} from "../utils/countryData";
+import { InternationalPhoneInput } from "./InternationalPhoneInput";
 import {
   Search,
   Filter,
@@ -49,8 +49,8 @@ import {
   Link,
   FileCheck,
   Power,
-  ShieldAlert
-} from 'lucide-react';
+  ShieldAlert,
+} from "lucide-react";
 
 interface AdminDashboardProps {
   adminUser?: { username: string; role: string; permissions?: string[] } | null;
@@ -82,7 +82,7 @@ export interface LeadDocument {
   name: string;
   category?: string;
   required?: boolean;
-  status: 'Pending' | 'Provided' | 'Verified' | 'Rejected' | string;
+  status: "Pending" | "Provided" | "Verified" | "Rejected" | string;
   drive_link?: string;
   notes?: string;
   updated_at?: string;
@@ -141,7 +141,14 @@ interface JobApplication {
   role: string;
   resume_link?: string;
   notes?: string;
-  status: 'New' | 'Reviewing' | 'Shortlisted' | 'Interviewed' | 'Hired' | 'Rejected' | string;
+  status:
+    | "New"
+    | "Reviewing"
+    | "Shortlisted"
+    | "Interviewed"
+    | "Hired"
+    | "Rejected"
+    | string;
   stage_history?: StageHistoryEntry[];
   is_deleted?: boolean;
   deleted_at?: string;
@@ -149,52 +156,66 @@ interface JobApplication {
 }
 
 const CANDIDATE_ROLES = [
-  'All Roles',
-  'German Language Trainer',
-  'Visa Consultant',
-  'Student Counselor',
-  'Relocation Coordinator'
+  "All Roles",
+  "German Language Trainer",
+  "Visa Consultant",
+  "Student Counselor",
+  "Relocation Coordinator",
 ];
 
 const CANDIDATE_STATUSES = [
-  'All',
-  'New',
-  'Reviewing',
-  'Shortlisted',
-  'Interviewed',
-  'Hired',
-  'Rejected'
+  "All",
+  "New",
+  "Reviewing",
+  "Shortlisted",
+  "Interviewed",
+  "Hired",
+  "Rejected",
 ];
 
-const ENQUIRY_STATUSES = ['All', 'New', 'Contacted', 'In Progress', 'Closed'];
+const ENQUIRY_STATUSES = ["All", "New", "Contacted", "In Progress", "Closed"];
 
-export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardProps) {
+export default function AdminDashboard({
+  adminUser,
+  onLogout,
+}: AdminDashboardProps) {
   // Role & Permission Checks
-  const isSuperAdmin = adminUser?.role === 'Super Admin';
-  const userPerms = adminUser?.permissions || (isSuperAdmin ? ['*'] : []);
+  const isSuperAdmin = adminUser?.role === "Super Admin";
+  const userPerms = adminUser?.permissions || (isSuperAdmin ? ["*"] : []);
 
   const hasPerm = (perm: string) => {
-    if (isSuperAdmin || userPerms.includes('*')) return true;
+    if (isSuperAdmin || userPerms.includes("*")) return true;
     return userPerms.includes(perm);
   };
 
-  const canViewEnquiries = hasPerm('enquiries:read');
-  const canViewApplications = hasPerm('applications:read');
-  const canViewArchives = hasPerm('archive:read');
-  const canManageUsers = isSuperAdmin || hasPerm('users:manage');
-  const canManageSettings = isSuperAdmin || hasPerm('settings:manage');
+  const canViewEnquiries = hasPerm("enquiries:read");
+  const canViewApplications = hasPerm("applications:read");
+  const canViewArchives = hasPerm("archive:read");
+  const canManageUsers = isSuperAdmin || hasPerm("users:manage");
+  const canManageSettings = isSuperAdmin || hasPerm("settings:manage");
 
-  const defaultTab = canViewEnquiries ? 'enquiries' : (canViewApplications ? 'applications' : (canManageUsers ? 'users' : 'settings'));
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'applications' | 'archives' | 'users' | 'settings'>(defaultTab as any);
+  const defaultTab = canViewEnquiries
+    ? "enquiries"
+    : canViewApplications
+      ? "applications"
+      : canManageUsers
+        ? "users"
+        : "settings";
+  const [activeTab, setActiveTab] = useState<
+    "enquiries" | "applications" | "archives" | "users" | "settings"
+  >(defaultTab as any);
 
   // User Management state (Super Admin)
   const [userList, setUserList] = useState<UserAccount[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [newUserUsername, setNewUserUsername] = useState('');
-  const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserPassword, setNewUserPassword] = useState('');
-  const [newUserRole, setNewUserRole] = useState('Counselor');
-  const [newUserPerms, setNewUserPerms] = useState<string[]>(['enquiries:read', 'enquiries:write']);
+  const [newUserUsername, setNewUserUsername] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState("Counselor");
+  const [newUserPerms, setNewUserPerms] = useState<string[]>([
+    "enquiries:read",
+    "enquiries:write",
+  ]);
   const [creatingUser, setCreatingUser] = useState(false);
 
   // Dynamic System Configs state (Super Admin)
@@ -214,24 +235,32 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
   } | null>(null);
   const [archivedEnquiries, setArchivedEnquiries] = useState<any[]>([]);
   const [archivedApplications, setArchivedApplications] = useState<any[]>([]);
-  const [archivalSubTab, setArchivalSubTab] = useState<'overview' | 'enquiries' | 'applications'>('overview');
+  const [archivalSubTab, setArchivalSubTab] = useState<
+    "overview" | "enquiries" | "applications"
+  >("overview");
   const [runningArchival, setRunningArchival] = useState(false);
   const [loadingArchives, setLoadingArchives] = useState(false);
 
   // Enquiries state
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
-  const [enquiryStatusFilter, setEnquiryStatusFilter] = useState('All');
-  const [enquirySearchTerm, setEnquirySearchTerm] = useState('');
+  const [enquiryStatusFilter, setEnquiryStatusFilter] = useState("All");
+  const [enquirySearchTerm, setEnquirySearchTerm] = useState("");
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const [loadingEnquiries, setLoadingEnquiries] = useState(true);
 
   // Active sub-tab inside selected Enquiry detail drawer
-  const [enquiryDetailTab, setEnquiryDetailTab] = useState<'info' | 'documents' | 'history'>('info');
+  const [enquiryDetailTab, setEnquiryDetailTab] = useState<
+    "info" | "documents" | "history"
+  >("info");
 
   // Lead Editing State
   const [isEditingLead, setIsEditingLead] = useState(false);
-  const [leadPhoneCountry, setLeadPhoneCountry] = useState<CountryPhoneConfig>(() => getCountryConfig('IN'));
-  const [leadPhoneError, setLeadPhoneError] = useState<string | undefined>(undefined);
+  const [leadPhoneCountry, setLeadPhoneCountry] = useState<CountryPhoneConfig>(
+    () => getCountryConfig("IN"),
+  );
+  const [leadPhoneError, setLeadPhoneError] = useState<string | undefined>(
+    undefined,
+  );
   const [leadEditForm, setLeadEditForm] = useState<{
     full_name: string;
     email: string;
@@ -245,45 +274,49 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     consultation_method: string;
     message: string;
   }>({
-    full_name: '',
-    email: '',
-    phone: '',
-    city: '',
-    country: '',
-    service_interest: '',
-    language_course: '',
-    destination_country: '',
-    travel_period: '',
-    consultation_method: '',
-    message: ''
+    full_name: "",
+    email: "",
+    phone: "",
+    city: "",
+    country: "",
+    service_interest: "",
+    language_course: "",
+    destination_country: "",
+    travel_period: "",
+    consultation_method: "",
+    message: "",
   });
   const [savingLeadEdit, setSavingLeadEdit] = useState(false);
 
   // Document Editing State
   const [leadDocs, setLeadDocs] = useState<LeadDocument[]>([]);
   const [savingDocs, setSavingDocs] = useState(false);
-  const [newCustomDocName, setNewCustomDocName] = useState('');
-  const [newCustomDocCategory, setNewCustomDocCategory] = useState('Custom / Other');
+  const [newCustomDocName, setNewCustomDocName] = useState("");
+  const [newCustomDocCategory, setNewCustomDocCategory] =
+    useState("Custom / Other");
 
   // Stage Transition Modal State (Mandatory comment enforcement)
   const [stageModalOpen, setStageModalOpen] = useState(false);
-  const [stageTargetType, setStageTargetType] = useState<'enquiry' | 'application'>('enquiry');
-  const [stageTargetId, setStageTargetId] = useState<string | number>('');
-  const [stageTargetName, setStageTargetName] = useState('');
-  const [stagePrevStatus, setStagePrevStatus] = useState('');
-  const [stageNewStatus, setStageNewStatus] = useState('');
-  const [stageComment, setStageComment] = useState('');
+  const [stageTargetType, setStageTargetType] = useState<
+    "enquiry" | "application"
+  >("enquiry");
+  const [stageTargetId, setStageTargetId] = useState<string | number>("");
+  const [stageTargetName, setStageTargetName] = useState("");
+  const [stagePrevStatus, setStagePrevStatus] = useState("");
+  const [stageNewStatus, setStageNewStatus] = useState("");
+  const [stageComment, setStageComment] = useState("");
   const [submittingStageChange, setSubmittingStageChange] = useState(false);
 
   // Candidate detail tab
-  const [appDetailTab, setAppDetailTab] = useState<'info' | 'history'>('info');
+  const [appDetailTab, setAppDetailTab] = useState<"info" | "history">("info");
 
   // Job Applications state
   const [applications, setApplications] = useState<JobApplication[]>([]);
-  const [appRoleFilter, setAppRoleFilter] = useState('All Roles');
-  const [appStatusFilter, setAppStatusFilter] = useState('All');
-  const [appSearchTerm, setAppSearchTerm] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
+  const [appRoleFilter, setAppRoleFilter] = useState("All Roles");
+  const [appStatusFilter, setAppStatusFilter] = useState("All");
+  const [appSearchTerm, setAppSearchTerm] = useState("");
+  const [selectedApplication, setSelectedApplication] =
+    useState<JobApplication | null>(null);
   const [loadingApps, setLoadingApps] = useState(true);
 
   // Status feedback toast
@@ -296,15 +329,19 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   // Helper to obtain stored JWT bearer token
   const getAuthToken = (): string => {
-    return sessionStorage.getItem('harry_admin_token') || localStorage.getItem('harry_admin_token') || '';
+    return (
+      sessionStorage.getItem("harry_admin_token") ||
+      localStorage.getItem("harry_admin_token") ||
+      ""
+    );
   };
 
   // Session termination helper on 401/403
   const handleAuthError = () => {
-    sessionStorage.removeItem('harry_admin_token');
-    localStorage.removeItem('harry_admin_token');
-    sessionStorage.removeItem('harry_admin_session');
-    localStorage.removeItem('harry_admin_session');
+    sessionStorage.removeItem("harry_admin_token");
+    localStorage.removeItem("harry_admin_token");
+    sessionStorage.removeItem("harry_admin_session");
+    localStorage.removeItem("harry_admin_session");
     if (onLogout) {
       onLogout();
     }
@@ -330,34 +367,44 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
   const handleRoleSelectionChange = (newRole: string) => {
     setNewUserRole(newRole);
     switch (newRole) {
-      case 'Super Admin':
-        setNewUserPerms(['*']);
+      case "Super Admin":
+        setNewUserPerms(["*"]);
         break;
-      case 'Operations Manager':
-        setNewUserPerms(['enquiries:read', 'enquiries:write', 'applications:read', 'applications:write', 'archive:read']);
+      case "Operations Manager":
+        setNewUserPerms([
+          "enquiries:read",
+          "enquiries:write",
+          "applications:read",
+          "applications:write",
+          "archive:read",
+        ]);
         break;
-      case 'Counselor':
-        setNewUserPerms(['enquiries:read', 'enquiries:write']);
+      case "Counselor":
+        setNewUserPerms(["enquiries:read", "enquiries:write"]);
         break;
-      case 'Recruiter':
-        setNewUserPerms(['applications:read', 'applications:write']);
+      case "Recruiter":
+        setNewUserPerms(["applications:read", "applications:write"]);
         break;
-      case 'Auditor':
-      case 'Viewer':
-        setNewUserPerms(['enquiries:read', 'applications:read', 'archive:read']);
+      case "Auditor":
+      case "Viewer":
+        setNewUserPerms([
+          "enquiries:read",
+          "applications:read",
+          "archive:read",
+        ]);
         break;
       default:
-        setNewUserPerms(['enquiries:read']);
+        setNewUserPerms(["enquiries:read"]);
     }
   };
 
   const togglePermission = (perm: string) => {
-    if (newUserPerms.includes('*')) {
+    if (newUserPerms.includes("*")) {
       setNewUserPerms([perm]);
       return;
     }
     if (newUserPerms.includes(perm)) {
-      setNewUserPerms(newUserPerms.filter(p => p !== perm));
+      setNewUserPerms(newUserPerms.filter((p) => p !== perm));
     } else {
       setNewUserPerms([...newUserPerms, perm]);
     }
@@ -368,15 +415,15 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setLoadingUsers(true);
     const token = getAuthToken();
     try {
-      const res = await fetch('/api/users', {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch("/api/users", {
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
         setUserList(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      console.warn('Failed to load users:', err);
+      console.warn("Failed to load users:", err);
     } finally {
       setLoadingUsers(false);
     }
@@ -384,37 +431,43 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUserUsername.trim() || !newUserEmail.trim() || !newUserPassword.trim()) {
-      showNotice('Please provide username, email, and password.');
+    if (
+      !newUserUsername.trim() ||
+      !newUserEmail.trim() ||
+      !newUserPassword.trim()
+    ) {
+      showNotice("Please provide username, email, and password.");
       return;
     }
     setCreatingUser(true);
     const token = getAuthToken();
     try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
+      const res = await fetch("/api/users", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           username: newUserUsername.trim(),
           email: newUserEmail.trim(),
           password: newUserPassword,
           role: newUserRole,
-          permissions: newUserPerms
-        })
+          permissions: newUserPerms,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showNotice(`User '${newUserUsername}' created with role '${newUserRole}'`);
-        setNewUserUsername('');
-        setNewUserEmail('');
-        setNewUserPassword('');
-        handleRoleSelectionChange('Counselor');
+        showNotice(
+          `User '${newUserUsername}' created with role '${newUserRole}'`,
+        );
+        setNewUserUsername("");
+        setNewUserEmail("");
+        setNewUserPassword("");
+        handleRoleSelectionChange("Counselor");
         loadUsers();
       } else {
-        showNotice(`Failed to create user: ${data.error || 'Server error'}`);
+        showNotice(`Failed to create user: ${data.error || "Server error"}`);
       }
     } catch (err: any) {
       showNotice(`Error creating user: ${err.message}`);
@@ -424,19 +477,22 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
   };
 
   const handleDeleteUser = async (userId: number, username: string) => {
-    if (!confirm(`Are you sure you want to delete staff account '${username}'?`)) return;
+    if (
+      !confirm(`Are you sure you want to delete staff account '${username}'?`)
+    )
+      return;
     const token = getAuthToken();
     try {
       const res = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (res.ok) {
         showNotice(`User '${username}' deleted.`);
         loadUsers();
       } else {
-        showNotice(data.error || 'Failed to delete user');
+        showNotice(data.error || "Failed to delete user");
       }
     } catch (err: any) {
       showNotice(`Error deleting user: ${err.message}`);
@@ -448,8 +504,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setLoadingConfigs(true);
     const token = getAuthToken();
     try {
-      const res = await fetch('/api/admin/settings', {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch("/api/admin/settings", {
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -457,12 +513,12 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         setConfigsList(settings);
         const formObj: Record<string, string> = {};
         for (const s of settings) {
-          formObj[s.key] = s.is_secret && s.hasValue ? '' : s.value;
+          formObj[s.key] = s.is_secret && s.hasValue ? "" : s.value;
         }
         setConfigForm(formObj);
       }
     } catch (err) {
-      console.warn('Failed to load configs:', err);
+      console.warn("Failed to load configs:", err);
     } finally {
       setLoadingConfigs(false);
     }
@@ -475,27 +531,29 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     try {
       const payload: Record<string, string> = {};
       for (const [k, v] of Object.entries(configForm)) {
-        if (v !== undefined && v !== null && v.trim() !== '') {
+        if (v !== undefined && v !== null && v.trim() !== "") {
           payload[k] = v.trim();
         }
       }
 
-      const res = await fetch('/api/admin/settings', {
-        method: 'POST',
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ settings: payload })
+        body: JSON.stringify({ settings: payload }),
       });
       const data = await res.json();
       if (res.ok) {
-        showNotice('Settings saved directly to database. Active immediately without restart!');
+        showNotice(
+          "Settings saved directly to database. Active immediately without restart!",
+        );
         if (data.settings) {
           setConfigsList(data.settings);
         }
       } else {
-        showNotice(data.error || 'Failed to save settings');
+        showNotice(data.error || "Failed to save settings");
       }
     } catch (err: any) {
       showNotice(`Error saving settings: ${err.message}`);
@@ -509,8 +567,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setSmtpDiagnostics(null);
     const token = getAuthToken();
     try {
-      const res = await fetch('/api/admin/settings/test-smtp', {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch("/api/admin/settings/test-smtp", {
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (res.ok && data.results) {
@@ -518,9 +576,11 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         const infoOk = data.results.info?.connected;
         const supportOk = data.results.support?.connected;
         if (infoOk && supportOk) {
-          showNotice('All Multi-Inbox SMTP connections verified successfully!');
+          showNotice("All Multi-Inbox SMTP connections verified successfully!");
         } else {
-          showNotice(`SMTP Diagnostics: Info: ${infoOk ? 'OK' : 'Error'}, Support: ${supportOk ? 'OK' : 'Error'}`);
+          showNotice(
+            `SMTP Diagnostics: Info: ${infoOk ? "OK" : "Error"}, Support: ${supportOk ? "OK" : "Error"}`,
+          );
         }
       }
     } catch (err: any) {
@@ -535,10 +595,10 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setLoadingEnquiries(true);
     try {
       const token = getAuthToken();
-      const res = await fetch('/api/enquiries', {
+      const res = await fetch("/api/enquiries", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (res.status === 401 || res.status === 403) {
@@ -548,16 +608,19 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
       if (res.ok) {
         const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.enquiries || []);
+        const list = Array.isArray(data) ? data : data.enquiries || [];
         setEnquiries(list);
         try {
-          localStorage.setItem('harry_global_enquiries', JSON.stringify(list));
+          localStorage.setItem("harry_global_enquiries", JSON.stringify(list));
         } catch (e) {}
       } else {
         fallbackLoadEnquiries();
       }
     } catch (e) {
-      console.warn('Network error or server offline. Reading enquiries from local storage:', e);
+      console.warn(
+        "Network error or server offline. Reading enquiries from local storage:",
+        e,
+      );
       fallbackLoadEnquiries();
     } finally {
       setLoadingEnquiries(false);
@@ -566,22 +629,22 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   const fallbackLoadEnquiries = () => {
     try {
-      const local = localStorage.getItem('harry_global_enquiries');
+      const local = localStorage.getItem("harry_global_enquiries");
       if (local) {
         setEnquiries(JSON.parse(local));
       }
     } catch (e) {
-      console.error('Failed reading local enquiries:', e);
+      console.error("Failed reading local enquiries:", e);
     }
   };
 
   // Open stage change modal (enforces comment requirement)
   const initiateStageChange = (
-    type: 'enquiry' | 'application',
+    type: "enquiry" | "application",
     id: string | number,
     name: string,
     currentStatus: string,
-    targetStatus: string
+    targetStatus: string,
   ) => {
     if (currentStatus === targetStatus) return;
     setStageTargetType(type);
@@ -589,34 +652,48 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setStageTargetName(name);
     setStagePrevStatus(currentStatus);
     setStageNewStatus(targetStatus);
-    setStageComment('');
+    setStageComment("");
     setStageModalOpen(true);
   };
 
   const handleConfirmStageChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stageComment.trim()) {
-      showNotice('Please enter a comment. A comment is strictly required to change stages.');
+      showNotice(
+        "Please enter a comment. A comment is strictly required to change stages.",
+      );
       return;
     }
     setSubmittingStageChange(true);
     const token = getAuthToken();
 
     try {
-      if (stageTargetType === 'enquiry') {
-        const res = await secureFetch(`/api/enquiries/${stageTargetId}/status`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+      if (stageTargetType === "enquiry") {
+        const res = await secureFetch(
+          `/api/enquiries/${stageTargetId}/status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              status: stageNewStatus,
+              comment: stageComment.trim(),
+            }),
           },
-          body: JSON.stringify({ status: stageNewStatus, comment: stageComment.trim() })
-        });
+        );
         const data = await res.json();
         if (res.ok) {
-          showNotice(`Enquiry #${stageTargetId} stage updated to "${stageNewStatus}"`);
+          showNotice(
+            `Enquiry #${stageTargetId} stage updated to "${stageNewStatus}"`,
+          );
           if (data.enquiry) {
-            setEnquiries(prev => prev.map(enq => enq.id === stageTargetId ? { ...enq, ...data.enquiry } : enq));
+            setEnquiries((prev) =>
+              prev.map((enq) =>
+                enq.id === stageTargetId ? { ...enq, ...data.enquiry } : enq,
+              ),
+            );
             if (selectedEnquiry && selectedEnquiry.id === stageTargetId) {
               setSelectedEnquiry(data.enquiry);
             }
@@ -625,23 +702,40 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
           }
           setStageModalOpen(false);
         } else {
-          showNotice(data.error || 'Failed to update enquiry status');
+          showNotice(data.error || "Failed to update enquiry status");
         }
       } else {
-        const res = await secureFetch(`/api/applications/${stageTargetId}/status`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+        const res = await secureFetch(
+          `/api/applications/${stageTargetId}/status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              status: stageNewStatus,
+              comment: stageComment.trim(),
+            }),
           },
-          body: JSON.stringify({ status: stageNewStatus, comment: stageComment.trim() })
-        });
+        );
         const data = await res.json();
         if (res.ok) {
-          showNotice(`Candidate #${stageTargetId} stage updated to "${stageNewStatus}"`);
+          showNotice(
+            `Candidate #${stageTargetId} stage updated to "${stageNewStatus}"`,
+          );
           if (data.application) {
-            setApplications(prev => prev.map(a => String(a.id) === String(stageTargetId) ? { ...a, ...data.application } : a));
-            if (selectedApplication && String(selectedApplication.id) === String(stageTargetId)) {
+            setApplications((prev) =>
+              prev.map((a) =>
+                String(a.id) === String(stageTargetId)
+                  ? { ...a, ...data.application }
+                  : a,
+              ),
+            );
+            if (
+              selectedApplication &&
+              String(selectedApplication.id) === String(stageTargetId)
+            ) {
               setSelectedApplication(data.application);
             }
           } else {
@@ -649,7 +743,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
           }
           setStageModalOpen(false);
         } else {
-          showNotice(data.error || 'Failed to update application status');
+          showNotice(data.error || "Failed to update application status");
         }
       }
     } catch (err: any) {
@@ -661,23 +755,36 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   // Helper to open edit lead form
   const handleStartEditLead = (lead: Enquiry) => {
-    const rawPhone = lead.mobile || lead.phone || '';
-    const { country: parsedCountry, nationalNumber } = parsePhoneParts(rawPhone, 'IN');
+    const rawPhone = lead.mobile || lead.phone || "";
+    const { country: parsedCountry, nationalNumber } = parsePhoneParts(
+      rawPhone,
+      "IN",
+    );
     setLeadPhoneCountry(parsedCountry);
     setLeadPhoneError(undefined);
 
     setLeadEditForm({
-      full_name: lead.full_name || lead.fullName || '',
-      email: lead.email || '',
+      full_name: lead.full_name || lead.fullName || "",
+      email: lead.email || "",
       phone: nationalNumber,
-      city: lead.city || 'Anantapur',
-      country: lead.country || 'India',
-      service_interest: lead.service_interest || (Array.isArray(lead.main_services) ? lead.main_services.join(', ') : String(lead.main_services || '')),
-      language_course: lead.language_course || lead.languageCourse || '',
-      destination_country: lead.destination_country || lead.intended_destination || lead.intendedDestination || 'Germany',
-      travel_period: lead.travel_period || lead.travelPeriod || 'Immediate',
-      consultation_method: lead.consultation_method || lead.consultationMethod || 'WhatsApp',
-      message: lead.message || lead.additional_reqs || lead.additionalReqs || ''
+      city: lead.city || "Anantapur",
+      country: lead.country || "India",
+      service_interest:
+        lead.service_interest ||
+        (Array.isArray(lead.main_services)
+          ? lead.main_services.join(", ")
+          : String(lead.main_services || "")),
+      language_course: lead.language_course || lead.languageCourse || "",
+      destination_country:
+        lead.destination_country ||
+        lead.intended_destination ||
+        lead.intendedDestination ||
+        "Germany",
+      travel_period: lead.travel_period || lead.travelPeriod || "Immediate",
+      consultation_method:
+        lead.consultation_method || lead.consultationMethod || "WhatsApp",
+      message:
+        lead.message || lead.additional_reqs || lead.additionalReqs || "",
     });
     setIsEditingLead(true);
   };
@@ -686,7 +793,12 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     e.preventDefault();
     if (!selectedEnquiry) return;
 
-    const phoneValidation = validateInternationalPhone(leadEditForm.phone, leadPhoneCountry, true, 'Phone number');
+    const phoneValidation = validateInternationalPhone(
+      leadEditForm.phone,
+      leadPhoneCountry,
+      true,
+      "Phone number",
+    );
     if (phoneValidation) {
       setLeadPhoneError(phoneValidation);
       return;
@@ -696,30 +808,37 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setSavingLeadEdit(true);
     const token = getAuthToken();
 
-    const fullFormattedPhone = formatFullPhoneNumber(leadPhoneCountry.dialCode, leadEditForm.phone);
+    const fullFormattedPhone = formatFullPhoneNumber(
+      leadPhoneCountry.dialCode,
+      leadEditForm.phone,
+    );
     const submissionData = {
       ...leadEditForm,
       phone: fullFormattedPhone,
-      mobile: fullFormattedPhone
+      mobile: fullFormattedPhone,
     };
 
     try {
       const res = await secureFetch(`/api/enquiries/${selectedEnquiry.id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(submissionData)
+        body: JSON.stringify(submissionData),
       });
       const data = await res.json();
       if (res.ok && data.enquiry) {
         showNotice(`Lead details saved for #${selectedEnquiry.id}`);
-        setEnquiries(prev => prev.map(enq => enq.id === selectedEnquiry.id ? { ...enq, ...data.enquiry } : enq));
+        setEnquiries((prev) =>
+          prev.map((enq) =>
+            enq.id === selectedEnquiry.id ? { ...enq, ...data.enquiry } : enq,
+          ),
+        );
         setSelectedEnquiry(data.enquiry);
         setIsEditingLead(false);
       } else {
-        showNotice(data.error || 'Failed to save lead details');
+        showNotice(data.error || "Failed to save lead details");
       }
     } catch (err: any) {
       showNotice(`Error saving lead: ${err.message}`);
@@ -740,32 +859,40 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
   }, [selectedEnquiry?.id]);
 
   // Document item mutation helpers
-  const handleUpdateDocField = (docId: string, field: keyof LeadDocument, value: any) => {
-    setLeadDocs(prev => prev.map(doc => doc.id === docId ? { ...doc, [field]: value } : doc));
+  const handleUpdateDocField = (
+    docId: string,
+    field: keyof LeadDocument,
+    value: any,
+  ) => {
+    setLeadDocs((prev) =>
+      prev.map((doc) => (doc.id === docId ? { ...doc, [field]: value } : doc)),
+    );
   };
 
   const handleAddCustomDoc = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomDocName.trim()) {
-      showNotice('Please enter document title');
+      showNotice("Please enter document title");
       return;
     }
     const newDoc: LeadDocument = {
       id: `custom-doc-${Date.now()}`,
       name: newCustomDocName.trim(),
-      category: newCustomDocCategory.trim() || 'Custom / Extra',
+      category: newCustomDocCategory.trim() || "Custom / Extra",
       required: false,
-      status: 'Pending',
-      drive_link: '',
-      notes: ''
+      status: "Pending",
+      drive_link: "",
+      notes: "",
     };
-    setLeadDocs(prev => [...prev, newDoc]);
-    setNewCustomDocName('');
-    showNotice(`Added "${newDoc.name}" to document list. Remember to click "Save Documents".`);
+    setLeadDocs((prev) => [...prev, newDoc]);
+    setNewCustomDocName("");
+    showNotice(
+      `Added "${newDoc.name}" to document list. Remember to click "Save Documents".`,
+    );
   };
 
   const handleRemoveDoc = (docId: string) => {
-    setLeadDocs(prev => prev.filter(d => d.id !== docId));
+    setLeadDocs((prev) => prev.filter((d) => d.id !== docId));
   };
 
   const handleSaveDocuments = async () => {
@@ -774,21 +901,32 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     const token = getAuthToken();
 
     try {
-      const res = await secureFetch(`/api/enquiries/${selectedEnquiry.id}/documents`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+      const res = await secureFetch(
+        `/api/enquiries/${selectedEnquiry.id}/documents`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ documents: leadDocs }),
         },
-        body: JSON.stringify({ documents: leadDocs })
-      });
+      );
       const data = await res.json();
       if (res.ok) {
         showNotice(`Documents updated for lead #${selectedEnquiry.id}`);
-        setEnquiries(prev => prev.map(enq => enq.id === selectedEnquiry.id ? { ...enq, documents: leadDocs } : enq));
-        setSelectedEnquiry(prev => prev ? { ...prev, documents: leadDocs } : null);
+        setEnquiries((prev) =>
+          prev.map((enq) =>
+            enq.id === selectedEnquiry.id
+              ? { ...enq, documents: leadDocs }
+              : enq,
+          ),
+        );
+        setSelectedEnquiry((prev) =>
+          prev ? { ...prev, documents: leadDocs } : null,
+        );
       } else {
-        showNotice(data.error || 'Failed to save documents');
+        showNotice(data.error || "Failed to save documents");
       }
     } catch (err: any) {
       showNotice(`Error saving documents: ${err.message}`);
@@ -798,13 +936,19 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
   };
 
   const deleteEnquiry = async (id: string) => {
-    if (!confirm(`Move enquiry #${id} to Trash (soft delete)? You can restore it anytime.`)) {
+    if (
+      !confirm(
+        `Move enquiry #${id} to Trash (soft delete)? You can restore it anytime.`,
+      )
+    ) {
       return;
     }
 
-    setEnquiries(prev => {
-      const updated = prev.filter(e => e.id !== id);
-      try { localStorage.setItem('harry_global_enquiries', JSON.stringify(updated)); } catch (err) {}
+    setEnquiries((prev) => {
+      const updated = prev.filter((e) => e.id !== id);
+      try {
+        localStorage.setItem("harry_global_enquiries", JSON.stringify(updated));
+      } catch (err) {}
       return updated;
     });
 
@@ -815,10 +959,10 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     try {
       const token = getAuthToken();
       const res = await fetch(`/api/enquiries/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (res.status === 401 || res.status === 403) {
@@ -830,7 +974,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         showNotice(`Enquiry #${id} moved to Trash`);
       }
     } catch (e) {
-      console.warn('Network error deleting enquiry on server:', e);
+      console.warn("Network error deleting enquiry on server:", e);
     }
   };
 
@@ -839,10 +983,10 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setLoadingApps(true);
     try {
       const token = getAuthToken();
-      const res = await fetch('/api/applications', {
+      const res = await fetch("/api/applications", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (res.status === 401 || res.status === 403) {
@@ -855,13 +999,19 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         const list = data.applications || (Array.isArray(data) ? data : []);
         setApplications(list);
         try {
-          localStorage.setItem('harry_global_job_applications', JSON.stringify(list));
+          localStorage.setItem(
+            "harry_global_job_applications",
+            JSON.stringify(list),
+          );
         } catch (e) {}
       } else {
         fallbackLoadApplications();
       }
     } catch (e) {
-      console.warn('Network error or server offline. Reading applications from local storage:', e);
+      console.warn(
+        "Network error or server offline. Reading applications from local storage:",
+        e,
+      );
       fallbackLoadApplications();
     } finally {
       setLoadingApps(false);
@@ -870,23 +1020,32 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   const fallbackLoadApplications = () => {
     try {
-      const local = localStorage.getItem('harry_global_job_applications');
+      const local = localStorage.getItem("harry_global_job_applications");
       if (local) {
         setApplications(JSON.parse(local));
       }
     } catch (e) {
-      console.error('Failed reading local job applications:', e);
+      console.error("Failed reading local job applications:", e);
     }
   };
 
   const deleteApplication = async (id: number | string) => {
-    if (!confirm(`Move candidate application #${id} to Trash (soft delete)? You can restore it anytime.`)) {
+    if (
+      !confirm(
+        `Move candidate application #${id} to Trash (soft delete)? You can restore it anytime.`,
+      )
+    ) {
       return;
     }
 
-    setApplications(prev => {
-      const updated = prev.filter(a => String(a.id) !== String(id));
-      try { localStorage.setItem('harry_global_job_applications', JSON.stringify(updated)); } catch (err) {}
+    setApplications((prev) => {
+      const updated = prev.filter((a) => String(a.id) !== String(id));
+      try {
+        localStorage.setItem(
+          "harry_global_job_applications",
+          JSON.stringify(updated),
+        );
+      } catch (err) {}
       return updated;
     });
 
@@ -897,10 +1056,10 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     try {
       const token = getAuthToken();
       const res = await fetch(`/api/applications/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (res.status === 401 || res.status === 403) {
@@ -912,15 +1071,17 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         showNotice(`Candidate #${id} moved to Trash`);
       }
     } catch (e) {
-      console.warn('Network error deleting application on server:', e);
+      console.warn("Network error deleting application on server:", e);
     }
   };
 
   // --- FILTERING & COMPUTATIONS ---
-  const filteredEnquiries = enquiries.filter(e => {
-    const matchStatus = enquiryStatusFilter === 'All' || e.status === enquiryStatusFilter;
+  const filteredEnquiries = enquiries.filter((e) => {
+    const matchStatus =
+      enquiryStatusFilter === "All" || e.status === enquiryStatusFilter;
     const search = enquirySearchTerm.trim().toLowerCase();
-    const matchSearch = !search ||
+    const matchSearch =
+      !search ||
       (e.full_name && e.full_name.toLowerCase().includes(search)) ||
       (e.fullName && e.fullName.toLowerCase().includes(search)) ||
       (e.mobile && e.mobile.includes(search)) ||
@@ -929,11 +1090,16 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     return matchStatus && matchSearch;
   });
 
-  const filteredApplications = applications.filter(app => {
-    const matchRole = appRoleFilter === 'All Roles' || app.role.toLowerCase() === appRoleFilter.toLowerCase();
-    const matchStatus = appStatusFilter === 'All' || app.status.toLowerCase() === appStatusFilter.toLowerCase();
+  const filteredApplications = applications.filter((app) => {
+    const matchRole =
+      appRoleFilter === "All Roles" ||
+      app.role.toLowerCase() === appRoleFilter.toLowerCase();
+    const matchStatus =
+      appStatusFilter === "All" ||
+      app.status.toLowerCase() === appStatusFilter.toLowerCase();
     const search = appSearchTerm.trim().toLowerCase();
-    const matchSearch = !search ||
+    const matchSearch =
+      !search ||
       (app.full_name && app.full_name.toLowerCase().includes(search)) ||
       (app.email && app.email.toLowerCase().includes(search)) ||
       (app.phone && app.phone.toLowerCase().includes(search)) ||
@@ -945,53 +1111,63 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
   // KPI Metrics for Job Applications
   const totalCandidates = applications.length;
-  const countNew = applications.filter(a => a.status === 'New').length;
-  const countReviewing = applications.filter(a => a.status === 'Reviewing').length;
-  const countShortlisted = applications.filter(a => a.status === 'Shortlisted').length;
-  const countInterviewed = applications.filter(a => a.status === 'Interviewed').length;
-  const countHired = applications.filter(a => a.status === 'Hired').length;
+  const countNew = applications.filter((a) => a.status === "New").length;
+  const countReviewing = applications.filter(
+    (a) => a.status === "Reviewing",
+  ).length;
+  const countShortlisted = applications.filter(
+    (a) => a.status === "Shortlisted",
+  ).length;
+  const countInterviewed = applications.filter(
+    (a) => a.status === "Interviewed",
+  ).length;
+  const countHired = applications.filter((a) => a.status === "Hired").length;
 
   // Role badge color helper
   const getRoleBadgeColor = (role: string) => {
     const r = role.toLowerCase();
-    if (r.includes('language') || r.includes('german') || r.includes('trainer')) {
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (
+      r.includes("language") ||
+      r.includes("german") ||
+      r.includes("trainer")
+    ) {
+      return "bg-blue-100 text-blue-800 border-blue-200";
     }
-    if (r.includes('visa') || r.includes('immigration')) {
-      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (r.includes("visa") || r.includes("immigration")) {
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
     }
-    if (r.includes('counselor') || r.includes('student')) {
-      return 'bg-purple-100 text-purple-800 border-purple-200';
+    if (r.includes("counselor") || r.includes("student")) {
+      return "bg-purple-100 text-purple-800 border-purple-200";
     }
-    if (r.includes('relocation') || r.includes('arrival')) {
-      return 'bg-amber-100 text-amber-800 border-amber-200';
+    if (r.includes("relocation") || r.includes("arrival")) {
+      return "bg-amber-100 text-amber-800 border-amber-200";
     }
-    return 'bg-slate-100 text-slate-800 border-slate-200';
+    return "bg-slate-100 text-slate-800 border-slate-200";
   };
 
   // Status badge color helper
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'New':
-        return 'bg-sky-100 text-sky-800 border-sky-200';
-      case 'Reviewing':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'Shortlisted':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'Interviewed':
-        return 'bg-cyan-100 text-cyan-800 border-cyan-200';
-      case 'Hired':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'Rejected':
-        return 'bg-rose-100 text-rose-800 border-rose-200';
-      case 'Contacted':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'In Progress':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'Closed':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case "New":
+        return "bg-sky-100 text-sky-800 border-sky-200";
+      case "Reviewing":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "Shortlisted":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "Interviewed":
+        return "bg-cyan-100 text-cyan-800 border-cyan-200";
+      case "Hired":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "Rejected":
+        return "bg-rose-100 text-rose-800 border-rose-200";
+      case "Contacted":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "In Progress":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "Closed":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+        return "bg-slate-100 text-slate-700 border-slate-200";
     }
   };
 
@@ -1000,9 +1176,15 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     const token = getAuthToken();
     try {
       const [statsRes, enqRes, appRes] = await Promise.all([
-        fetch('/api/admin/archive/stats', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/archive/enquiries', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/archive/applications', { headers: { Authorization: `Bearer ${token}` } })
+        fetch("/api/admin/archive/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/admin/archive/enquiries", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/admin/archive/applications", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
       if (statsRes.ok) {
         const d = await statsRes.json();
@@ -1017,7 +1199,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         setArchivedApplications(d.applications || []);
       }
     } catch (err) {
-      console.warn('Error loading archival data:', err);
+      console.warn("Error loading archival data:", err);
     } finally {
       setLoadingArchives(false);
     }
@@ -1028,22 +1210,24 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     setRunningArchival(true);
     const token = getAuthToken();
     try {
-      const res = await fetch('/api/admin/archive/run', {
-        method: 'POST',
+      const res = await fetch("/api/admin/archive/run", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ daysThreshold: 90 })
+        body: JSON.stringify({ daysThreshold: 90 }),
       });
       const data = await res.json();
       if (res.ok) {
-        showNotice(`Archival completed! Enquiries: ${data.result.enquiriesArchived}, Candidates: ${data.result.applicationsArchived}`);
+        showNotice(
+          `Archival completed! Enquiries: ${data.result.enquiriesArchived}, Candidates: ${data.result.applicationsArchived}`,
+        );
         await loadArchivalData();
         await loadEnquiries();
         await loadApplications();
       } else {
-        showNotice(`Archival failed: ${data.error || 'Server error'}`);
+        showNotice(`Archival failed: ${data.error || "Server error"}`);
       }
     } catch (e: any) {
       showNotice(`Network error running archival: ${e.message}`);
@@ -1056,8 +1240,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     const token = getAuthToken();
     try {
       const res = await fetch(`/api/admin/archive/restore/enquiry/${id}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         showNotice(`Enquiry #${id} restored to active enquiries`);
@@ -1065,7 +1249,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         await loadEnquiries();
       }
     } catch {
-      showNotice('Failed to restore enquiry');
+      showNotice("Failed to restore enquiry");
     }
   };
 
@@ -1073,8 +1257,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
     const token = getAuthToken();
     try {
       const res = await fetch(`/api/admin/archive/restore/application/${id}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         showNotice(`Candidate #${id} restored to active applications`);
@@ -1082,20 +1266,20 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         await loadApplications();
       }
     } catch {
-      showNotice('Failed to restore application');
+      showNotice("Failed to restore application");
     }
   };
 
   const handleRefresh = () => {
-    if (activeTab === 'enquiries') {
+    if (activeTab === "enquiries") {
       loadEnquiries();
-    } else if (activeTab === 'applications') {
+    } else if (activeTab === "applications") {
       loadApplications();
-    } else if (activeTab === 'archives') {
+    } else if (activeTab === "archives") {
       loadArchivalData();
-    } else if (activeTab === 'users') {
+    } else if (activeTab === "users") {
       loadUsers();
-    } else if (activeTab === 'settings') {
+    } else if (activeTab === "settings") {
       loadConfigs();
     }
   };
@@ -1103,7 +1287,6 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
   return (
     <div className="py-10 bg-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
         {/* Status Toast Notice */}
         {actionNotice && (
           <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-brand-gold/40 flex items-center space-x-2 text-sm animate-fade-in">
@@ -1126,7 +1309,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
               {adminUser && (
                 <span className="text-xs font-medium text-slate-600 flex items-center space-x-1 bg-white px-2.5 py-0.5 rounded-full border border-slate-200">
                   <UserCheck className="w-3.5 h-3.5 text-brand-navy" />
-                  <span>{adminUser.username} ({adminUser.role})</span>
+                  <span>
+                    {adminUser.username} ({adminUser.role})
+                  </span>
                 </span>
               )}
             </div>
@@ -1134,7 +1319,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
               Harry Overseas Operations Dashboard
             </h1>
             <p className="text-slate-600 text-sm mt-1">
-              Cross-Border Immigration Services & European Recruitment Management (Anantapur & Germany)
+              Cross-Border Immigration Services & European Recruitment
+              Management (Anantapur & Germany)
             </p>
           </div>
 
@@ -1144,7 +1330,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
               className="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-300 flex items-center space-x-2 shadow-sm transition"
               title="Refresh current view"
             >
-              <RefreshCw className={`w-4 h-4 text-brand-navy ${loadingEnquiries || loadingApps ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 text-brand-navy ${loadingEnquiries || loadingApps ? "animate-spin" : ""}`}
+              />
               <span>Refresh</span>
             </button>
             {onLogout && (
@@ -1166,20 +1354,24 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {canViewEnquiries && (
               <button
                 onClick={() => {
-                  setActiveTab('enquiries');
+                  setActiveTab("enquiries");
                   setSelectedApplication(null);
                 }}
                 className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                  activeTab === 'enquiries'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                  activeTab === "enquiries"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <MessageCircle className="w-4 h-4 text-brand-navy" />
                 <span>Customer Enquiries</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  activeTab === 'enquiries' ? 'bg-brand-navy/10 text-brand-navy' : 'bg-slate-300/70 text-slate-600'
-                }`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    activeTab === "enquiries"
+                      ? "bg-brand-navy/10 text-brand-navy"
+                      : "bg-slate-300/70 text-slate-600"
+                  }`}
+                >
                   {enquiries.length}
                 </span>
               </button>
@@ -1188,20 +1380,24 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {canViewApplications && (
               <button
                 onClick={() => {
-                  setActiveTab('applications');
+                  setActiveTab("applications");
                   setSelectedEnquiry(null);
                 }}
                 className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                  activeTab === 'applications'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                  activeTab === "applications"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Briefcase className="w-4 h-4 text-brand-gold" />
                 <span>Job Applications</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  activeTab === 'applications' ? 'bg-amber-100 text-amber-800' : 'bg-slate-300/70 text-slate-600'
-                }`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    activeTab === "applications"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-slate-300/70 text-slate-600"
+                  }`}
+                >
                   {applications.length}
                 </span>
               </button>
@@ -1210,24 +1406,29 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {canViewArchives && (
               <button
                 onClick={() => {
-                  setActiveTab('archives');
+                  setActiveTab("archives");
                   setSelectedEnquiry(null);
                   setSelectedApplication(null);
                   loadArchivalData();
                 }}
                 className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                  activeTab === 'archives'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                  activeTab === "archives"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Archive className="w-4 h-4 text-emerald-600" />
                 <span>Data Archive</span>
                 {archivalStats && (
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    activeTab === 'archives' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/70 text-slate-600'
-                  }`}>
-                    {archivalStats.totalArchivedEnquiries + archivalStats.totalArchivedApplications}
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      activeTab === "archives"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-slate-300/70 text-slate-600"
+                    }`}
+                  >
+                    {archivalStats.totalArchivedEnquiries +
+                      archivalStats.totalArchivedApplications}
                   </span>
                 )}
               </button>
@@ -1236,22 +1437,26 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {canManageUsers && (
               <button
                 onClick={() => {
-                  setActiveTab('users');
+                  setActiveTab("users");
                   setSelectedEnquiry(null);
                   setSelectedApplication(null);
                   loadUsers();
                 }}
                 className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                  activeTab === 'users'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                  activeTab === "users"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Users className="w-4 h-4 text-indigo-600" />
                 <span>Team & Access (RBAC)</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  activeTab === 'users' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-300/70 text-slate-600'
-                }`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    activeTab === "users"
+                      ? "bg-indigo-100 text-indigo-800"
+                      : "bg-slate-300/70 text-slate-600"
+                  }`}
+                >
                   {userList.length}
                 </span>
               </button>
@@ -1260,15 +1465,15 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {canManageSettings && (
               <button
                 onClick={() => {
-                  setActiveTab('settings');
+                  setActiveTab("settings");
                   setSelectedEnquiry(null);
                   setSelectedApplication(null);
                   loadConfigs();
                 }}
                 className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                  activeTab === 'settings'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                  activeTab === "settings"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Settings className="w-4 h-4 text-brand-navy" />
@@ -1278,18 +1483,18 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
           </div>
 
           <div className="text-xs text-slate-500 font-medium">
-            {activeTab === 'enquiries' 
+            {activeTab === "enquiries"
               ? `Showing ${filteredEnquiries.length} of ${enquiries.length} enquiries`
-              : activeTab === 'applications'
+              : activeTab === "applications"
                 ? `Showing ${filteredApplications.length} of ${applications.length} candidates`
-                : `Cold Storage: ${archivalStats ? (archivalStats.totalArchivedEnquiries + archivalStats.totalArchivedApplications) : 0} archived records`}
+                : `Cold Storage: ${archivalStats ? archivalStats.totalArchivedEnquiries + archivalStats.totalArchivedApplications : 0} archived records`}
           </div>
         </div>
 
         {/* ======================================================== */}
         {/* TAB 1: CUSTOMER ENQUIRIES VIEW                           */}
         {/* ======================================================== */}
-        {activeTab === 'enquiries' && (
+        {activeTab === "enquiries" && (
           <div>
             {/* Enquiry Filters & Search */}
             <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -1298,24 +1503,28 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                 <input
                   type="text"
                   value={enquirySearchTerm}
-                  onChange={e => setEnquirySearchTerm(e.target.value)}
+                  onChange={(e) => setEnquirySearchTerm(e.target.value)}
                   placeholder="Search by name, phone, email or ID..."
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-gold focus:outline-none"
                 />
               </div>
 
               <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
-                {ENQUIRY_STATUSES.map(status => (
+                {ENQUIRY_STATUSES.map((status) => (
                   <button
                     key={status}
                     onClick={() => setEnquiryStatusFilter(status)}
                     className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
                       enquiryStatusFilter === status
-                        ? 'bg-brand-navy text-white shadow'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? "bg-brand-navy text-white shadow"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    {status} ({status === 'All' ? enquiries.length : enquiries.filter(e => e.status === status).length})
+                    {status} (
+                    {status === "All"
+                      ? enquiries.length
+                      : enquiries.filter((e) => e.status === status).length}
+                    )
                   </button>
                 ))}
               </div>
@@ -1324,7 +1533,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {/* Enquiries Table & Detail View */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Enquiries Table */}
-              <div className={`${selectedEnquiry ? 'lg:col-span-7' : 'lg:col-span-12'} transition-all duration-300`}>
+              <div
+                className={`${selectedEnquiry ? "lg:col-span-7" : "lg:col-span-12"} transition-all duration-300`}
+              >
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -1340,61 +1551,99 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       <tbody className="divide-y divide-slate-100 text-sm">
                         {loadingEnquiries ? (
                           <tr>
-                            <td colSpan={5} className="p-8 text-center text-slate-500">
+                            <td
+                              colSpan={5}
+                              className="p-8 text-center text-slate-500"
+                            >
                               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-navy" />
                               Loading enquiries from database...
                             </td>
                           </tr>
-                        ) : filteredEnquiries.length > 0 ? filteredEnquiries.map(enq => (
-                          <tr
-                            key={enq.id}
-                            onClick={() => setSelectedEnquiry(enq)}
-                            className={`cursor-pointer transition hover:bg-slate-50 ${
-                              selectedEnquiry?.id === enq.id ? 'bg-brand-navy/5' : ''
-                            }`}
-                          >
-                            <td className="p-4">
-                              <span className="font-mono text-xs font-bold text-brand-navy block">{enq.id}</span>
-                              <span className="font-bold text-slate-900">{enq.full_name || enq.fullName}</span>
-                              <span className="text-xs text-slate-400 block">{enq.created_at || enq.createdAt}</span>
-                            </td>
-                            <td className="p-4">
-                              <span className="text-xs font-medium text-slate-700 block">{enq.mobile || enq.phone}</span>
-                              <span className="text-xs text-slate-500">{enq.email}</span>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex flex-wrap gap-1">
-                                {(Array.isArray(enq.main_services || enq.mainServices)
-                                  ? (enq.main_services || enq.mainServices as string[])
-                                  : [String(enq.main_services || enq.mainServices || '')]
-                                ).filter(Boolean).slice(0, 2).map((s: string) => (
-                                  <span key={s} className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded">
-                                    {s}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(enq.status)}`}>
-                                {enq.status}
-                              </span>
-                            </td>
-                            <td className="p-4 text-right">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEnquiry(enq);
-                                }}
-                                className="text-brand-navy hover:text-brand-dark text-xs font-semibold bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
-                              >
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        )) : (
+                        ) : filteredEnquiries.length > 0 ? (
+                          filteredEnquiries.map((enq) => (
+                            <tr
+                              key={enq.id}
+                              onClick={() => setSelectedEnquiry(enq)}
+                              className={`cursor-pointer transition hover:bg-slate-50 ${
+                                selectedEnquiry?.id === enq.id
+                                  ? "bg-brand-navy/5"
+                                  : ""
+                              }`}
+                            >
+                              <td className="p-4">
+                                <span className="font-mono text-xs font-bold text-brand-navy block">
+                                  {enq.id}
+                                </span>
+                                <span className="font-bold text-slate-900">
+                                  {enq.full_name || enq.fullName}
+                                </span>
+                                <span className="text-xs text-slate-400 block">
+                                  {enq.created_at || enq.createdAt}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <span className="text-xs font-medium text-slate-700 block">
+                                  {enq.mobile || enq.phone}
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                  {enq.email}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {(Array.isArray(
+                                    enq.main_services || enq.mainServices,
+                                  )
+                                    ? enq.main_services ||
+                                      (enq.mainServices as string[])
+                                    : [
+                                        String(
+                                          enq.main_services ||
+                                            enq.mainServices ||
+                                            "",
+                                        ),
+                                      ]
+                                  )
+                                    .filter(Boolean)
+                                    .slice(0, 2)
+                                    .map((s: string) => (
+                                      <span
+                                        key={s}
+                                        className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded"
+                                      >
+                                        {s}
+                                      </span>
+                                    ))}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <span
+                                  className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(enq.status)}`}
+                                >
+                                  {enq.status}
+                                </span>
+                              </td>
+                              <td className="p-4 text-right">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedEnquiry(enq);
+                                  }}
+                                  className="text-brand-navy hover:text-brand-dark text-xs font-semibold bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
                           <tr>
-                            <td colSpan={5} className="p-8 text-center text-slate-500">
-                              No customer enquiries matching your filter criteria.
+                            <td
+                              colSpan={5}
+                              className="p-8 text-center text-slate-500"
+                            >
+                              No customer enquiries matching your filter
+                              criteria.
                             </td>
                           </tr>
                         )}
@@ -1412,12 +1661,19 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     <div className="flex items-start justify-between pb-3 border-b border-slate-200 mb-4">
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs font-mono font-bold text-brand-navy">{selectedEnquiry.id}</span>
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getStatusBadgeColor(selectedEnquiry.status)}`}>
+                          <span className="text-xs font-mono font-bold text-brand-navy">
+                            {selectedEnquiry.id}
+                          </span>
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getStatusBadgeColor(selectedEnquiry.status)}`}
+                          >
                             {selectedEnquiry.status}
                           </span>
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900 mt-0.5">{selectedEnquiry.full_name || selectedEnquiry.fullName}</h3>
+                        <h3 className="text-lg font-bold text-slate-900 mt-0.5">
+                          {selectedEnquiry.full_name ||
+                            selectedEnquiry.fullName}
+                        </h3>
                       </div>
                       <div className="flex items-center space-x-1">
                         {!isEditingLead && (
@@ -1445,45 +1701,62 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     {/* Sub-tab navigation: Info vs Documents vs History */}
                     <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl mb-4 text-xs font-semibold">
                       <button
-                        onClick={() => { setEnquiryDetailTab('info'); setIsEditingLead(false); }}
+                        onClick={() => {
+                          setEnquiryDetailTab("info");
+                          setIsEditingLead(false);
+                        }}
                         className={`flex-1 py-1.5 rounded-lg transition flex items-center justify-center space-x-1 ${
-                          enquiryDetailTab === 'info' && !isEditingLead
-                            ? 'bg-white text-brand-navy shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900'
+                          enquiryDetailTab === "info" && !isEditingLead
+                            ? "bg-white text-brand-navy shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
                         <UserCheck className="w-3.5 h-3.5" />
                         <span>Lead Info</span>
                       </button>
                       <button
-                        onClick={() => { setEnquiryDetailTab('documents'); setIsEditingLead(false); }}
+                        onClick={() => {
+                          setEnquiryDetailTab("documents");
+                          setIsEditingLead(false);
+                        }}
                         className={`flex-1 py-1.5 rounded-lg transition flex items-center justify-center space-x-1 ${
-                          enquiryDetailTab === 'documents'
-                            ? 'bg-white text-brand-navy shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900'
+                          enquiryDetailTab === "documents"
+                            ? "bg-white text-brand-navy shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
                         <FolderOpen className="w-3.5 h-3.5" />
                         <span>Docs & Drive ({leadDocs.length})</span>
                       </button>
                       <button
-                        onClick={() => { setEnquiryDetailTab('history'); setIsEditingLead(false); }}
+                        onClick={() => {
+                          setEnquiryDetailTab("history");
+                          setIsEditingLead(false);
+                        }}
                         className={`flex-1 py-1.5 rounded-lg transition flex items-center justify-center space-x-1 ${
-                          enquiryDetailTab === 'history'
-                            ? 'bg-white text-brand-navy shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900'
+                          enquiryDetailTab === "history"
+                            ? "bg-white text-brand-navy shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
                         <History className="w-3.5 h-3.5" />
-                        <span>Stage History ({selectedEnquiry.stage_history?.length || 0})</span>
+                        <span>
+                          Stage History (
+                          {selectedEnquiry.stage_history?.length || 0})
+                        </span>
                       </button>
                     </div>
 
                     {/* EDIT LEAD MODAL / FORM */}
                     {isEditingLead ? (
-                      <form onSubmit={handleSaveLeadEdit} className="space-y-3 text-xs">
+                      <form
+                        onSubmit={handleSaveLeadEdit}
+                        className="space-y-3 text-xs"
+                      >
                         <div className="bg-amber-50 text-amber-900 p-2.5 rounded-xl border border-amber-200 flex items-center justify-between">
-                          <span className="font-semibold">Editing Lead Details</span>
+                          <span className="font-semibold">
+                            Editing Lead Details
+                          </span>
                           <button
                             type="button"
                             onClick={() => setIsEditingLead(false)}
@@ -1494,24 +1767,38 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                         </div>
 
                         <div>
-                          <label className="block text-slate-600 font-semibold mb-1">Full Name *</label>
+                          <label className="block text-slate-600 font-semibold mb-1">
+                            Full Name *
+                          </label>
                           <input
                             type="text"
                             required
                             value={leadEditForm.full_name}
-                            onChange={e => setLeadEditForm({ ...leadEditForm, full_name: e.target.value })}
+                            onChange={(e) =>
+                              setLeadEditForm({
+                                ...leadEditForm,
+                                full_name: e.target.value,
+                              })
+                            }
                             className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                           />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">Email *</label>
+                            <label className="block text-slate-600 font-semibold mb-1">
+                              Email *
+                            </label>
                             <input
                               type="email"
                               required
                               value={leadEditForm.email}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, email: e.target.value })}
+                              onChange={(e) =>
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  email: e.target.value,
+                                })
+                              }
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             />
                           </div>
@@ -1522,15 +1809,28 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                               required
                               size="sm"
                               country={leadPhoneCountry}
-                              onCountryChange={c => {
+                              onCountryChange={(c) => {
                                 setLeadPhoneCountry(c);
-                                const err = validateInternationalPhone(leadEditForm.phone, c, true, 'Phone number');
+                                const err = validateInternationalPhone(
+                                  leadEditForm.phone,
+                                  c,
+                                  true,
+                                  "Phone number",
+                                );
                                 setLeadPhoneError(err);
                               }}
                               value={leadEditForm.phone}
-                              onChange={val => {
-                                setLeadEditForm({ ...leadEditForm, phone: val });
-                                const err = validateInternationalPhone(val, leadPhoneCountry, true, 'Phone number');
+                              onChange={(val) => {
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  phone: val,
+                                });
+                                const err = validateInternationalPhone(
+                                  val,
+                                  leadPhoneCountry,
+                                  true,
+                                  "Phone number",
+                                );
                                 setLeadPhoneError(err);
                               }}
                               error={leadPhoneError}
@@ -1541,29 +1841,43 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">City</label>
+                            <label className="block text-slate-600 font-semibold mb-1">
+                              City
+                            </label>
                             <input
                               type="text"
                               value={leadEditForm.city}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, city: e.target.value })}
+                              onChange={(e) =>
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  city: e.target.value,
+                                })
+                              }
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             />
                           </div>
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">Country</label>
+                            <label className="block text-slate-600 font-semibold mb-1">
+                              Country
+                            </label>
                             <select
                               value={leadEditForm.country}
-                              onChange={e => {
+                              onChange={(e) => {
                                 const selectedCountry = e.target.value;
-                                setLeadEditForm({ ...leadEditForm, country: selectedCountry });
-                                const conf = COUNTRY_PHONE_CONFIGS.find(c => c.name === selectedCountry);
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  country: selectedCountry,
+                                });
+                                const conf = COUNTRY_PHONE_CONFIGS.find(
+                                  (c) => c.name === selectedCountry,
+                                );
                                 if (conf && !leadEditForm.phone) {
                                   setLeadPhoneCountry(conf);
                                 }
                               }}
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             >
-                              {COUNTRY_PHONE_CONFIGS.map(c => (
+                              {COUNTRY_PHONE_CONFIGS.map((c) => (
                                 <option key={c.code} value={c.name}>
                                   {c.flag} {c.name}
                                 </option>
@@ -1573,11 +1887,18 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                         </div>
 
                         <div>
-                          <label className="block text-slate-600 font-semibold mb-1">Service Interest / Pathway</label>
+                          <label className="block text-slate-600 font-semibold mb-1">
+                            Service Interest / Pathway
+                          </label>
                           <input
                             type="text"
                             value={leadEditForm.service_interest}
-                            onChange={e => setLeadEditForm({ ...leadEditForm, service_interest: e.target.value })}
+                            onChange={(e) =>
+                              setLeadEditForm({
+                                ...leadEditForm,
+                                service_interest: e.target.value,
+                              })
+                            }
                             placeholder="e.g., Student Visa, German Language Classes, Nursing Pathway"
                             className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                           />
@@ -1585,21 +1906,35 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">Language Level</label>
+                            <label className="block text-slate-600 font-semibold mb-1">
+                              Language Level
+                            </label>
                             <input
                               type="text"
                               value={leadEditForm.language_course}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, language_course: e.target.value })}
+                              onChange={(e) =>
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  language_course: e.target.value,
+                                })
+                              }
                               placeholder="e.g., A1, A2, B1, B2"
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             />
                           </div>
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">Intended Destination</label>
+                            <label className="block text-slate-600 font-semibold mb-1">
+                              Intended Destination
+                            </label>
                             <input
                               type="text"
                               value={leadEditForm.destination_country}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, destination_country: e.target.value })}
+                              onChange={(e) =>
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  destination_country: e.target.value,
+                                })
+                              }
                               placeholder="e.g., Germany"
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             />
@@ -1608,36 +1943,59 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">Target Intake / Period</label>
+                            <label className="block text-slate-600 font-semibold mb-1">
+                              Target Intake / Period
+                            </label>
                             <input
                               type="text"
                               value={leadEditForm.travel_period}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, travel_period: e.target.value })}
+                              onChange={(e) =>
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  travel_period: e.target.value,
+                                })
+                              }
                               placeholder="e.g., Winter 2026, Immediate"
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             />
                           </div>
                           <div>
-                            <label className="block text-slate-600 font-semibold mb-1">Consultation Preference</label>
+                            <label className="block text-slate-600 font-semibold mb-1">
+                              Consultation Preference
+                            </label>
                             <select
                               value={leadEditForm.consultation_method}
-                              onChange={e => setLeadEditForm({ ...leadEditForm, consultation_method: e.target.value })}
+                              onChange={(e) =>
+                                setLeadEditForm({
+                                  ...leadEditForm,
+                                  consultation_method: e.target.value,
+                                })
+                              }
                               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             >
                               <option value="WhatsApp">WhatsApp</option>
                               <option value="Phone Call">Phone Call</option>
                               <option value="Google Meet">Google Meet</option>
-                              <option value="In-Person Office">In-Person Office</option>
+                              <option value="In-Person Office">
+                                In-Person Office
+                              </option>
                             </select>
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-slate-600 font-semibold mb-1">Notes & Requirements</label>
+                          <label className="block text-slate-600 font-semibold mb-1">
+                            Notes & Requirements
+                          </label>
                           <textarea
                             rows={3}
                             value={leadEditForm.message}
-                            onChange={e => setLeadEditForm({ ...leadEditForm, message: e.target.value })}
+                            onChange={(e) =>
+                              setLeadEditForm({
+                                ...leadEditForm,
+                                message: e.target.value,
+                              })
+                            }
                             className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                           />
                         </div>
@@ -1648,7 +2006,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                             disabled={savingLeadEdit}
                             className="flex-1 bg-brand-navy hover:bg-brand-dark text-white font-bold py-2 rounded-xl transition shadow"
                           >
-                            {savingLeadEdit ? 'Saving...' : 'Save Lead Changes'}
+                            {savingLeadEdit ? "Saving..." : "Save Lead Changes"}
                           </button>
                           <button
                             type="button"
@@ -1659,20 +2017,27 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                           </button>
                         </div>
                       </form>
-                    ) : enquiryDetailTab === 'info' ? (
+                    ) : enquiryDetailTab === "info" ? (
                       /* TAB A: STANDARD LEAD INFO */
                       <div className="space-y-4 text-sm">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <span className="text-xs text-slate-400 block">Mobile</span>
-                            <a href={`tel:${selectedEnquiry.mobile || selectedEnquiry.phone}`} className="font-semibold text-brand-navy hover:underline">
+                            <span className="text-xs text-slate-400 block">
+                              Mobile
+                            </span>
+                            <a
+                              href={`tel:${selectedEnquiry.mobile || selectedEnquiry.phone}`}
+                              className="font-semibold text-brand-navy hover:underline"
+                            >
                               {selectedEnquiry.mobile || selectedEnquiry.phone}
                             </a>
                           </div>
                           <div>
-                            <span className="text-xs text-slate-400 block">WhatsApp</span>
+                            <span className="text-xs text-slate-400 block">
+                              WhatsApp
+                            </span>
                             <a
-                              href={`https://wa.me/${(selectedEnquiry.whatsapp || selectedEnquiry.mobile || '').replace(/[^0-9]/g, '')}`}
+                              href={`https://wa.me/${(selectedEnquiry.whatsapp || selectedEnquiry.mobile || "").replace(/[^0-9]/g, "")}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-semibold text-emerald-700 hover:underline flex items-center space-x-1"
@@ -1684,55 +2049,102 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                         </div>
 
                         <div>
-                          <span className="text-xs text-slate-400 block">Email Address</span>
-                          <a href={`mailto:${selectedEnquiry.email}`} className="font-semibold text-brand-navy hover:underline">
+                          <span className="text-xs text-slate-400 block">
+                            Email Address
+                          </span>
+                          <a
+                            href={`mailto:${selectedEnquiry.email}`}
+                            className="font-semibold text-brand-navy hover:underline"
+                          >
                             {selectedEnquiry.email}
                           </a>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <span className="text-xs text-slate-400 block">Location</span>
+                            <span className="text-xs text-slate-400 block">
+                              Location
+                            </span>
                             <span className="font-semibold text-slate-800">
-                              {selectedEnquiry.city || 'Anantapur'}, {selectedEnquiry.country || 'India'}
+                              {selectedEnquiry.city || "Anantapur"},{" "}
+                              {selectedEnquiry.country || "India"}
                             </span>
                           </div>
                           <div>
-                            <span className="text-xs text-slate-400 block">Destination & Intake</span>
+                            <span className="text-xs text-slate-400 block">
+                              Destination & Intake
+                            </span>
                             <span className="font-semibold text-slate-800">
-                              {selectedEnquiry.destination_country || selectedEnquiry.intended_destination || selectedEnquiry.intendedDestination || 'Germany'} ({selectedEnquiry.travel_period || selectedEnquiry.travelPeriod || 'Immediate'})
+                              {selectedEnquiry.destination_country ||
+                                selectedEnquiry.intended_destination ||
+                                selectedEnquiry.intendedDestination ||
+                                "Germany"}{" "}
+                              (
+                              {selectedEnquiry.travel_period ||
+                                selectedEnquiry.travelPeriod ||
+                                "Immediate"}
+                              )
                             </span>
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-xs text-slate-400 block mb-1">Selected Main Services</span>
+                          <span className="text-xs text-slate-400 block mb-1">
+                            Selected Main Services
+                          </span>
                           <div className="flex flex-wrap gap-1.5">
-                            {(Array.isArray(selectedEnquiry.main_services || selectedEnquiry.mainServices)
-                              ? (selectedEnquiry.main_services || selectedEnquiry.mainServices as string[])
-                              : [String(selectedEnquiry.service_interest || selectedEnquiry.main_services || selectedEnquiry.mainServices || '')]
-                            ).filter(Boolean).map((s: string) => (
-                              <span key={s} className="bg-brand-navy/10 text-brand-navy text-xs font-semibold px-2.5 py-1 rounded-md">
-                                {s}
-                              </span>
-                            ))}
+                            {(Array.isArray(
+                              selectedEnquiry.main_services ||
+                                selectedEnquiry.mainServices,
+                            )
+                              ? selectedEnquiry.main_services ||
+                                (selectedEnquiry.mainServices as string[])
+                              : [
+                                  String(
+                                    selectedEnquiry.service_interest ||
+                                      selectedEnquiry.main_services ||
+                                      selectedEnquiry.mainServices ||
+                                      "",
+                                  ),
+                                ]
+                            )
+                              .filter(Boolean)
+                              .map((s: string) => (
+                                <span
+                                  key={s}
+                                  className="bg-brand-navy/10 text-brand-navy text-xs font-semibold px-2.5 py-1 rounded-md"
+                                >
+                                  {s}
+                                </span>
+                              ))}
                           </div>
                         </div>
 
-                        {(selectedEnquiry.language_course || selectedEnquiry.languageCourse) && (
+                        {(selectedEnquiry.language_course ||
+                          selectedEnquiry.languageCourse) && (
                           <div>
-                            <span className="text-xs text-slate-400 block mb-1">German Language Course</span>
+                            <span className="text-xs text-slate-400 block mb-1">
+                              German Language Course
+                            </span>
                             <span className="font-semibold text-slate-800 text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-md inline-block">
-                              German {selectedEnquiry.language_course || selectedEnquiry.languageCourse}
+                              German{" "}
+                              {selectedEnquiry.language_course ||
+                                selectedEnquiry.languageCourse}
                             </span>
                           </div>
                         )}
 
-                        {(selectedEnquiry.additional_reqs || selectedEnquiry.additionalReqs || selectedEnquiry.message) && (
+                        {(selectedEnquiry.additional_reqs ||
+                          selectedEnquiry.additionalReqs ||
+                          selectedEnquiry.message) && (
                           <div>
-                            <span className="text-xs text-slate-400 block">Additional Notes</span>
+                            <span className="text-xs text-slate-400 block">
+                              Additional Notes
+                            </span>
                             <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 mt-1 whitespace-pre-wrap">
-                              {selectedEnquiry.additional_reqs || selectedEnquiry.additionalReqs || selectedEnquiry.message}
+                              {selectedEnquiry.additional_reqs ||
+                                selectedEnquiry.additionalReqs ||
+                                selectedEnquiry.message}
                             </p>
                           </div>
                         )}
@@ -1743,36 +2155,45 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                             Update Lead Stage (Requires Comment)
                           </label>
                           <div className="grid grid-cols-2 gap-2">
-                            {['New', 'Contacted', 'In Progress', 'Closed'].map(st => (
-                              <button
-                                key={st}
-                                onClick={() => initiateStageChange(
-                                  'enquiry',
-                                  selectedEnquiry.id,
-                                  selectedEnquiry.full_name || selectedEnquiry.fullName || selectedEnquiry.id,
-                                  selectedEnquiry.status,
-                                  st
-                                )}
-                                className={`py-2 rounded-xl text-xs font-semibold transition ${
-                                  selectedEnquiry.status === st
-                                    ? 'bg-brand-dark text-white shadow'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                }`}
-                              >
-                                {st}
-                              </button>
-                            ))}
+                            {["New", "Contacted", "In Progress", "Closed"].map(
+                              (st) => (
+                                <button
+                                  key={st}
+                                  onClick={() =>
+                                    initiateStageChange(
+                                      "enquiry",
+                                      selectedEnquiry.id,
+                                      selectedEnquiry.full_name ||
+                                        selectedEnquiry.fullName ||
+                                        selectedEnquiry.id,
+                                      selectedEnquiry.status,
+                                      st,
+                                    )
+                                  }
+                                  className={`py-2 rounded-xl text-xs font-semibold transition ${
+                                    selectedEnquiry.status === st
+                                      ? "bg-brand-dark text-white shadow"
+                                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                  }`}
+                                >
+                                  {st}
+                                </button>
+                              ),
+                            )}
                           </div>
                         </div>
                       </div>
-                    ) : enquiryDetailTab === 'documents' ? (
+                    ) : enquiryDetailTab === "documents" ? (
                       /* TAB B: DIGITAL DOCUMENT CHECKLIST & GOOGLE/ONE DRIVE LINKS */
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800">Digital Document Checklist</h4>
+                            <h4 className="text-xs font-bold text-slate-800">
+                              Digital Document Checklist
+                            </h4>
                             <p className="text-[11px] text-slate-500">
-                              Direct cloud links (Google Drive, OneDrive). No local storage needed.
+                              Direct cloud links (Google Drive, OneDrive). No
+                              local storage needed.
                             </p>
                           </div>
                           <button
@@ -1781,18 +2202,23 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                             disabled={savingDocs}
                             className="bg-brand-navy hover:bg-brand-dark text-white text-xs font-bold px-3 py-1.5 rounded-lg transition shadow-sm"
                           >
-                            {savingDocs ? 'Saving...' : 'Save Documents'}
+                            {savingDocs ? "Saving..." : "Save Documents"}
                           </button>
                         </div>
 
                         {/* Document List */}
                         <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
                           {leadDocs.map((doc, idx) => (
-                            <div key={doc.id || idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                            <div
+                              key={doc.id || idx}
+                              className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2"
+                            >
                               <div className="flex items-start justify-between">
                                 <div className="space-y-0.5">
                                   <div className="flex items-center space-x-2">
-                                    <span className="text-xs font-bold text-slate-800">{doc.name}</span>
+                                    <span className="text-xs font-bold text-slate-800">
+                                      {doc.name}
+                                    </span>
                                     {doc.required && (
                                       <span className="text-[10px] bg-rose-100 text-rose-700 font-semibold px-1.5 py-0.2 rounded">
                                         Mandatory
@@ -1807,13 +2233,22 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <select
-                                    value={doc.status || 'Pending'}
-                                    onChange={e => handleUpdateDocField(doc.id, 'status', e.target.value)}
+                                    value={doc.status || "Pending"}
+                                    onChange={(e) =>
+                                      handleUpdateDocField(
+                                        doc.id,
+                                        "status",
+                                        e.target.value,
+                                      )
+                                    }
                                     className={`text-[11px] font-bold rounded-lg px-2 py-1 border focus:outline-none ${
-                                      doc.status === 'Verified' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
-                                      doc.status === 'Provided' ? 'bg-sky-100 text-sky-800 border-sky-300' :
-                                      doc.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border-rose-300' :
-                                      'bg-amber-100 text-amber-800 border-amber-300'
+                                      doc.status === "Verified"
+                                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                        : doc.status === "Provided"
+                                          ? "bg-sky-100 text-sky-800 border-sky-300"
+                                          : doc.status === "Rejected"
+                                            ? "bg-rose-100 text-rose-800 border-rose-300"
+                                            : "bg-amber-100 text-amber-800 border-amber-300"
                                     }`}
                                   >
                                     <option value="Pending">Pending</option>
@@ -1841,8 +2276,14 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                                   <input
                                     type="url"
                                     placeholder="OneDrive / Google Drive Shareable Link..."
-                                    value={doc.drive_link || ''}
-                                    onChange={e => handleUpdateDocField(doc.id, 'drive_link', e.target.value)}
+                                    value={doc.drive_link || ""}
+                                    onChange={(e) =>
+                                      handleUpdateDocField(
+                                        doc.id,
+                                        "drive_link",
+                                        e.target.value,
+                                      )
+                                    }
                                     className="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-2 py-1 text-xs font-mono text-slate-700 focus:outline-none focus:ring-1 focus:ring-brand-navy"
                                   />
                                 </div>
@@ -1858,7 +2299,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                                     <span>Open</span>
                                   </a>
                                 ) : (
-                                  <span className="text-[11px] text-slate-400 italic shrink-0">No Link</span>
+                                  <span className="text-[11px] text-slate-400 italic shrink-0">
+                                    No Link
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -1866,21 +2309,30 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                         </div>
 
                         {/* Add Custom Document Form */}
-                        <form onSubmit={handleAddCustomDoc} className="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-2">
-                          <span className="text-xs font-bold text-slate-700 block">Add Custom / Extra Document</span>
+                        <form
+                          onSubmit={handleAddCustomDoc}
+                          className="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-2"
+                        >
+                          <span className="text-xs font-bold text-slate-700 block">
+                            Add Custom / Extra Document
+                          </span>
                           <div className="grid grid-cols-3 gap-2">
                             <input
                               type="text"
                               placeholder="Document Title (e.g. Birth Certificate, Marriage Cert)..."
                               value={newCustomDocName}
-                              onChange={e => setNewCustomDocName(e.target.value)}
+                              onChange={(e) =>
+                                setNewCustomDocName(e.target.value)
+                              }
                               className="col-span-2 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             />
                             <input
                               type="text"
                               placeholder="Category (e.g. Civil, Financial)"
                               value={newCustomDocCategory}
-                              onChange={e => setNewCustomDocCategory(e.target.value)}
+                              onChange={(e) =>
+                                setNewCustomDocCategory(e.target.value)
+                              }
                               className="col-span-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-brand-navy"
                             />
                           </div>
@@ -1897,37 +2349,58 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       /* TAB C: AUDIT TRAIL / HISTORICAL STAGE CHANGES */
                       <div className="space-y-3">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                          <h4 className="text-xs font-bold text-slate-800">Historical Stage Change Log</h4>
+                          <h4 className="text-xs font-bold text-slate-800">
+                            Historical Stage Change Log
+                          </h4>
                           <span className="text-[11px] text-slate-500">
                             Strict audit log with required transition comments
                           </span>
                         </div>
 
                         <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-                          {selectedEnquiry.stage_history && selectedEnquiry.stage_history.length > 0 ? (
+                          {selectedEnquiry.stage_history &&
+                          selectedEnquiry.stage_history.length > 0 ? (
                             selectedEnquiry.stage_history.map((entry, idx) => (
-                              <div key={entry.id || idx} className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+                              <div
+                                key={entry.id || idx}
+                                className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1"
+                              >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-1.5 font-bold">
                                     {entry.from_status ? (
                                       <>
-                                        <span className="text-slate-500">{entry.from_status}</span>
-                                        <span className="text-slate-400">→</span>
-                                        <span className="text-brand-navy">{entry.to_status}</span>
+                                        <span className="text-slate-500">
+                                          {entry.from_status}
+                                        </span>
+                                        <span className="text-slate-400">
+                                          →
+                                        </span>
+                                        <span className="text-brand-navy">
+                                          {entry.to_status}
+                                        </span>
                                       </>
                                     ) : (
-                                      <span className="text-brand-navy">{entry.to_status} (Initial)</span>
+                                      <span className="text-brand-navy">
+                                        {entry.to_status} (Initial)
+                                      </span>
                                     )}
                                   </div>
                                   <span className="text-[10px] text-slate-400">
-                                    {entry.changed_at ? new Date(entry.changed_at).toLocaleString() : 'N/A'}
+                                    {entry.changed_at
+                                      ? new Date(
+                                          entry.changed_at,
+                                        ).toLocaleString()
+                                      : "N/A"}
                                   </span>
                                 </div>
                                 <p className="text-slate-700 bg-white p-2 rounded border border-slate-100 whitespace-pre-wrap">
                                   "{entry.comment}"
                                 </p>
                                 <div className="text-[10px] text-slate-400 font-medium">
-                                  Recorded by: <span className="text-slate-600 font-semibold">{entry.changed_by || 'Staff'}</span>
+                                  Recorded by:{" "}
+                                  <span className="text-slate-600 font-semibold">
+                                    {entry.changed_by || "Staff"}
+                                  </span>
                                 </div>
                               </div>
                             ))
@@ -1950,7 +2423,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       <span>Delete Enquiry</span>
                     </button>
                     <span className="text-xs text-slate-400">
-                      Created: {selectedEnquiry.created_at || selectedEnquiry.createdAt}
+                      Created:{" "}
+                      {selectedEnquiry.created_at || selectedEnquiry.createdAt}
                     </span>
                   </div>
                 </div>
@@ -1962,97 +2436,136 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         {/* ======================================================== */}
         {/* TAB 2: JOB APPLICATIONS VIEW                             */}
         {/* ======================================================== */}
-        {activeTab === 'applications' && (
+        {activeTab === "applications" && (
           <div>
             {/* Top KPI Metrics Banner */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
               {/* Total Candidates */}
-              <div 
-                onClick={() => { setAppStatusFilter('All'); setAppRoleFilter('All Roles'); }}
+              <div
+                onClick={() => {
+                  setAppStatusFilter("All");
+                  setAppRoleFilter("All Roles");
+                }}
                 className={`cursor-pointer rounded-2xl p-4 border transition shadow-sm ${
-                  appStatusFilter === 'All' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
+                  appStatusFilter === "All"
+                    ? "bg-slate-900 text-white border-slate-800"
+                    : "bg-white text-slate-800 border-slate-200 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold opacity-75">Total Applicants</span>
+                  <span className="text-xs font-semibold opacity-75">
+                    Total Applicants
+                  </span>
                   <Users className="w-4 h-4 text-brand-gold" />
                 </div>
-                <div className="text-2xl font-extrabold tracking-tight">{totalCandidates}</div>
+                <div className="text-2xl font-extrabold tracking-tight">
+                  {totalCandidates}
+                </div>
                 <span className="text-[11px] opacity-70">All submissions</span>
               </div>
 
               {/* New */}
-              <div 
-                onClick={() => setAppStatusFilter('New')}
+              <div
+                onClick={() => setAppStatusFilter("New")}
                 className={`cursor-pointer rounded-2xl p-4 border transition shadow-sm ${
-                  appStatusFilter === 'New' ? 'bg-sky-600 text-white border-sky-700' : 'bg-white text-slate-800 border-slate-200 hover:border-sky-300'
+                  appStatusFilter === "New"
+                    ? "bg-sky-600 text-white border-sky-700"
+                    : "bg-white text-slate-800 border-slate-200 hover:border-sky-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-semibold opacity-75">New</span>
                   <Sparkles className="w-4 h-4 text-sky-400" />
                 </div>
-                <div className="text-2xl font-extrabold tracking-tight">{countNew}</div>
+                <div className="text-2xl font-extrabold tracking-tight">
+                  {countNew}
+                </div>
                 <span className="text-[11px] opacity-70">Awaiting review</span>
               </div>
 
               {/* Reviewing */}
-              <div 
-                onClick={() => setAppStatusFilter('Reviewing')}
+              <div
+                onClick={() => setAppStatusFilter("Reviewing")}
                 className={`cursor-pointer rounded-2xl p-4 border transition shadow-sm ${
-                  appStatusFilter === 'Reviewing' ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-slate-800 border-slate-200 hover:border-amber-300'
+                  appStatusFilter === "Reviewing"
+                    ? "bg-amber-500 text-white border-amber-600"
+                    : "bg-white text-slate-800 border-slate-200 hover:border-amber-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold opacity-75">Reviewing</span>
+                  <span className="text-xs font-semibold opacity-75">
+                    Reviewing
+                  </span>
                   <Eye className="w-4 h-4 text-amber-400" />
                 </div>
-                <div className="text-2xl font-extrabold tracking-tight">{countReviewing}</div>
+                <div className="text-2xl font-extrabold tracking-tight">
+                  {countReviewing}
+                </div>
                 <span className="text-[11px] opacity-70">Under evaluation</span>
               </div>
 
               {/* Shortlisted */}
-              <div 
-                onClick={() => setAppStatusFilter('Shortlisted')}
+              <div
+                onClick={() => setAppStatusFilter("Shortlisted")}
                 className={`cursor-pointer rounded-2xl p-4 border transition shadow-sm ${
-                  appStatusFilter === 'Shortlisted' ? 'bg-purple-600 text-white border-purple-700' : 'bg-white text-slate-800 border-slate-200 hover:border-purple-300'
+                  appStatusFilter === "Shortlisted"
+                    ? "bg-purple-600 text-white border-purple-700"
+                    : "bg-white text-slate-800 border-slate-200 hover:border-purple-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold opacity-75">Shortlisted</span>
+                  <span className="text-xs font-semibold opacity-75">
+                    Shortlisted
+                  </span>
                   <CheckCircle2 className="w-4 h-4 text-purple-300" />
                 </div>
-                <div className="text-2xl font-extrabold tracking-tight">{countShortlisted}</div>
-                <span className="text-[11px] opacity-70">Ready for interview</span>
+                <div className="text-2xl font-extrabold tracking-tight">
+                  {countShortlisted}
+                </div>
+                <span className="text-[11px] opacity-70">
+                  Ready for interview
+                </span>
               </div>
 
               {/* Interviewed */}
-              <div 
-                onClick={() => setAppStatusFilter('Interviewed')}
+              <div
+                onClick={() => setAppStatusFilter("Interviewed")}
                 className={`cursor-pointer rounded-2xl p-4 border transition shadow-sm ${
-                  appStatusFilter === 'Interviewed' ? 'bg-cyan-600 text-white border-cyan-700' : 'bg-white text-slate-800 border-slate-200 hover:border-cyan-300'
+                  appStatusFilter === "Interviewed"
+                    ? "bg-cyan-600 text-white border-cyan-700"
+                    : "bg-white text-slate-800 border-slate-200 hover:border-cyan-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold opacity-75">Interviewed</span>
+                  <span className="text-xs font-semibold opacity-75">
+                    Interviewed
+                  </span>
                   <Calendar className="w-4 h-4 text-cyan-300" />
                 </div>
-                <div className="text-2xl font-extrabold tracking-tight">{countInterviewed}</div>
+                <div className="text-2xl font-extrabold tracking-tight">
+                  {countInterviewed}
+                </div>
                 <span className="text-[11px] opacity-70">Completed rounds</span>
               </div>
 
               {/* Hired */}
-              <div 
-                onClick={() => setAppStatusFilter('Hired')}
+              <div
+                onClick={() => setAppStatusFilter("Hired")}
                 className={`cursor-pointer rounded-2xl p-4 border transition shadow-sm ${
-                  appStatusFilter === 'Hired' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-300'
+                  appStatusFilter === "Hired"
+                    ? "bg-emerald-600 text-white border-emerald-700"
+                    : "bg-white text-slate-800 border-slate-200 hover:border-emerald-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold opacity-75">Hired</span>
+                  <span className="text-xs font-semibold opacity-75">
+                    Hired
+                  </span>
                   <GraduationCap className="w-4 h-4 text-emerald-300" />
                 </div>
-                <div className="text-2xl font-extrabold tracking-tight">{countHired}</div>
+                <div className="text-2xl font-extrabold tracking-tight">
+                  {countHired}
+                </div>
                 <span className="text-[11px] opacity-70">Recruited staff</span>
               </div>
             </div>
@@ -2066,7 +2579,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                   <input
                     type="text"
                     value={appSearchTerm}
-                    onChange={e => setAppSearchTerm(e.target.value)}
+                    onChange={(e) => setAppSearchTerm(e.target.value)}
                     placeholder="Search candidate name, email, phone, role, notes..."
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-gold focus:outline-none"
                   />
@@ -2074,17 +2587,19 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
                 {/* Role Pills */}
                 <div className="flex items-center space-x-1.5 w-full lg:w-auto overflow-x-auto pb-1">
-                  {CANDIDATE_ROLES.map(role => (
+                  {CANDIDATE_ROLES.map((role) => (
                     <button
                       key={role}
                       onClick={() => setAppRoleFilter(role)}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
                         appRoleFilter === role
-                          ? 'bg-brand-navy text-white border-brand-navy shadow-sm'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          ? "bg-brand-navy text-white border-brand-navy shadow-sm"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                       }`}
                     >
-                      {role} {role !== 'All Roles' && `(${applications.filter(a => a.role === role).length})`}
+                      {role}{" "}
+                      {role !== "All Roles" &&
+                        `(${applications.filter((a) => a.role === role).length})`}
                     </button>
                   ))}
                 </div>
@@ -2095,17 +2610,19 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
                   Status:
                 </span>
-                {CANDIDATE_STATUSES.map(st => (
+                {CANDIDATE_STATUSES.map((st) => (
                   <button
                     key={st}
                     onClick={() => setAppStatusFilter(st)}
                     className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition border ${
                       appStatusFilter === st
-                        ? 'bg-slate-800 text-white border-slate-800 shadow'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? "bg-slate-800 text-white border-slate-800 shadow"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
-                    {st} {st !== 'All' && `(${applications.filter(a => a.status === st).length})`}
+                    {st}{" "}
+                    {st !== "All" &&
+                      `(${applications.filter((a) => a.status === st).length})`}
                   </button>
                 ))}
               </div>
@@ -2114,7 +2631,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {/* Applications Table & Detail Drawer */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Table List */}
-              <div className={`${selectedApplication ? 'lg:col-span-7' : 'lg:col-span-12'} transition-all duration-300`}>
+              <div
+                className={`${selectedApplication ? "lg:col-span-7" : "lg:col-span-12"} transition-all duration-300`}
+              >
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -2131,101 +2650,133 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       <tbody className="divide-y divide-slate-100 text-sm">
                         {loadingApps ? (
                           <tr>
-                            <td colSpan={6} className="p-8 text-center text-slate-500">
+                            <td
+                              colSpan={6}
+                              className="p-8 text-center text-slate-500"
+                            >
                               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-gold" />
                               Loading job applications...
                             </td>
                           </tr>
-                        ) : filteredApplications.length > 0 ? filteredApplications.map(app => (
-                          <tr
-                            key={app.id}
-                            onClick={() => setSelectedApplication(app)}
-                            className={`cursor-pointer transition hover:bg-slate-50 ${
-                              selectedApplication?.id === app.id ? 'bg-brand-gold/5' : ''
-                            }`}
-                          >
-                            <td className="p-4">
-                              <span className="font-mono text-xs font-bold text-slate-400 block">#{app.id}</span>
-                              <span className="font-bold text-slate-900 block">{app.full_name}</span>
-                              <span className="text-xs text-slate-400 block">
-                                {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'Recent'}
-                              </span>
-                            </td>
-                            <td className="p-4">
-                              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(app.role)}`}>
-                                {app.role}
-                              </span>
-                            </td>
-                            <td className="p-4">
-                              <span className="text-xs font-medium text-slate-700 block">{app.phone}</span>
-                              <span className="text-xs text-slate-500 block">{app.email}</span>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <a
-                                  href={`tel:${app.phone}`}
-                                  onClick={e => e.stopPropagation()}
-                                  title="Direct phone call"
-                                  className="text-[11px] text-brand-navy hover:underline flex items-center space-x-0.5"
+                        ) : filteredApplications.length > 0 ? (
+                          filteredApplications.map((app) => (
+                            <tr
+                              key={app.id}
+                              onClick={() => setSelectedApplication(app)}
+                              className={`cursor-pointer transition hover:bg-slate-50 ${
+                                selectedApplication?.id === app.id
+                                  ? "bg-brand-gold/5"
+                                  : ""
+                              }`}
+                            >
+                              <td className="p-4">
+                                <span className="font-mono text-xs font-bold text-slate-400 block">
+                                  #{app.id}
+                                </span>
+                                <span className="font-bold text-slate-900 block">
+                                  {app.full_name}
+                                </span>
+                                <span className="text-xs text-slate-400 block">
+                                  {app.created_at
+                                    ? new Date(
+                                        app.created_at,
+                                      ).toLocaleDateString()
+                                    : "Recent"}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <span
+                                  className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(app.role)}`}
                                 >
-                                  <Phone className="w-3 h-3 text-slate-400" />
-                                  <span>Call</span>
-                                </a>
-                                <span className="text-slate-300">•</span>
-                                <a
-                                  href={`https://wa.me/${app.phone.replace(/[^0-9]/g, '')}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  title="WhatsApp Chat"
-                                  className="text-[11px] text-emerald-600 hover:underline flex items-center space-x-0.5"
+                                  {app.role}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <span className="text-xs font-medium text-slate-700 block">
+                                  {app.phone}
+                                </span>
+                                <span className="text-xs text-slate-500 block">
+                                  {app.email}
+                                </span>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <a
+                                    href={`tel:${app.phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="Direct phone call"
+                                    className="text-[11px] text-brand-navy hover:underline flex items-center space-x-0.5"
+                                  >
+                                    <Phone className="w-3 h-3 text-slate-400" />
+                                    <span>Call</span>
+                                  </a>
+                                  <span className="text-slate-300">•</span>
+                                  <a
+                                    href={`https://wa.me/${app.phone.replace(/[^0-9]/g, "")}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="WhatsApp Chat"
+                                    className="text-[11px] text-emerald-600 hover:underline flex items-center space-x-0.5"
+                                  >
+                                    <MessageCircle className="w-3 h-3 text-emerald-500" />
+                                    <span>WhatsApp</span>
+                                  </a>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                {app.resume_link ? (
+                                  <a
+                                    href={app.resume_link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center space-x-1 text-xs text-brand-navy font-semibold hover:underline bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                    <span>Resume</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-slate-400 italic">
+                                    None
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-4">
+                                <span
+                                  className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(app.status)}`}
                                 >
-                                  <MessageCircle className="w-3 h-3 text-emerald-500" />
-                                  <span>WhatsApp</span>
-                                </a>
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              {app.resume_link ? (
-                                <a
-                                  href={app.resume_link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="inline-flex items-center space-x-1 text-xs text-brand-navy font-semibold hover:underline bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition"
+                                  {app.status}
+                                </span>
+                              </td>
+                              <td className="p-4 text-right">
+                                <div
+                                  className="flex items-center justify-end space-x-1.5"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <ExternalLink className="w-3 h-3" />
-                                  <span>Resume</span>
-                                </a>
-                              ) : (
-                                <span className="text-xs text-slate-400 italic">None</span>
-                              )}
-                            </td>
-                            <td className="p-4">
-                              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(app.status)}`}>
-                                {app.status}
-                              </span>
-                            </td>
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end space-x-1.5" onClick={e => e.stopPropagation()}>
-                                <button
-                                  onClick={() => setSelectedApplication(app)}
-                                  className="text-brand-navy hover:text-brand-dark text-xs font-semibold bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
-                                >
-                                  Inspect
-                                </button>
-                                <button
-                                  onClick={() => deleteApplication(app.id)}
-                                  className="text-slate-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg transition"
-                                  title="Delete candidate"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )) : (
+                                  <button
+                                    onClick={() => setSelectedApplication(app)}
+                                    className="text-brand-navy hover:text-brand-dark text-xs font-semibold bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
+                                  >
+                                    Inspect
+                                  </button>
+                                  <button
+                                    onClick={() => deleteApplication(app.id)}
+                                    className="text-slate-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg transition"
+                                    title="Delete candidate"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
                           <tr>
-                            <td colSpan={6} className="p-8 text-center text-slate-500">
-                              No candidate applications found matching the selected filters.
+                            <td
+                              colSpan={6}
+                              className="p-8 text-center text-slate-500"
+                            >
+                              No candidate applications found matching the
+                              selected filters.
                             </td>
                           </tr>
                         )}
@@ -2243,13 +2794,21 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     <div className="flex items-start justify-between pb-4 border-b border-slate-200 mb-6">
                       <div>
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-mono text-xs font-bold text-slate-400">#{selectedApplication.id}</span>
-                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${getStatusBadgeColor(selectedApplication.status)}`}>
+                          <span className="font-mono text-xs font-bold text-slate-400">
+                            #{selectedApplication.id}
+                          </span>
+                          <span
+                            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${getStatusBadgeColor(selectedApplication.status)}`}
+                          >
                             {selectedApplication.status}
                           </span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900">{selectedApplication.full_name}</h3>
-                        <span className={`inline-block mt-1 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${getRoleBadgeColor(selectedApplication.role)}`}>
+                        <h3 className="text-xl font-bold text-slate-900">
+                          {selectedApplication.full_name}
+                        </h3>
+                        <span
+                          className={`inline-block mt-1 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${getRoleBadgeColor(selectedApplication.role)}`}
+                        >
                           {selectedApplication.role}
                         </span>
                       </div>
@@ -2264,36 +2823,41 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     {/* Candidate Sub-tab navigation: Info vs Stage History */}
                     <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl mb-4 text-xs font-semibold">
                       <button
-                        onClick={() => setAppDetailTab('info')}
+                        onClick={() => setAppDetailTab("info")}
                         className={`flex-1 py-1.5 rounded-lg transition flex items-center justify-center space-x-1 ${
-                          appDetailTab === 'info'
-                            ? 'bg-white text-brand-navy shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900'
+                          appDetailTab === "info"
+                            ? "bg-white text-brand-navy shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
                         <UserCheck className="w-3.5 h-3.5" />
                         <span>Profile & CV</span>
                       </button>
                       <button
-                        onClick={() => setAppDetailTab('history')}
+                        onClick={() => setAppDetailTab("history")}
                         className={`flex-1 py-1.5 rounded-lg transition flex items-center justify-center space-x-1 ${
-                          appDetailTab === 'history'
-                            ? 'bg-white text-brand-navy shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900'
+                          appDetailTab === "history"
+                            ? "bg-white text-brand-navy shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
                         }`}
                       >
                         <History className="w-3.5 h-3.5" />
-                        <span>Stage History ({selectedApplication.stage_history?.length || 0})</span>
+                        <span>
+                          Stage History (
+                          {selectedApplication.stage_history?.length || 0})
+                        </span>
                       </button>
                     </div>
 
-                    {appDetailTab === 'info' ? (
+                    {appDetailTab === "info" ? (
                       /* Candidate Details Content */
                       <div className="space-y-4 text-sm">
                         {/* Contact Card */}
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-slate-500 font-medium">Direct Phone</span>
+                            <span className="text-xs text-slate-500 font-medium">
+                              Direct Phone
+                            </span>
                             <div className="flex items-center space-x-2">
                               <a
                                 href={`tel:${selectedApplication.phone}`}
@@ -2303,7 +2867,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                                 <span>{selectedApplication.phone}</span>
                               </a>
                               <a
-                                href={`https://wa.me/${selectedApplication.phone.replace(/[^0-9]/g, '')}`}
+                                href={`https://wa.me/${selectedApplication.phone.replace(/[^0-9]/g, "")}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2 py-0.5 rounded flex items-center space-x-1 transition"
@@ -2315,7 +2879,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                           </div>
 
                           <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                            <span className="text-xs text-slate-500 font-medium">Email Address</span>
+                            <span className="text-xs text-slate-500 font-medium">
+                              Email Address
+                            </span>
                             <a
                               href={`mailto:${selectedApplication.email}`}
                               className="text-xs font-semibold text-brand-navy hover:underline flex items-center space-x-1"
@@ -2361,7 +2927,8 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                             Candidate Notes / Teaching & Immigration Experience
                           </span>
                           <div className="text-xs text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-200 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-                            {selectedApplication.notes || 'No additional notes provided.'}
+                            {selectedApplication.notes ||
+                              "No additional notes provided."}
                           </div>
                         </div>
 
@@ -2371,20 +2938,29 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                             Candidate Status Lifecycle (Requires Comment)
                           </label>
                           <div className="grid grid-cols-3 gap-2">
-                            {['New', 'Reviewing', 'Shortlisted', 'Interviewed', 'Hired', 'Rejected'].map(st => (
+                            {[
+                              "New",
+                              "Reviewing",
+                              "Shortlisted",
+                              "Interviewed",
+                              "Hired",
+                              "Rejected",
+                            ].map((st) => (
                               <button
                                 key={st}
-                                onClick={() => initiateStageChange(
-                                  'application',
-                                  selectedApplication.id,
-                                  selectedApplication.full_name,
-                                  selectedApplication.status,
-                                  st
-                                )}
+                                onClick={() =>
+                                  initiateStageChange(
+                                    "application",
+                                    selectedApplication.id,
+                                    selectedApplication.full_name,
+                                    selectedApplication.status,
+                                    st,
+                                  )
+                                }
                                 className={`py-2 rounded-xl text-xs font-bold transition border ${
                                   selectedApplication.status === st
-                                    ? 'bg-brand-dark text-white border-brand-dark shadow'
-                                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                    ? "bg-brand-dark text-white border-brand-dark shadow"
+                                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                                 }`}
                               >
                                 {st}
@@ -2397,32 +2973,53 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       /* Candidate Stage History */
                       <div className="space-y-3">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                          <h4 className="text-xs font-bold text-slate-800">Candidate Stage Change Audit</h4>
-                          <span className="text-[11px] text-slate-500">All status transitions</span>
+                          <h4 className="text-xs font-bold text-slate-800">
+                            Candidate Stage Change Audit
+                          </h4>
+                          <span className="text-[11px] text-slate-500">
+                            All status transitions
+                          </span>
                         </div>
 
                         <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-                          {selectedApplication.stage_history && selectedApplication.stage_history.length > 0 ? (
-                            selectedApplication.stage_history.map((entry, idx) => (
-                              <div key={entry.id || idx} className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-1.5 font-bold">
-                                    <span className="text-slate-500">{entry.from_status || 'Initial'}</span>
-                                    <span className="text-slate-400">→</span>
-                                    <span className="text-brand-navy">{entry.to_status}</span>
+                          {selectedApplication.stage_history &&
+                          selectedApplication.stage_history.length > 0 ? (
+                            selectedApplication.stage_history.map(
+                              (entry, idx) => (
+                                <div
+                                  key={entry.id || idx}
+                                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-1.5 font-bold">
+                                      <span className="text-slate-500">
+                                        {entry.from_status || "Initial"}
+                                      </span>
+                                      <span className="text-slate-400">→</span>
+                                      <span className="text-brand-navy">
+                                        {entry.to_status}
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400">
+                                      {entry.changed_at
+                                        ? new Date(
+                                            entry.changed_at,
+                                          ).toLocaleString()
+                                        : "N/A"}
+                                    </span>
                                   </div>
-                                  <span className="text-[10px] text-slate-400">
-                                    {entry.changed_at ? new Date(entry.changed_at).toLocaleString() : 'N/A'}
-                                  </span>
+                                  <p className="text-slate-700 bg-white p-2 rounded border border-slate-100 whitespace-pre-wrap">
+                                    "{entry.comment}"
+                                  </p>
+                                  <div className="text-[10px] text-slate-400 font-medium">
+                                    Staff reviewer:{" "}
+                                    <span className="text-slate-600 font-semibold">
+                                      {entry.changed_by || "HR"}
+                                    </span>
+                                  </div>
                                 </div>
-                                <p className="text-slate-700 bg-white p-2 rounded border border-slate-100 whitespace-pre-wrap">
-                                  "{entry.comment}"
-                                </p>
-                                <div className="text-[10px] text-slate-400 font-medium">
-                                  Staff reviewer: <span className="text-slate-600 font-semibold">{entry.changed_by || 'HR'}</span>
-                                </div>
-                              </div>
-                            ))
+                              ),
+                            )
                           ) : (
                             <div className="text-center py-6 text-slate-400 text-xs">
                               No prior stage transitions recorded.
@@ -2443,7 +3040,12 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       <span>Delete Application</span>
                     </button>
                     <span className="text-xs text-slate-400">
-                      Applied: {selectedApplication.created_at ? new Date(selectedApplication.created_at).toLocaleString() : 'N/A'}
+                      Applied:{" "}
+                      {selectedApplication.created_at
+                        ? new Date(
+                            selectedApplication.created_at,
+                          ).toLocaleString()
+                        : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -2455,7 +3057,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         {/* ======================================================== */}
         {/* TAB 3: DATA ARCHIVE VIEW (90+ DAYS RETENTION)            */}
         {/* ======================================================== */}
-        {activeTab === 'archives' && (
+        {activeTab === "archives" && (
           <div className="space-y-6">
             {/* Top Archival Policy Card */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
@@ -2474,7 +3076,15 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     Automated Data Archival & Cold Storage
                   </h3>
                   <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
-                    Customer enquiries and job candidate records older than 90 days are automatically migrated from active operational tables into historical archive tables daily at 02:00 AM off-peak. Backups are exported as immutable JSON snapshots in the <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded">/archives</code> filesystem directory.
+                    Customer enquiries and job candidate records older than 90
+                    days are automatically migrated from active operational
+                    tables into historical archive tables daily at 02:00 AM
+                    off-peak. Backups are exported as immutable JSON snapshots
+                    in the{" "}
+                    <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded">
+                      /archives
+                    </code>{" "}
+                    filesystem directory.
                   </p>
                 </div>
 
@@ -2485,7 +3095,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     className="p-2.5 rounded-xl border border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
                     title="Refresh Archive Data"
                   >
-                    <RefreshCw className={`w-4 h-4 ${loadingArchives ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`w-4 h-4 ${loadingArchives ? "animate-spin" : ""}`}
+                    />
                   </button>
 
                   <button
@@ -2512,48 +3124,67 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-semibold">Archived Enquiries</span>
+                    <span className="text-xs text-slate-500 font-semibold">
+                      Archived Enquiries
+                    </span>
                     <MessageCircle className="w-4 h-4 text-brand-navy" />
                   </div>
                   <div className="text-2xl font-black text-slate-900 mt-2">
                     {archivalStats?.totalArchivedEnquiries ?? 0}
                   </div>
-                  <span className="text-[11px] text-slate-500">Records &gt; 90 days old</span>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-semibold">Archived Candidates</span>
-                    <Briefcase className="w-4 h-4 text-brand-gold" />
-                  </div>
-                  <div className="text-2xl font-black text-slate-900 mt-2">
-                    {archivalStats?.totalArchivedApplications ?? 0}
-                  </div>
-                  <span className="text-[11px] text-slate-500">Past job applications</span>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-semibold">Last Execution</span>
-                    <Clock className="w-4 h-4 text-emerald-600" />
-                  </div>
-                  <div className="text-sm font-bold text-slate-900 mt-2 truncate">
-                    {archivalStats?.lastExecution ? new Date(archivalStats.lastExecution.executed_at).toLocaleString() : 'Pending'}
-                  </div>
-                  <span className="text-[11px] text-emerald-600 font-semibold">
-                    {archivalStats?.lastExecution?.status || 'Scheduled at 02:00 AM'}
+                  <span className="text-[11px] text-slate-500">
+                    Records &gt; 90 days old
                   </span>
                 </div>
 
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-semibold">Storage Engine</span>
+                    <span className="text-xs text-slate-500 font-semibold">
+                      Archived Candidates
+                    </span>
+                    <Briefcase className="w-4 h-4 text-brand-gold" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {archivalStats?.totalArchivedApplications ?? 0}
+                  </div>
+                  <span className="text-[11px] text-slate-500">
+                    Past job applications
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-semibold">
+                      Last Execution
+                    </span>
+                    <Clock className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-sm font-bold text-slate-900 mt-2 truncate">
+                    {archivalStats?.lastExecution
+                      ? new Date(
+                          archivalStats.lastExecution.executed_at,
+                        ).toLocaleString()
+                      : "Pending"}
+                  </div>
+                  <span className="text-[11px] text-emerald-600 font-semibold">
+                    {archivalStats?.lastExecution?.status ||
+                      "Scheduled at 02:00 AM"}
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-semibold">
+                      Storage Engine
+                    </span>
                     <Database className="w-4 h-4 text-purple-600" />
                   </div>
                   <div className="text-sm font-bold text-slate-900 mt-2">
                     PostgreSQL + JSON
                   </div>
-                  <span className="text-[11px] text-slate-500">Disk snapshots in /archives</span>
+                  <span className="text-[11px] text-slate-500">
+                    Disk snapshots in /archives
+                  </span>
                 </div>
               </div>
             </div>
@@ -2561,33 +3192,33 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             {/* Sub-Tabs for Archive View */}
             <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
               <button
-                onClick={() => setArchivalSubTab('overview')}
+                onClick={() => setArchivalSubTab("overview")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-                  archivalSubTab === 'overview'
-                    ? 'bg-brand-navy text-white shadow'
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                  archivalSubTab === "overview"
+                    ? "bg-brand-navy text-white shadow"
+                    : "bg-white text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 Execution Audit Logs ({archivalStats?.recentLogs?.length || 0})
               </button>
 
               <button
-                onClick={() => setArchivalSubTab('enquiries')}
+                onClick={() => setArchivalSubTab("enquiries")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-                  archivalSubTab === 'enquiries'
-                    ? 'bg-brand-navy text-white shadow'
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                  archivalSubTab === "enquiries"
+                    ? "bg-brand-navy text-white shadow"
+                    : "bg-white text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 Archived Enquiries ({archivedEnquiries.length})
               </button>
 
               <button
-                onClick={() => setArchivalSubTab('applications')}
+                onClick={() => setArchivalSubTab("applications")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-                  archivalSubTab === 'applications'
-                    ? 'bg-brand-navy text-white shadow'
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                  archivalSubTab === "applications"
+                    ? "bg-brand-navy text-white shadow"
+                    : "bg-white text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 Archived Candidates ({archivedApplications.length})
@@ -2595,7 +3226,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             </div>
 
             {/* SUB-VIEW 1: AUDIT LOGS */}
-            {archivalSubTab === 'overview' && (
+            {archivalSubTab === "overview" && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100 font-bold text-sm text-slate-800">
                   Recent Archival Executions & Audit Trail
@@ -2614,38 +3245,62 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {archivalStats?.recentLogs && archivalStats.recentLogs.length > 0 ? (
-                        archivalStats.recentLogs.map((log: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-slate-50/80">
-                            <td className="p-4 font-mono font-semibold text-slate-700">
-                              {new Date(log.executed_at).toLocaleString()}
-                            </td>
-                            <td className="p-4">
-                              <span className={`px-2 py-0.5 rounded-full font-bold ${
-                                log.execution_type === 'automated' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                              }`}>
-                                {log.execution_type}
-                              </span>
-                            </td>
-                            <td className="p-4 text-slate-600 font-semibold">{log.days_threshold} Days</td>
-                            <td className="p-4 font-bold text-slate-800">{log.enquiries_archived}</td>
-                            <td className="p-4 font-bold text-slate-800">{log.applications_archived}</td>
-                            <td className="p-4">
-                              <span className={`px-2 py-0.5 rounded-full font-bold ${
-                                log.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                              }`}>
-                                {log.status}
-                              </span>
-                            </td>
-                            <td className="p-4 text-slate-500 max-w-xs truncate" title={log.details}>
-                              {log.details || 'Archived per policy'}
-                            </td>
-                          </tr>
-                        ))
+                      {archivalStats?.recentLogs &&
+                      archivalStats.recentLogs.length > 0 ? (
+                        archivalStats.recentLogs.map(
+                          (log: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-slate-50/80">
+                              <td className="p-4 font-mono font-semibold text-slate-700">
+                                {new Date(log.executed_at).toLocaleString()}
+                              </td>
+                              <td className="p-4">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full font-bold ${
+                                    log.execution_type === "automated"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-purple-100 text-purple-800"
+                                  }`}
+                                >
+                                  {log.execution_type}
+                                </span>
+                              </td>
+                              <td className="p-4 text-slate-600 font-semibold">
+                                {log.days_threshold} Days
+                              </td>
+                              <td className="p-4 font-bold text-slate-800">
+                                {log.enquiries_archived}
+                              </td>
+                              <td className="p-4 font-bold text-slate-800">
+                                {log.applications_archived}
+                              </td>
+                              <td className="p-4">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full font-bold ${
+                                    log.status === "SUCCESS"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : "bg-rose-100 text-rose-800"
+                                  }`}
+                                >
+                                  {log.status}
+                                </span>
+                              </td>
+                              <td
+                                className="p-4 text-slate-500 max-w-xs truncate"
+                                title={log.details}
+                              >
+                                {log.details || "Archived per policy"}
+                              </td>
+                            </tr>
+                          ),
+                        )
                       ) : (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-slate-500">
-                            No archival runs recorded yet. Click "Run 90-Day Archival Now" to execute.
+                          <td
+                            colSpan={7}
+                            className="p-8 text-center text-slate-500"
+                          >
+                            No archival runs recorded yet. Click "Run 90-Day
+                            Archival Now" to execute.
                           </td>
                         </tr>
                       )}
@@ -2656,11 +3311,15 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             )}
 
             {/* SUB-VIEW 2: ARCHIVED ENQUIRIES */}
-            {archivalSubTab === 'enquiries' && (
+            {archivalSubTab === "enquiries" && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-800">Archived Enquiries ({archivedEnquiries.length})</span>
-                  <span className="text-xs text-slate-400">Records older than 90 days</span>
+                  <span className="font-bold text-sm text-slate-800">
+                    Archived Enquiries ({archivedEnquiries.length})
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    Records older than 90 days
+                  </span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -2679,18 +3338,30 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       {archivedEnquiries.length > 0 ? (
                         archivedEnquiries.map((enq: any) => (
                           <tr key={enq.id} className="hover:bg-slate-50/80">
-                            <td className="p-4 font-mono font-bold text-brand-navy">{enq.id}</td>
-                            <td className="p-4 font-bold text-slate-900">{enq.full_name}</td>
+                            <td className="p-4 font-mono font-bold text-brand-navy">
+                              {enq.id}
+                            </td>
+                            <td className="p-4 font-bold text-slate-900">
+                              {enq.full_name}
+                            </td>
                             <td className="p-4 text-slate-600">
                               <div>{enq.mobile || enq.phone}</div>
-                              <div className="text-[11px] text-slate-400">{enq.email}</div>
+                              <div className="text-[11px] text-slate-400">
+                                {enq.email}
+                              </div>
                             </td>
-                            <td className="p-4 text-slate-700">{enq.service_interest || 'N/A'}</td>
-                            <td className="p-4 text-slate-500 font-mono">
-                              {enq.created_at ? new Date(enq.created_at).toLocaleDateString() : 'N/A'}
+                            <td className="p-4 text-slate-700">
+                              {enq.service_interest || "N/A"}
                             </td>
                             <td className="p-4 text-slate-500 font-mono">
-                              {enq.archived_at ? new Date(enq.archived_at).toLocaleString() : 'N/A'}
+                              {enq.created_at
+                                ? new Date(enq.created_at).toLocaleDateString()
+                                : "N/A"}
+                            </td>
+                            <td className="p-4 text-slate-500 font-mono">
+                              {enq.archived_at
+                                ? new Date(enq.archived_at).toLocaleString()
+                                : "N/A"}
                             </td>
                             <td className="p-4 text-right">
                               <button
@@ -2706,8 +3377,12 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-slate-500">
-                            No archived enquiries found. All active enquiries are currently under 90 days old.
+                          <td
+                            colSpan={7}
+                            className="p-8 text-center text-slate-500"
+                          >
+                            No archived enquiries found. All active enquiries
+                            are currently under 90 days old.
                           </td>
                         </tr>
                       )}
@@ -2718,11 +3393,15 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             )}
 
             {/* SUB-VIEW 3: ARCHIVED APPLICATIONS */}
-            {archivalSubTab === 'applications' && (
+            {archivalSubTab === "applications" && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-800">Archived Job Candidates ({archivedApplications.length})</span>
-                  <span className="text-xs text-slate-400">Records older than 90 days</span>
+                  <span className="font-bold text-sm text-slate-800">
+                    Archived Job Candidates ({archivedApplications.length})
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    Records older than 90 days
+                  </span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -2741,22 +3420,34 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       {archivedApplications.length > 0 ? (
                         archivedApplications.map((app: any) => (
                           <tr key={app.id} className="hover:bg-slate-50/80">
-                            <td className="p-4 font-mono font-bold text-slate-400">#{app.id}</td>
-                            <td className="p-4 font-bold text-slate-900">{app.full_name}</td>
+                            <td className="p-4 font-mono font-bold text-slate-400">
+                              #{app.id}
+                            </td>
+                            <td className="p-4 font-bold text-slate-900">
+                              {app.full_name}
+                            </td>
                             <td className="p-4 text-slate-600">
                               <div>{app.phone}</div>
-                              <div className="text-[11px] text-slate-400">{app.email}</div>
+                              <div className="text-[11px] text-slate-400">
+                                {app.email}
+                              </div>
                             </td>
                             <td className="p-4">
-                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${getRoleBadgeColor(app.role)}`}>
+                              <span
+                                className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${getRoleBadgeColor(app.role)}`}
+                              >
                                 {app.role}
                               </span>
                             </td>
                             <td className="p-4 text-slate-500 font-mono">
-                              {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'N/A'}
+                              {app.created_at
+                                ? new Date(app.created_at).toLocaleDateString()
+                                : "N/A"}
                             </td>
                             <td className="p-4 text-slate-500 font-mono">
-                              {app.archived_at ? new Date(app.archived_at).toLocaleString() : 'N/A'}
+                              {app.archived_at
+                                ? new Date(app.archived_at).toLocaleString()
+                                : "N/A"}
                             </td>
                             <td className="p-4 text-right">
                               <button
@@ -2772,8 +3463,12 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-slate-500">
-                            No archived candidates found. All current candidate applications are under 90 days old.
+                          <td
+                            colSpan={7}
+                            className="p-8 text-center text-slate-500"
+                          >
+                            No archived candidates found. All current candidate
+                            applications are under 90 days old.
                           </td>
                         </tr>
                       )}
@@ -2786,7 +3481,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         )}
 
         {/* ─── TAB 4: TEAM & ACCESS MANAGEMENT (RBAC) ─── */}
-        {activeTab === 'users' && canManageUsers && (
+        {activeTab === "users" && canManageUsers && (
           <div className="space-y-8 animate-fade-in">
             {/* Add User Form Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -2795,8 +3490,13 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                   <UserPlus className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-extrabold text-slate-900">Add Staff Account & Permissions</h2>
-                  <p className="text-xs text-slate-500">Create login credentials and grant role-based access directly to database</p>
+                  <h2 className="text-lg font-extrabold text-slate-900">
+                    Add Staff Account & Permissions
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Create login credentials and grant role-based access
+                    directly to database
+                  </p>
                 </div>
               </div>
 
@@ -2810,7 +3510,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       type="text"
                       required
                       value={newUserUsername}
-                      onChange={e => setNewUserUsername(e.target.value)}
+                      onChange={(e) => setNewUserUsername(e.target.value)}
                       placeholder="e.g. counselor_anantapur"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     />
@@ -2824,7 +3524,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       type="email"
                       required
                       value={newUserEmail}
-                      onChange={e => setNewUserEmail(e.target.value)}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
                       placeholder="e.g. staff@harryoverseas.com"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     />
@@ -2838,7 +3538,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       type="password"
                       required
                       value={newUserPassword}
-                      onChange={e => setNewUserPassword(e.target.value)}
+                      onChange={(e) => setNewUserPassword(e.target.value)}
                       placeholder="Min 8 characters"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     />
@@ -2850,14 +3550,26 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     </label>
                     <select
                       value={newUserRole}
-                      onChange={e => handleRoleSelectionChange(e.target.value)}
+                      onChange={(e) =>
+                        handleRoleSelectionChange(e.target.value)
+                      }
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-semibold text-slate-800"
                     >
-                      <option value="Counselor">Counselor (Enquiries Only)</option>
-                      <option value="Recruiter">Recruiter (Job Applications Only)</option>
-                      <option value="Operations Manager">Operations Manager (Enquiries + Candidates + Archives)</option>
-                      <option value="Viewer">Viewer / Auditor (Read-only)</option>
-                      <option value="Super Admin">Super Admin (Full Unrestricted Access)</option>
+                      <option value="Counselor">
+                        Counselor (Enquiries Only)
+                      </option>
+                      <option value="Recruiter">
+                        Recruiter (Job Applications Only)
+                      </option>
+                      <option value="Operations Manager">
+                        Operations Manager (Enquiries + Candidates + Archives)
+                      </option>
+                      <option value="Viewer">
+                        Viewer / Auditor (Read-only)
+                      </option>
+                      <option value="Super Admin">
+                        Super Admin (Full Unrestricted Access)
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -2869,7 +3581,7 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       <Lock className="w-3.5 h-3.5 text-indigo-600" />
                       <span>Granular Access Permissions</span>
                     </span>
-                    {newUserPerms.includes('*') && (
+                    {newUserPerms.includes("*") && (
                       <span className="text-xs font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">
                         Full Administrator Authority (*)
                       </span>
@@ -2878,30 +3590,44 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                     {[
-                      { key: 'enquiries:read', label: 'View Enquiries' },
-                      { key: 'enquiries:write', label: 'Update Enquiry Status' },
-                      { key: 'enquiries:delete', label: 'Delete Enquiries' },
-                      { key: 'applications:read', label: 'View Candidate CVs' },
-                      { key: 'applications:write', label: 'Update Application Status' },
-                      { key: 'applications:delete', label: 'Delete Applications' },
-                      { key: 'archive:read', label: 'View 90+ Day Archives' },
-                      { key: 'archive:write', label: 'Trigger Archival & Restore' }
-                    ].map(p => {
-                      const isChecked = newUserPerms.includes('*') || newUserPerms.includes(p.key);
+                      { key: "enquiries:read", label: "View Enquiries" },
+                      {
+                        key: "enquiries:write",
+                        label: "Update Enquiry Status",
+                      },
+                      { key: "enquiries:delete", label: "Delete Enquiries" },
+                      { key: "applications:read", label: "View Candidate CVs" },
+                      {
+                        key: "applications:write",
+                        label: "Update Application Status",
+                      },
+                      {
+                        key: "applications:delete",
+                        label: "Delete Applications",
+                      },
+                      { key: "archive:read", label: "View 90+ Day Archives" },
+                      {
+                        key: "archive:write",
+                        label: "Trigger Archival & Restore",
+                      },
+                    ].map((p) => {
+                      const isChecked =
+                        newUserPerms.includes("*") ||
+                        newUserPerms.includes(p.key);
                       return (
                         <label
                           key={p.key}
                           onClick={() => togglePermission(p.key)}
                           className={`flex items-center space-x-2 p-2.5 rounded-lg border text-xs font-medium cursor-pointer transition select-none ${
                             isChecked
-                              ? 'bg-indigo-50/80 border-indigo-200 text-indigo-900 font-bold'
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                              ? "bg-indigo-50/80 border-indigo-200 text-indigo-900 font-bold"
+                              : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
                           }`}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            disabled={newUserRole === 'Super Admin'}
+                            disabled={newUserRole === "Super Admin"}
                             readOnly
                             className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
                           />
@@ -2919,7 +3645,11 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm shadow-md flex items-center space-x-2 transition disabled:opacity-50"
                   >
                     <UserPlus className="w-4 h-4" />
-                    <span>{creatingUser ? 'Creating Account...' : 'Create Staff Member'}</span>
+                    <span>
+                      {creatingUser
+                        ? "Creating Account..."
+                        : "Create Staff Member"}
+                    </span>
                   </button>
                 </div>
               </form>
@@ -2929,15 +3659,21 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                  <h3 className="font-extrabold text-slate-900">Configured Portal Accounts</h3>
-                  <p className="text-xs text-slate-500">Active accounts authorized to access Staff Portal modules</p>
+                  <h3 className="font-extrabold text-slate-900">
+                    Configured Portal Accounts
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Active accounts authorized to access Staff Portal modules
+                  </p>
                 </div>
                 <button
                   onClick={loadUsers}
                   className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition"
                   title="Reload users"
                 >
-                  <RefreshCw className={`w-4 h-4 ${loadingUsers ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`w-4 h-4 ${loadingUsers ? "animate-spin" : ""}`}
+                  />
                 </button>
               </div>
 
@@ -2954,39 +3690,49 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {userList.map(u => (
-                      <tr key={u.id} className="hover:bg-slate-50/80 transition">
+                    {userList.map((u) => (
+                      <tr
+                        key={u.id}
+                        className="hover:bg-slate-50/80 transition"
+                      >
                         <td className="p-4 font-bold text-slate-900 flex items-center space-x-2">
                           <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 text-xs font-bold uppercase">
                             {u.username.substring(0, 2)}
                           </div>
                           <span>{u.username}</span>
                         </td>
-                        <td className="p-4 text-slate-600 font-mono text-xs">{u.email}</td>
+                        <td className="p-4 text-slate-600 font-mono text-xs">
+                          {u.email}
+                        </td>
                         <td className="p-4">
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-bold border ${
-                            u.role === 'Super Admin'
-                              ? 'bg-purple-100 text-purple-800 border-purple-200'
-                              : u.role === 'Operations Manager'
-                                ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
-                                : u.role === 'Counselor'
-                                  ? 'bg-blue-100 text-blue-800 border-blue-200'
-                                  : u.role === 'Recruiter'
-                                    ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                    : 'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}>
+                          <span
+                            className={`text-xs px-2.5 py-1 rounded-full font-bold border ${
+                              u.role === "Super Admin"
+                                ? "bg-purple-100 text-purple-800 border-purple-200"
+                                : u.role === "Operations Manager"
+                                  ? "bg-indigo-100 text-indigo-800 border-indigo-200"
+                                  : u.role === "Counselor"
+                                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                                    : u.role === "Recruiter"
+                                      ? "bg-amber-100 text-amber-800 border-amber-200"
+                                      : "bg-slate-100 text-slate-700 border-slate-200"
+                            }`}
+                          >
                             {u.role}
                           </span>
                         </td>
                         <td className="p-4">
                           <div className="flex flex-wrap gap-1 max-w-xs">
-                            {u.permissions?.includes('*') ? (
+                            {u.permissions?.includes("*") ? (
                               <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 font-bold">
                                 Full System Access (*)
                               </span>
                             ) : (
                               u.permissions?.map((p, idx) => (
-                                <span key={idx} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                                <span
+                                  key={idx}
+                                  className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200"
+                                >
                                   {p}
                                 </span>
                               ))
@@ -2994,10 +3740,12 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                           </div>
                         </td>
                         <td className="p-4 text-slate-400 font-mono text-xs">
-                          {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                          {u.created_at
+                            ? new Date(u.created_at).toLocaleDateString()
+                            : "N/A"}
                         </td>
                         <td className="p-4 text-right">
-                          {u.role !== 'Super Admin' && (
+                          {u.role !== "Super Admin" && (
                             <button
                               onClick={() => handleDeleteUser(u.id, u.username)}
                               className="text-rose-600 hover:text-rose-800 p-1.5 hover:bg-rose-50 rounded-lg transition"
@@ -3017,17 +3765,21 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
         )}
 
         {/* ─── TAB 5: SYSTEM CONFIGS (DATABASE BACKED, NO RESTART NEEDED) ─── */}
-        {activeTab === 'settings' && canManageSettings && (
+        {activeTab === "settings" && canManageSettings && (
           <div className="space-y-8 animate-fade-in">
             {/* Header info */}
             <div className="bg-gradient-to-r from-brand-navy to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
               <div className="flex items-center space-x-3 mb-2">
                 <Sliders className="w-6 h-6 text-brand-gold" />
-                <h2 className="text-xl font-extrabold tracking-tight">Database-Backed Dynamic System Settings</h2>
+                <h2 className="text-xl font-extrabold tracking-tight">
+                  Database-Backed Dynamic System Settings
+                </h2>
               </div>
               <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
-                All credentials, email configurations, and Slack webhooks are securely stored in the PostgreSQL database.
-                Updating values here takes effect immediately in the runtime engine <strong>without requiring any server reboot</strong>.
+                All credentials, email configurations, and Slack webhooks are
+                securely stored in the PostgreSQL database. Updating values here
+                takes effect immediately in the runtime engine{" "}
+                <strong>without requiring any server reboot</strong>.
               </p>
             </div>
 
@@ -3037,7 +3789,9 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                 <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
                   <div className="flex items-center space-x-2">
                     <Mail className="w-5 h-5 text-brand-navy" />
-                    <h3 className="font-extrabold text-slate-900">Multi-Inbox Gmail SMTP Configuration</h3>
+                    <h3 className="font-extrabold text-slate-900">
+                      Multi-Inbox Gmail SMTP Configuration
+                    </h3>
                   </div>
                   <button
                     type="button"
@@ -3045,26 +3799,53 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     disabled={testingSmtp}
                     className="text-xs font-bold px-3 py-1.5 bg-brand-navy text-white rounded-lg hover:bg-slate-800 transition flex items-center space-x-1.5 disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 ${testingSmtp ? 'animate-spin' : ''}`} />
-                    <span>{testingSmtp ? 'Testing Live...' : 'Verify SMTP Live'}</span>
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${testingSmtp ? "animate-spin" : ""}`}
+                    />
+                    <span>
+                      {testingSmtp ? "Testing Live..." : "Verify SMTP Live"}
+                    </span>
                   </button>
                 </div>
 
                 {smtpDiagnostics && (
                   <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                    <div className="font-bold text-slate-800 mb-2">Diagnostic Results:</div>
+                    <div className="font-bold text-slate-800 mb-2">
+                      Diagnostic Results:
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                        smtpDiagnostics.info?.connected ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
-                      }`}>
-                        <span>Info Inbox ({smtpDiagnostics.info?.user || 'info'}):</span>
-                        <span className="font-bold">{smtpDiagnostics.info?.connected ? 'Connected (OK)' : (smtpDiagnostics.info?.error || 'Failed')}</span>
+                      <div
+                        className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                          smtpDiagnostics.info?.connected
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                            : "bg-rose-50 border-rose-200 text-rose-800"
+                        }`}
+                      >
+                        <span>
+                          Info Inbox ({smtpDiagnostics.info?.user || "info"}):
+                        </span>
+                        <span className="font-bold">
+                          {smtpDiagnostics.info?.connected
+                            ? "Connected (OK)"
+                            : smtpDiagnostics.info?.error || "Failed"}
+                        </span>
                       </div>
-                      <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                        smtpDiagnostics.support?.connected ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
-                      }`}>
-                        <span>Support Inbox ({smtpDiagnostics.support?.user || 'support'}):</span>
-                        <span className="font-bold">{smtpDiagnostics.support?.connected ? 'Connected (OK)' : (smtpDiagnostics.support?.error || 'Failed')}</span>
+                      <div
+                        className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                          smtpDiagnostics.support?.connected
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                            : "bg-rose-50 border-rose-200 text-rose-800"
+                        }`}
+                      >
+                        <span>
+                          Support Inbox (
+                          {smtpDiagnostics.support?.user || "support"}):
+                        </span>
+                        <span className="font-bold">
+                          {smtpDiagnostics.support?.connected
+                            ? "Connected (OK)"
+                            : smtpDiagnostics.support?.error || "Failed"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -3072,11 +3853,18 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">EMAIL_INFO_USER (Leads Recipient & Sender)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      EMAIL_INFO_USER (Leads Recipient & Sender)
+                    </label>
                     <input
                       type="text"
-                      value={configForm['EMAIL_INFO_USER'] || ''}
-                      onChange={e => setConfigForm({ ...configForm, EMAIL_INFO_USER: e.target.value })}
+                      value={configForm["EMAIL_INFO_USER"] || ""}
+                      onChange={(e) =>
+                        setConfigForm({
+                          ...configForm,
+                          EMAIL_INFO_USER: e.target.value,
+                        })
+                      }
                       placeholder="info.harryoverseas@gmail.com"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
@@ -3088,19 +3876,31 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     </label>
                     <input
                       type="password"
-                      value={configForm['EMAIL_INFO_PASS'] || ''}
-                      onChange={e => setConfigForm({ ...configForm, EMAIL_INFO_PASS: e.target.value })}
+                      value={configForm["EMAIL_INFO_PASS"] || ""}
+                      onChange={(e) =>
+                        setConfigForm({
+                          ...configForm,
+                          EMAIL_INFO_PASS: e.target.value,
+                        })
+                      }
                       placeholder="Enter new 16-char password to update"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">EMAIL_SUPPORT_USER (Candidate Submissions)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      EMAIL_SUPPORT_USER (Candidate Submissions)
+                    </label>
                     <input
                       type="text"
-                      value={configForm['EMAIL_SUPPORT_USER'] || ''}
-                      onChange={e => setConfigForm({ ...configForm, EMAIL_SUPPORT_USER: e.target.value })}
+                      value={configForm["EMAIL_SUPPORT_USER"] || ""}
+                      onChange={(e) =>
+                        setConfigForm({
+                          ...configForm,
+                          EMAIL_SUPPORT_USER: e.target.value,
+                        })
+                      }
                       placeholder="support.harryoverseas@gmail.com"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
@@ -3112,8 +3912,13 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     </label>
                     <input
                       type="password"
-                      value={configForm['EMAIL_SUPPORT_PASS'] || ''}
-                      onChange={e => setConfigForm({ ...configForm, EMAIL_SUPPORT_PASS: e.target.value })}
+                      value={configForm["EMAIL_SUPPORT_PASS"] || ""}
+                      onChange={(e) =>
+                        setConfigForm({
+                          ...configForm,
+                          EMAIL_SUPPORT_PASS: e.target.value,
+                        })
+                      }
                       placeholder="Enter new 16-char password to update"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
@@ -3125,38 +3930,61 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
                   <MessageCircle className="w-5 h-5 text-emerald-600" />
-                  <h3 className="font-extrabold text-slate-900">Real-Time Slack Webhook Routing</h3>
+                  <h3 className="font-extrabold text-slate-900">
+                    Real-Time Slack Webhook Routing
+                  </h3>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">SLACK_LEADS_WEBHOOK_URL</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      SLACK_LEADS_WEBHOOK_URL
+                    </label>
                     <input
                       type="password"
-                      value={configForm['SLACK_LEADS_WEBHOOK_URL'] || ''}
-                      onChange={e => setConfigForm({ ...configForm, SLACK_LEADS_WEBHOOK_URL: e.target.value })}
+                      value={configForm["SLACK_LEADS_WEBHOOK_URL"] || ""}
+                      onChange={(e) =>
+                        setConfigForm({
+                          ...configForm,
+                          SLACK_LEADS_WEBHOOK_URL: e.target.value,
+                        })
+                      }
                       placeholder="https://hooks.slack.com/services/..."
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">SLACK_CAREERS_WEBHOOK_URL</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      SLACK_CAREERS_WEBHOOK_URL
+                    </label>
                     <input
                       type="password"
-                      value={configForm['SLACK_CAREERS_WEBHOOK_URL'] || ''}
-                      onChange={e => setConfigForm({ ...configForm, SLACK_CAREERS_WEBHOOK_URL: e.target.value })}
+                      value={configForm["SLACK_CAREERS_WEBHOOK_URL"] || ""}
+                      onChange={(e) =>
+                        setConfigForm({
+                          ...configForm,
+                          SLACK_CAREERS_WEBHOOK_URL: e.target.value,
+                        })
+                      }
                       placeholder="https://hooks.slack.com/services/..."
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">SLACK_ALERTS_WEBHOOK_URL</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      SLACK_ALERTS_WEBHOOK_URL
+                    </label>
                     <input
                       type="password"
-                      value={configForm['SLACK_ALERTS_WEBHOOK_URL'] || ''}
-                      onChange={e => setConfigForm({ ...configForm, SLACK_ALERTS_WEBHOOK_URL: e.target.value })}
+                      value={configForm["SLACK_ALERTS_WEBHOOK_URL"] || ""}
+                      onChange={(e) =>
+                        setConfigForm({
+                          ...configForm,
+                          SLACK_ALERTS_WEBHOOK_URL: e.target.value,
+                        })
+                      }
                       placeholder="https://hooks.slack.com/services/..."
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                     />
@@ -3168,46 +3996,74 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
                   <Power className="w-5 h-5 text-amber-500" />
-                  <h3 className="font-extrabold text-slate-900">Operations & Maintenance Mode Control</h3>
+                  <h3 className="font-extrabold text-slate-900">
+                    Operations & Maintenance Mode Control
+                  </h3>
                 </div>
 
                 <div className="space-y-4">
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-slate-900">PORTAL_MAINTENANCE_MODE</span>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                          (configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() === 'true'
-                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        }`}>
-                          {(configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() === 'true' ? 'MAINTENANCE ACTIVE' : 'LIVE / NORMAL'}
+                        <span className="text-sm font-bold text-slate-900">
+                          PORTAL_MAINTENANCE_MODE
+                        </span>
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            (
+                              configForm["PORTAL_MAINTENANCE_MODE"] || "false"
+                            ).toLowerCase() === "true"
+                              ? "bg-amber-100 text-amber-800 border border-amber-300"
+                              : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          }`}
+                        >
+                          {(
+                            configForm["PORTAL_MAINTENANCE_MODE"] || "false"
+                          ).toLowerCase() === "true"
+                            ? "MAINTENANCE ACTIVE"
+                            : "LIVE / NORMAL"}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-1 max-w-xl">
-                        When active, public enquiry and candidate submissions display a polite maintenance notice and are temporarily paused while administrators retain full access.
+                        When active, public enquiry and candidate submissions
+                        display a polite maintenance notice and are temporarily
+                        paused while administrators retain full access.
                       </p>
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => setConfigForm({ ...configForm, PORTAL_MAINTENANCE_MODE: 'false' })}
+                        onClick={() =>
+                          setConfigForm({
+                            ...configForm,
+                            PORTAL_MAINTENANCE_MODE: "false",
+                          })
+                        }
                         className={`px-4 py-2 text-xs font-bold rounded-xl border transition ${
-                          (configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() !== 'true'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow'
-                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                          (
+                            configForm["PORTAL_MAINTENANCE_MODE"] || "false"
+                          ).toLowerCase() !== "true"
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow"
+                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
                         }`}
                       >
                         Normal (Live)
                       </button>
                       <button
                         type="button"
-                        onClick={() => setConfigForm({ ...configForm, PORTAL_MAINTENANCE_MODE: 'true' })}
+                        onClick={() =>
+                          setConfigForm({
+                            ...configForm,
+                            PORTAL_MAINTENANCE_MODE: "true",
+                          })
+                        }
                         className={`px-4 py-2 text-xs font-bold rounded-xl border transition ${
-                          (configForm['PORTAL_MAINTENANCE_MODE'] || 'false').toLowerCase() === 'true'
-                            ? 'bg-amber-600 text-white border-amber-600 shadow'
-                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                          (
+                            configForm["PORTAL_MAINTENANCE_MODE"] || "false"
+                          ).toLowerCase() === "true"
+                            ? "bg-amber-600 text-white border-amber-600 shadow"
+                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
                         }`}
                       >
                         Maintenance Mode
@@ -3217,21 +4073,35 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">SUPPORT_PHONE</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        SUPPORT_PHONE
+                      </label>
                       <input
                         type="text"
-                        value={configForm['SUPPORT_PHONE'] || ''}
-                        onChange={e => setConfigForm({ ...configForm, SUPPORT_PHONE: e.target.value })}
+                        value={configForm["SUPPORT_PHONE"] || ""}
+                        onChange={(e) =>
+                          setConfigForm({
+                            ...configForm,
+                            SUPPORT_PHONE: e.target.value,
+                          })
+                        }
                         placeholder="+91 6302951891"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">WHATSAPP_SUPPORT_NUMBER</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        WHATSAPP_SUPPORT_NUMBER
+                      </label>
                       <input
                         type="text"
-                        value={configForm['WHATSAPP_SUPPORT_NUMBER'] || ''}
-                        onChange={e => setConfigForm({ ...configForm, WHATSAPP_SUPPORT_NUMBER: e.target.value })}
+                        value={configForm["WHATSAPP_SUPPORT_NUMBER"] || ""}
+                        onChange={(e) =>
+                          setConfigForm({
+                            ...configForm,
+                            WHATSAPP_SUPPORT_NUMBER: e.target.value,
+                          })
+                        }
                         placeholder="+91 6302951891"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-navy text-sm font-mono"
                       />
@@ -3255,7 +4125,11 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                   className="bg-brand-navy hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md flex items-center space-x-2 transition disabled:opacity-50"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{savingConfigs ? 'Updating Database...' : 'Save Changes to Database'}</span>
+                  <span>
+                    {savingConfigs
+                      ? "Updating Database..."
+                      : "Save Changes to Database"}
+                  </span>
                 </button>
               </div>
             </form>
@@ -3272,8 +4146,10 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
           </div>
 
           <div className="flex items-center space-x-2 bg-white px-3.5 py-1.5 rounded-full border border-slate-200 shadow-sm text-[11px]">
-            <span className="text-slate-500">System Architect & Caretaker:</span>
-            <strong className="text-brand-navy font-bold">Yathin</strong>
+            <span className="text-slate-500">
+              System Architect & Caretaker:
+            </span>
+            <strong className="text-brand-navy font-bold">YKS</strong>
             <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
               Lead Support & Engineering
             </span>
@@ -3296,7 +4172,11 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       Confirm Stage Transition
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Target: <span className="font-semibold text-slate-700">{stageTargetName}</span> ({stageTargetType === 'enquiry' ? 'Lead' : 'Candidate'})
+                      Target:{" "}
+                      <span className="font-semibold text-slate-700">
+                        {stageTargetName}
+                      </span>{" "}
+                      ({stageTargetType === "enquiry" ? "Lead" : "Candidate"})
                     </p>
                   </div>
                 </div>
@@ -3312,13 +4192,21 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                 {/* Transition Direction Indicator */}
                 <div className="flex items-center justify-center space-x-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
                   <div className="text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Current Stage</span>
-                    <span className="font-bold text-slate-700">{stagePrevStatus || 'Initial'}</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                      Current Stage
+                    </span>
+                    <span className="font-bold text-slate-700">
+                      {stagePrevStatus || "Initial"}
+                    </span>
                   </div>
                   <span className="text-slate-400 font-bold text-base">→</span>
                   <div className="text-center">
-                    <span className="text-[10px] text-brand-navy uppercase font-semibold block">Target Stage</span>
-                    <span className="font-bold text-brand-navy">{stageNewStatus}</span>
+                    <span className="text-[10px] text-brand-navy uppercase font-semibold block">
+                      Target Stage
+                    </span>
+                    <span className="font-bold text-brand-navy">
+                      {stageNewStatus}
+                    </span>
                   </div>
                 </div>
 
@@ -3329,18 +4217,21 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                       <span>Reason / Transition Justification</span>
                       <span className="text-rose-500">*</span>
                     </label>
-                    <span className="text-[11px] text-slate-400">Strictly mandatory for audit</span>
+                    <span className="text-[11px] text-slate-400">
+                      Strictly mandatory for audit
+                    </span>
                   </div>
                   <textarea
                     required
                     rows={4}
                     value={stageComment}
-                    onChange={e => setStageComment(e.target.value)}
+                    onChange={(e) => setStageComment(e.target.value)}
                     placeholder="Enter thorough reasoning for this stage change (e.g., 'Initial consultation completed via WhatsApp, documents checklist requested', 'Interview scheduled for Friday with senior panel')..."
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-navy"
                   />
                   <span className="text-[10px] text-slate-500 block mt-1">
-                    This note will be permanently logged in the audit trail alongside your staff username and timestamp.
+                    This note will be permanently logged in the audit trail
+                    alongside your staff username and timestamp.
                   </span>
                 </div>
 
@@ -3359,7 +4250,11 @@ export default function AdminDashboard({ adminUser, onLogout }: AdminDashboardPr
                     className="px-5 py-2 bg-brand-navy hover:bg-brand-dark text-white text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5"
                   >
                     <Check className="w-4 h-4" />
-                    <span>{submittingStageChange ? 'Updating...' : 'Confirm Stage Change'}</span>
+                    <span>
+                      {submittingStageChange
+                        ? "Updating..."
+                        : "Confirm Stage Change"}
+                    </span>
                   </button>
                 </div>
               </form>

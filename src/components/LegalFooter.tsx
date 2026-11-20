@@ -1,8 +1,22 @@
-import React, { useState } from 'react';
-import { Globe, Phone, Mail, MapPin, ShieldAlert, Youtube, Instagram, Code, Heart, LifeBuoy } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Globe,
+  Phone,
+  Mail,
+  MapPin,
+  ShieldAlert,
+  Youtube,
+  Instagram,
+  Code,
+  Heart,
+  LifeBuoy,
+} from "lucide-react";
 
 interface LegalFooterProps {
-  onNavigate?: (view: 'public' | 'careers' | 'admin', sectionId?: string) => void;
+  onNavigate?: (
+    view: "public" | "careers" | "admin",
+    sectionId?: string,
+  ) => void;
 }
 
 export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
@@ -10,11 +24,9 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
 
   return (
     <footer className="bg-brand-dark text-white border-t border-slate-800">
-
       {/* Top Footer with Contact & Info */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-
           {/* Brand Column */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
@@ -26,17 +38,25 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                 />
               </div>
               <div>
-                <span className="text-lg font-bold tracking-tight text-white block">Harry Overseas</span>
-                <span className="text-[10px] text-brand-gold tracking-widest uppercase font-semibold">Immigration & Language</span>
+                <span className="text-lg font-bold tracking-tight text-white block">
+                  Harry Overseas
+                </span>
+                <span className="text-[10px] text-brand-gold tracking-widest uppercase font-semibold">
+                  Immigration & Language
+                </span>
               </div>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed">
-              Your trusted partner for Germany visa consultancy, German language training (A1-B2), nurse recruitment, and arrival assistance. Managed between Germany and Anantapur.
+              Your trusted partner for Germany visa consultancy, German language
+              training (A1-B2), nurse recruitment, and arrival assistance.
+              Managed between Germany and Anantapur.
             </p>
 
             {/* Social Media Links */}
             <div className="pt-2">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-brand-gold mb-2.5">Follow Us</h5>
+              <h5 className="text-xs font-bold uppercase tracking-wider text-brand-gold mb-2.5">
+                Follow Us
+              </h5>
               <div className="flex flex-col space-y-2">
                 <a
                   href="https://youtube.com/@harryoverseas?si=NfLVoDQIQXjMhmvL"
@@ -45,7 +65,10 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                   className="inline-flex items-center space-x-2 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-red-950/40 border border-slate-700 hover:border-red-500/50 px-3 py-1.5 rounded-lg transition group"
                 >
                   <Youtube className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
-                  <span className="font-medium">YouTube: <strong className="text-white">@harryoverseas</strong></span>
+                  <span className="font-medium">
+                    YouTube:{" "}
+                    <strong className="text-white">@harryoverseas</strong>
+                  </span>
                 </a>
 
                 <a
@@ -55,7 +78,10 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                   className="inline-flex items-center space-x-2 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-pink-950/40 border border-slate-700 hover:border-pink-500/50 px-3 py-1.5 rounded-lg transition group"
                 >
                   <Instagram className="w-4 h-4 text-pink-500 group-hover:scale-110 transition-transform" />
-                  <span className="font-medium">Instagram: <strong className="text-white">@harryoverseas</strong></span>
+                  <span className="font-medium">
+                    Instagram:{" "}
+                    <strong className="text-white">@harryoverseas</strong>
+                  </span>
                 </a>
               </div>
             </div>
@@ -63,7 +89,9 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
 
           {/* Contact Column */}
           <div className="space-y-3">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-brand-gold">Contact Office</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-brand-gold">
+              Contact Office
+            </h4>
             <div className="space-y-2 text-xs text-slate-300">
               <div className="flex items-start space-x-2">
                 <MapPin className="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5" />
@@ -74,27 +102,47 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                     rel="noopener noreferrer"
                     className="hover:text-brand-gold transition text-left inline-block"
                   >
-                    <span>Near JNTU University, Anantapur, Andhra Pradesh, India</span>
-                    <span className="block text-[11px] text-brand-gold font-semibold mt-0.5">📍 View on Google Maps</span>
+                    <span>
+                      Near JNTU University, Anantapur, Andhra Pradesh, India
+                    </span>
+                    <span className="block text-[11px] text-brand-gold font-semibold mt-0.5">
+                      📍 View on Google Maps
+                    </span>
                   </a>
                 </div>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                  <a href="tel:+916302951891" className="hover:text-white">+91 6302951891</a>
+                  <a href="tel:+916302951891" className="hover:text-white">
+                    +91 6302951891
+                  </a>
                 </div>
                 <div className="flex items-center space-x-2 pl-6">
-                  <a href="tel:+4917670256852" className="hover:text-white">+49 17670256852</a>
+                  <a href="tel:+4917670256852" className="hover:text-white">
+                    +49 17670256852
+                  </a>
                 </div>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
                   <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                  <a href="mailto:info.harryoverseas@gmail.com" className="hover:text-white" title="General & Course Inquiries">info.harryoverseas@gmail.com</a>
+                  <a
+                    href="mailto:info.harryoverseas@gmail.com"
+                    className="hover:text-white"
+                    title="General & Course Inquiries"
+                  >
+                    info.harryoverseas@gmail.com
+                  </a>
                 </div>
                 <div className="flex items-center space-x-2 pl-6">
-                  <a href="mailto:support.harryoverseas@gmail.com" className="hover:text-white" title="Careers & Candidate Support">support.harryoverseas@gmail.com</a>
+                  <a
+                    href="mailto:support.harryoverseas@gmail.com"
+                    className="hover:text-white"
+                    title="Careers & Candidate Support"
+                  >
+                    support.harryoverseas@gmail.com
+                  </a>
                 </div>
               </div>
             </div>
@@ -102,15 +150,17 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
 
           {/* Quick Links */}
           <div className="space-y-3">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-brand-gold">Quick Links</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-brand-gold">
+              Quick Links
+            </h4>
             <ul className="space-y-2 text-xs text-slate-300">
               <li>
                 <button
                   onClick={() => {
                     if (onNavigate) {
-                      onNavigate('public', 'services');
+                      onNavigate("public", "services");
                     } else {
-                      window.location.hash = 'services';
+                      window.location.hash = "services";
                     }
                   }}
                   className="hover:text-brand-gold transition text-left"
@@ -122,9 +172,9 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                 <button
                   onClick={() => {
                     if (onNavigate) {
-                      onNavigate('public', 'academy');
+                      onNavigate("public", "academy");
                     } else {
-                      window.location.hash = 'academy';
+                      window.location.hash = "academy";
                     }
                   }}
                   className="hover:text-brand-gold transition text-left"
@@ -136,9 +186,9 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                 <button
                   onClick={() => {
                     if (onNavigate) {
-                      onNavigate('public', 'arrival');
+                      onNavigate("public", "arrival");
                     } else {
-                      window.location.hash = 'arrival';
+                      window.location.hash = "arrival";
                     }
                   }}
                   className="hover:text-brand-gold transition text-left"
@@ -150,9 +200,9 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
                 <button
                   onClick={() => {
                     if (onNavigate) {
-                      onNavigate('public', 'enquiry');
+                      onNavigate("public", "enquiry");
                     } else {
-                      window.location.hash = 'enquiry';
+                      window.location.hash = "enquiry";
                     }
                   }}
                   className="hover:text-brand-gold transition text-left"
@@ -165,23 +215,58 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
 
           {/* Legal Policies */}
           <div className="space-y-3">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-brand-gold">Legal & Policies</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-brand-gold">
+              Legal & Policies
+            </h4>
             <ul className="space-y-2 text-xs text-slate-300">
-              <li><button onClick={() => setActiveModal('privacy')} className="hover:text-brand-gold transition text-left">Privacy Policy</button></li>
-              <li><button onClick={() => setActiveModal('terms')} className="hover:text-brand-gold transition text-left">Terms & Conditions</button></li>
-              <li><button onClick={() => setActiveModal('refund')} className="hover:text-brand-gold transition text-left">Refund & Cancellation Policy</button></li>
-              <li><button onClick={() => setActiveModal('disclaimer')} className="hover:text-brand-gold transition text-left">Visa Consultancy Disclaimer</button></li>
+              <li>
+                <button
+                  onClick={() => setActiveModal("privacy")}
+                  className="hover:text-brand-gold transition text-left"
+                >
+                  Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveModal("terms")}
+                  className="hover:text-brand-gold transition text-left"
+                >
+                  Terms & Conditions
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveModal("refund")}
+                  className="hover:text-brand-gold transition text-left"
+                >
+                  Refund & Cancellation Policy
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveModal("disclaimer")}
+                  className="hover:text-brand-gold transition text-left"
+                >
+                  Visa Consultancy Disclaimer
+                </button>
+              </li>
             </ul>
           </div>
-
         </div>
 
         {/* Disclaimer Bar */}
         <div className="mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-400 space-y-3">
           <p>
-            <strong>Disclaimer:</strong> Harry Overseas Immigration is an independent consultancy and language training provider. Visa decisions are solely at the discretion of the respective embassies and government authorities. We do not guarantee visa approvals.
+            <strong>Disclaimer:</strong> Harry Overseas Immigration is an
+            independent consultancy and language training provider. Visa
+            decisions are solely at the discretion of the respective embassies
+            and government authorities. We do not guarantee visa approvals.
           </p>
-          <p>© {new Date().getFullYear()} Harry Overseas Immigration. All rights reserved. • Tagline: Your Global Journey Starts Here.</p>
+          <p>
+            © {new Date().getFullYear()} Harry Overseas Immigration. All rights
+            reserved. • Tagline: Your Global Journey Starts Here.
+          </p>
 
           {/* Developer & System Caretaker Signature */}
           <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-[11px] text-slate-400">
@@ -190,7 +275,7 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
               <span>Engineered & Maintained with</span>
               <Heart className="w-3 h-3 text-red-500 fill-red-500 inline" />
               <span>by</span>
-              <span className="text-brand-gold font-bold">Yathin</span>
+              <span className="text-brand-gold font-bold">YKS</span>
             </div>
             <span className="hidden sm:inline text-slate-600">•</span>
             <div className="flex items-center space-x-1.5">
@@ -209,10 +294,10 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
           <div className="bg-white text-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[85vh] overflow-y-auto shadow-2xl relative">
             <div className="flex justify-between items-center pb-4 border-b border-slate-200 mb-6">
               <h3 className="text-xl font-bold text-slate-900 capitalize">
-                {activeModal === 'privacy' && 'Privacy Policy'}
-                {activeModal === 'terms' && 'Terms & Conditions'}
-                {activeModal === 'refund' && 'Refund & Cancellation Policy'}
-                {activeModal === 'disclaimer' && 'Visa Consultancy Disclaimer'}
+                {activeModal === "privacy" && "Privacy Policy"}
+                {activeModal === "terms" && "Terms & Conditions"}
+                {activeModal === "refund" && "Refund & Cancellation Policy"}
+                {activeModal === "disclaimer" && "Visa Consultancy Disclaimer"}
               </h3>
               <button
                 onClick={() => setActiveModal(null)}
@@ -223,32 +308,70 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
             </div>
 
             <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
-              {activeModal === 'privacy' && (
+              {activeModal === "privacy" && (
                 <>
-                  <p>At Harry Overseas Immigration, we respect your privacy and protect your personal information with strict confidentiality.</p>
-                  <p><strong>Information Collection:</strong> We collect contact details, academic background, and visa preferences solely for the purpose of immigration assessment and language training enrolment.</p>
-                  <p><strong>Data Security:</strong> Your data is stored securely and never sold or shared with unauthorized third parties.</p>
+                  <p>
+                    At Harry Overseas Immigration, we respect your privacy and
+                    protect your personal information with strict
+                    confidentiality.
+                  </p>
+                  <p>
+                    <strong>Information Collection:</strong> We collect contact
+                    details, academic background, and visa preferences solely
+                    for the purpose of immigration assessment and language
+                    training enrolment.
+                  </p>
+                  <p>
+                    <strong>Data Security:</strong> Your data is stored securely
+                    and never sold or shared with unauthorized third parties.
+                  </p>
                 </>
               )}
 
-              {activeModal === 'terms' && (
+              {activeModal === "terms" && (
                 <>
-                  <p>By engaging Harry Overseas Immigration for consultancy or German language courses, you agree to provide accurate and authentic documents.</p>
-                  <p><strong>Service Scope:</strong> We provide expert guidance, document checklists, application preparation, and language instruction. Final visa outcomes rest entirely with government immigration authorities.</p>
+                  <p>
+                    By engaging Harry Overseas Immigration for consultancy or
+                    German language courses, you agree to provide accurate and
+                    authentic documents.
+                  </p>
+                  <p>
+                    <strong>Service Scope:</strong> We provide expert guidance,
+                    document checklists, application preparation, and language
+                    instruction. Final visa outcomes rest entirely with
+                    government immigration authorities.
+                  </p>
                 </>
               )}
 
-              {activeModal === 'refund' && (
+              {activeModal === "refund" && (
                 <>
-                  <p><strong>Consultancy Fees:</strong> Service fees paid for consultancy or language training are subject to our service agreement terms.</p>
-                  <p><strong>Non-Refundable Government Fees:</strong> Visa application fees, embassy fees, and third-party charges paid directly to authorities are strictly non-refundable.</p>
+                  <p>
+                    <strong>Consultancy Fees:</strong> Service fees paid for
+                    consultancy or language training are subject to our service
+                    agreement terms.
+                  </p>
+                  <p>
+                    <strong>Non-Refundable Government Fees:</strong> Visa
+                    application fees, embassy fees, and third-party charges paid
+                    directly to authorities are strictly non-refundable.
+                  </p>
                 </>
               )}
 
-              {activeModal === 'disclaimer' && (
+              {activeModal === "disclaimer" && (
                 <>
-                  <p>Harry Overseas Immigration operates independently and is not an official branch of any German or European government embassy.</p>
-                  <p>We provide professional guidance, application preparation, and language training. No consultancy can guarantee visa issuance, as approvals are decided solely by visa officers based on individual applicant credentials.</p>
+                  <p>
+                    Harry Overseas Immigration operates independently and is not
+                    an official branch of any German or European government
+                    embassy.
+                  </p>
+                  <p>
+                    We provide professional guidance, application preparation,
+                    and language training. No consultancy can guarantee visa
+                    issuance, as approvals are decided solely by visa officers
+                    based on individual applicant credentials.
+                  </p>
                 </>
               )}
             </div>
@@ -264,7 +387,6 @@ export default function LegalFooter({ onNavigate }: LegalFooterProps = {}) {
           </div>
         </div>
       )}
-
     </footer>
   );
 }
