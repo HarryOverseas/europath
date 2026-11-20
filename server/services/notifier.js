@@ -101,18 +101,16 @@ export async function notifyNewEnquiry(lead) {
 
       // 1. Dispatch Internal Team Alert
       const internalEmail = renderTemplate('admin_lead_alert', leadData);
-      const ccList = isUrgent ? [emailAdmin] : [];
 
       await transporter.sendMail({
         from: `"Harry Overseas Leads" <${user}>`,
         to: emailInfo,
-        cc: ccList.length > 0 ? ccList.join(', ') : undefined,
         replyTo: lead.email,
         subject: internalEmail.subject,
         html: internalEmail.html,
         text: internalEmail.text
       });
-      console.log(`[Notifier] Lead alert #${lead.id} sent to ${emailInfo}${ccList.length ? ` (CC: ${ccList.join(', ')})` : ''}`);
+      console.log(`[Notifier] Lead alert #${lead.id} sent to ${emailInfo}`);
 
       // 2. Dispatch Personalized Client Welcome
       if (lead.email && lead.email.includes('@')) {
