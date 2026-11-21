@@ -609,44 +609,46 @@
 
   "enquiry_stage_update": {
     "id": "enquiry_stage_update",
-    "name": "Client Consultation Stage Progress Update",
-    "category": "lead",
+    "name": "Internal Lead Stage Progress Notification",
+    "category": "administrative",
     "targetInbox": "info.harryoverseas@gmail.com",
-    "subject": "Consultation Progress: Enquiry #{{referenceId}} is now {{status}} - Harry Overseas",
-    "preheader": "Your European immigration / language inquiry #{{referenceId}} status has been updated to {{status}}.",
+    "subject": "[Internal Stage Update] Lead #{{referenceId}} transitioned to {{status}} ({{fullName}})",
+    "preheader": "Lead status for #{{referenceId}} ({{fullName}}) has been updated to {{status}}.",
     "badge": "Stage: {{status}}",
     "badgeType": "gold",
-    "title": "Progress Update on Your Enquiry, {{firstName}}!",
-    "subtitle": "Current Consultation Milestone: {{status}}",
-    "salutation": "Dear {{fullName}},",
-    "intro": "We are writing to share an update regarding your consultation request with Harry Overseas for <strong>{{destinationCountry}}</strong>.",
+    "title": "Lead Stage Updated: #{{referenceId}}",
+    "subtitle": "Lead: {{fullName}} &bull; Current Milestone: {{status}}",
+    "salutation": "Hello Team,",
+    "intro": "The consultation inquiry profile for <strong>{{fullName}}</strong> (#{{referenceId}}) has been updated to stage <strong>{{status}}</strong> by admin staff.",
     "sections": [
       {
         "type": "details_table",
-        "heading": "Case Overview",
+        "heading": "Stage & Case Overview",
         "fields": [
           { "label": "Enquiry Reference", "value": "<strong>#{{referenceId}}</strong>" },
-          { "label": "Current Status", "value": "<span style='color: #0a192f; font-weight: bold; background: #e0f2fe; padding: 2px 8px; border-radius: 4px;'>{{status}}</span>" },
+          { "label": "Client Name", "value": "{{fullName}}" },
+          { "label": "Previous Status", "value": "{{prevStatus || 'N/A'}}" },
+          { "label": "New Status", "value": "<span style='color: #0a192f; font-weight: bold; background: #e0f2fe; padding: 2px 8px; border-radius: 4px;'>{{status}}</span>" },
           { "label": "Selected Service", "value": "{{serviceInterest}}" },
           { "label": "Destination", "value": "{{destinationCountry}}" },
-          { "label": "Counselor Notes", "value": "{{stageNotes || 'Your counselor is actively processing your case documentation.'}}" }
+          { "label": "Staff Transition Notes", "value": "{{stageNotes || 'No notes provided.'}}" }
         ]
       },
       {
         "type": "highlight_box",
-        "title": "What this means for your case",
+        "title": "Internal Action Checklist",
         "items": [
-          "Our team is actively coordinating your file according to German statutory requirements.",
-          "If documents (APS, language certificates, or transcripts) are requested, please share them via WhatsApp or email.",
-          "You can reach out to your counselor at any time referencing your enquiry ID #{{referenceId}}."
+          "Case documentation and stage comments are historically archived database.",
+          "Coordinate next client deliverables directly via phone or WhatsApp as needed.",
+          "Check document checklist drive links in the Admin Portal."
         ]
       }
     ],
     "callToAction": {
-      "label": "Message Counselor on WhatsApp",
-      "url": "https://wa.me/916302951891?text=Hello%20Harry%20Overseas,%20regarding%20my%20enquiry%20%23{{referenceId}}%20(Status:%20{{status}})"
+      "label": "Open Lead in WhatsApp",
+      "url": "https://wa.me/{{whatsappClean}}?text=Hello%20{{firstName}},%20this%20is%20Harry%20Overseas%20regarding%20your%20enquiry%20%23{{referenceId}}"
     },
-    "footerNote": "Need immediate clarification? Reply to this email or call our desk at +91 6302951891.",
+    "footerNote": "This is an internal staff alert. No automated progress notification was dispatched to the client.",
     "sampleData": {
       "fullName": "Venkatesh Rao",
       "email": "venkatesh.rao@example.com",

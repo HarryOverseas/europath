@@ -237,47 +237,44 @@ export async function notifyAdminAlert(alertTitle, alertMessage, metadata = {}) 
 }
 
 /**
- * 4. NOTIFY CANDIDATE STAGE CHANGE
+ * 4. NOTIFY CANDIDATE STAGE CHANGE (Internal Recruitment Team Only)
  */
-export async function notifyApplicationStageChange(application, newStatus) {
+export async function notifyApplicationStageChange(application, prevStatus, newStatus, stageComment = '') {
   setTimeout(async () => {
     try {
       const transporter = getTransporter('support');
       const { user, emailSupport } = getSmtpSettings('support');
 
-      if (!transporter || !application.email) return;
+      if (!transporter) return;
 
-      const candidateData = {
-        fullName: application.full_name,
-        role: application.role,
-        applicationId: application.id,
-        currentStage: newStatus,
-        status: newStatus
-      };
+      // Keep stage updates strictly internal - do not send progress emails to candidate/user
+      const subject = `[Internal Candidate Stage] #${application.id} - ${application.full_name} (${application.role}) -> ${newStatus}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+          <h2 style="color: #0f172a; margin-top: 0;">Candidate Stage Update</h2>
+          <p style="color: #475569; font-size: 14px;">The recruitment stage for candidate <strong>${application.full_name}</strong> has been updated:</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0;">
+            <tr><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; color: #64748b; width: 35%;">Application ID</td><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">#${application.id}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; color: #64748b;">Candidate Name</td><td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${application.full_name}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; color: #64748b;">Role</td><td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${application.role}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; color: #64748b;">Previous Stage</td><td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${prevStatus || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; color: #64748b;">New Stage</td><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a;">${newStatus}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #f1f5f9; color: #64748b;">Staff Comment</td><td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${stageComment || 'No comments provided.'}</td></tr>
+          </table>
+          <p style="color: #94a3b8; font-size: 11px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+            Internal Notification Only &bull; Candidate was not sent an automated stage email.
+          </p>
+        </div>
+      `;
 
-      // Select specific candidate update template based on stage
-      let templateId = 'candidate_shortlisted';
-      const statusLower = (newStatus || '').toLowerCase();
-      if (statusLower.includes('shortlist')) {
-        templateId = 'candidate_shortlisted';
-      } else if (statusLower.includes('interview')) {
-        templateId = 'candidate_interviewed';
-      } else if (statusLower.includes('hire') || statusLower.includes('offer') || statusLower.includes('select')) {
-        templateId = 'candidate_hired';
-      } else if (statusLower.includes('reject') || statusLower.includes('decline') || statusLower.includes('closed')) {
-        templateId = 'candidate_rejected';
-      }
-
-      const candidateEmail = renderTemplate(templateId, candidateData);
       await transporter.sendMail({
-        from: `"Harry Overseas Recruitment Team" <${user}>`,
-        to: application.email,
-        replyTo: emailSupport,
-        subject: candidateEmail.subject,
-        html: candidateEmail.html,
-        text: candidateEmail.text
+        from: `"Harry Overseas Recruitment Ops" <${user}>`,
+        to: emailSupport,
+        subject,
+        html,
+        text: `Candidate Stage Update: #${application.id} ${application.full_name} moved from ${prevStatus} to ${newStatus}. Note: ${stageComment}`
       });
-      console.log(`[Notifier] Candidate stage update (${newStatus} -> ${templateId}) delivered to ${application.email}`);
+      console.log(`[Notifier] Internal candidate stage update (${newStatus}) delivered to ${emailSupport}`);
     } catch (err) {
       console.error('[Notifier Error - Application Stage Change]:', err.message);
     }
@@ -285,7 +282,7 @@ export async function notifyApplicationStageChange(application, newStatus) {
 }
 
 /**
- * 5. NOTIFY ENQUIRY STAGE CHANGE
+ * 5. NOTIFY ENQUIRY STAGE CHANGE (Internal Operations Team Only)
  */
 export async function notifyEnquiryStageChange(enquiry, prevStatus, newStatus, stageNotes = '') {
   setTimeout(async () => {
@@ -293,27 +290,29 @@ export async function notifyEnquiryStageChange(enquiry, prevStatus, newStatus, s
       const transporter = getTransporter('info');
       const { user, emailInfo } = getSmtpSettings('info');
 
-      if (!transporter || !enquiry.email) return;
+      if (!transporter) return;
 
+      // Keep stage progress updates internal - dispatch strictly to internal team inbox
       const stageEmail = renderTemplate('enquiry_stage_update', {
         fullName: enquiry.full_name,
         referenceId: enquiry.id,
         serviceInterest: enquiry.service_interest || enquiry.language_course || 'European Migration',
         destinationCountry: enquiry.destination_country || enquiry.intended_destination || 'Germany',
         status: newStatus,
-        prevStatus,
-        stageNotes: stageNotes || 'Your counselor is actively processing your case documentation.'
+        prevStatus: prevStatus || 'N/A',
+        stageNotes: stageNotes || 'No notes provided.',
+        phone: enquiry.mobile || enquiry.phone || '',
+        whatsapp: enquiry.whatsapp || enquiry.mobile || enquiry.phone || ''
       });
 
       await transporter.sendMail({
-        from: `"Harry Overseas Advisory" <${user}>`,
-        to: enquiry.email,
-        replyTo: emailInfo,
+        from: `"Harry Overseas Lead Ops" <${user}>`,
+        to: emailInfo,
         subject: stageEmail.subject,
         html: stageEmail.html,
         text: stageEmail.text
       });
-      console.log(`[Notifier] Client enquiry stage email (${newStatus}) sent to ${enquiry.email}`);
+      console.log(`[Notifier] Internal enquiry stage email (${newStatus}) sent to ${emailInfo}`);
     } catch (err) {
       console.error('[Notifier Error - Enquiry Stage Change]:', err.message);
     }
