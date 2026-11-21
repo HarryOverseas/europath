@@ -42,8 +42,87 @@ dotenv.config();
 
 const { Pool } = pg;
 const app = express();
+
+// Security Headers Middleware (Best Practices: X-Content-Type-Options, X-Frame-Options, HSTS, XSS protection)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// In-Memory Rate Limiter Middleware for API Protection (DDoS & Brute Force Prevention)
+function createRateLimiter(options = {}) {
+  const windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes
+  const max = options.max || 100;
+  const message = options.message || 'Too many requests. Please try again later.';
+  const hits = new Map();
+
+  // Periodic cleanup every 5 minutes to avoid memory leaks
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of hits.entries()) {
+      if (now > record.resetTime) {
+        hits.delete(key);
+      }
+    }
+  }, 5 * 60 * 1000).unref();
+
+  return (req, res, next) => {
+    // Determine client IP safely
+    const ip = req.headers['x-forwarded-for']
+      ? String(req.headers['x-forwarded-for']).split(',')[0].trim()
+      : req.socket?.remoteAddress || req.ip || '127.0.0.1';
+
+    const now = Date.now();
+    let record = hits.get(ip);
+
+    if (!record || now > record.resetTime) {
+      record = { count: 1, resetTime: now + windowMs };
+      hits.set(ip, record);
+    } else {
+      record.count++;
+    }
+
+    const remaining = Math.max(0, max - record.count);
+    res.setHeader('X-RateLimit-Limit', max);
+    res.setHeader('X-RateLimit-Remaining', remaining);
+    res.setHeader('X-RateLimit-Reset', Math.ceil(record.resetTime / 1000));
+
+    if (record.count > max) {
+      const retryAfter = Math.ceil((record.resetTime - now) / 1000);
+      res.setHeader('Retry-After', retryAfter);
+      return res.status(429).json({
+        success: false,
+        error: message,
+        retryAfter
+      });
+    }
+
+    next();
+  };
+}
+
+// 1. Strict Limiter for Admin Authentication (Max 15 attempts / 15 mins)
+const authRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: 'Too many login attempts. Please try again after 15 minutes.'
+});
+
+// 2. Submission Limiter for Public Forms (Enquiries & Applications: Max 30 / 10 mins)
+const submissionRateLimiter = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  message: 'Too many submissions from this network. Please try again in a few minutes.'
+});
 
 // Payload Decryption Configuration (AES-256-GCM)
 // Must match frontend VITE_PAYLOAD_SECRET. Independent of JWT_SECRET.
@@ -416,7 +495,7 @@ app.get('/api/status', (req, res) => {
 });
 
 // 1. Admin Login
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authRateLimiter, async (req, res) => {
   const { username, password } = req.body || {};
   if (
     !username || !password ||
@@ -475,7 +554,7 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
 });
 
 // 3. Create Job Application (Public Endpoint)
-app.post('/api/applications', async (req, res) => {
+app.post('/api/applications', submissionRateLimiter, async (req, res) => {
   const isMaintenance = String(getConfig('PORTAL_MAINTENANCE_MODE', 'false')).toLowerCase() === 'true';
   if (isMaintenance) {
     return res.status(503).json({
@@ -503,6 +582,15 @@ app.post('/api/applications', async (req, res) => {
       success: false,
       error: 'Missing required fields (full_name, email, phone, role)'
     });
+  }
+
+  if (resumeLink && typeof resumeLink === 'string' && resumeLink.trim()) {
+    if (!/^https?:\/\//i.test(resumeLink.trim())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Resume link must be a valid http:// or https:// URL'
+      });
+    }
   }
 
   const emailRegex = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
@@ -763,7 +851,7 @@ app.post('/api/applications/:id/restore', authenticateToken, requirePermission([
 });
 
 // 7. Create New Customer Enquiry (Public Endpoint)
-app.post('/api/enquiries', async (req, res) => {
+app.post('/api/enquiries', submissionRateLimiter, async (req, res) => {
   const isMaintenance = String(getConfig('PORTAL_MAINTENANCE_MODE', 'false')).toLowerCase() === 'true';
   if (isMaintenance) {
     return res.status(503).json({

@@ -84,13 +84,28 @@ function enrichData(data = {}) {
 }
 
 /**
- * Replaces {{placeholder}} or {{placeholder || fallback}} in a string.
+ * Escapes HTML characters to prevent HTML/content injection in rendered emails.
  */
-function interpolate(str, data) {
+function escapeHtml(str) {
+  if (typeof str !== 'string') return String(str ?? '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/**
+ * Replaces {{placeholder}} or {{placeholder || fallback}} in a string.
+ * Automatically HTML-escapes interpolated dynamic values to prevent injection.
+ */
+function interpolate(str, data, raw = false) {
   if (typeof str !== 'string') return '';
   return str.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s*\|\|\s*([^}]+))?\s*\}\}/g, (match, key, fallback) => {
     if (data[key] !== undefined && data[key] !== null && String(data[key]).trim() !== '') {
-      return String(data[key]);
+      const val = String(data[key]);
+      return raw ? val : escapeHtml(val);
     }
     return fallback !== undefined ? fallback.trim() : '';
   });
